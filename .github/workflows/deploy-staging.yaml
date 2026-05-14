@@ -36,7 +36,7 @@ jobs:
             });
             const passed = runs.data.workflow_runs.some(
               r => r.head_sha === context.sha &&
-                   r.name === 'Frontend CI'  // must match your CI workflow name exactly
+                   r.name === 'Frontend CI'
             );
             if (!passed) {
               core.setFailed('Frontend CI has not passed for this commit.');
