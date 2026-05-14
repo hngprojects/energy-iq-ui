@@ -22,4 +22,6 @@ jobs:
           script: |
             echo "SSH login successful"
             whoami
+            pwd
+            ls
             exit 0
