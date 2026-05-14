@@ -23,7 +23,7 @@ jobs:
       contents: read
     steps:
       - name: Confirm CI workflow passed for this commit
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const runs = await github.rest.actions.listWorkflowRunsForRepo({
@@ -97,15 +97,12 @@ jobs:
             set -e
             APP_DIR="/home/appuser/frontend/staging/"
 
-            echo "==> Extracting archive as appuser..."
-            sudo -u appuser bash -c '
-              cd '"$APP_DIR"'
+            cd '"$APP_DIR"'
+            tar -xzf /tmp/fe-staging.tar.gz -C '"$APP_DIR"'
 
-              tar -xzf /tmp/fe-staging.tar.gz -C '"$APP_DIR"'
+            pm2 reload fe-staging --update-env || pm2 start pnpm --name fe-staging -- start -H 0.0.0.0 -p 3005
+            pm2 save
 
-              pm2 reload fe-staging --update-env || pm2 start pnpm --name fe-staging -- start -H 0.0.0.0 -p 3005
-              pm2 save
-            '
             echo "==> Cleaning up..."
             rm -f /tmp/fe-staging.tar.gz
 
