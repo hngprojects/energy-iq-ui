@@ -1,13 +1,12 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { StarIcon } from "@hugeicons/core-free-icons";
+import { Star } from "lucide-react";
 import Image from "next/image";
 import {
   motion,
   useAnimate,
   type AnimationPlaybackControls,
-} from "framer-motion";
+} from "motion/react";
 import { useState, useEffect, useRef } from "react";
 
 interface Testimonial {
@@ -61,9 +60,8 @@ const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => (
   >
     <div className="mb-6 flex">
       {Array.from({ length: testimonial.rating }).map((_, i) => (
-        <HugeiconsIcon
+        <Star
           key={i}
-          icon={StarIcon}
           size={18}
           className="fill-primary text-primary"
         />

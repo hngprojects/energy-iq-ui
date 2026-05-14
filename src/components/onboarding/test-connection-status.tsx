@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowRight02Icon,
-  Cancel01Icon,
-  Tick01Icon,
-  Loading03Icon,
-} from "@hugeicons/core-free-icons";
+import { ChevronRight, X, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TestStatus = "idle" | "loading" | "error" | "success";
@@ -66,7 +60,7 @@ export function TestConnectionStatus({
         </div>
         <div className="mt-1 h-1 w-full bg-linear-to-r from-[#4ADE80] via-[#DDEFD9] to-[#72B800]" />
         <div className="mt-2 flex items-center gap-2 text-xs text-[#4ADE80]">
-          <HugeiconsIcon icon={Tick01Icon} className="size-4" />
+          <Check className="size-4" />
           <span>Connection Verified</span>
         </div>
       </div>
@@ -82,7 +76,7 @@ export function TestConnectionStatus({
         </div>
         <div className="mt-1 h-1 w-full bg-linear-to-r from-[#4ADE80] via-[#DDEFD9] to-[#72B800]" />
         <div className="mt-2 flex items-center gap-2 text-xs text-red-600">
-          <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+          <X className="size-4" />
           <span>
             Could not authenticate. Check your credentials and try again.
           </span>
@@ -101,15 +95,13 @@ export function TestConnectionStatus({
               {label}
             </span>
           </div>
-          <HugeiconsIcon
-            icon={ArrowRight02Icon}
+          <ChevronRight
             className="size-5 text-[#2A2F3C]"
           />
         </div>
         <div className="mt-2 flex items-center gap-2 pl-4 text-sm text-[#2A2F3C80]">
           <span>{LOADING_MESSAGES[msgIndex]}</span>
-          <HugeiconsIcon
-            icon={Loading03Icon}
+          <Loader2
             className="size-4 animate-spin text-black"
           />
         </div>
@@ -129,8 +121,7 @@ export function TestConnectionStatus({
           {label}
         </span>
       </div>
-      <HugeiconsIcon
-        icon={ArrowRight02Icon}
+      <ChevronRight
         className="size-5 text-[#2A2F3C]"
       />
     </button>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { env } from "@/env/server";
+// import { env } from "@/env/server";
 
-const API_BASE_URL = env.API_BASE_URL;
+const API_BASE_URL = process.env.API_BASE_URL;
 
 const buildBackendUrl = (path: string, search: string): string => {
   if (!API_BASE_URL) {

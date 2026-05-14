@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 const faqData = [
   {
     question: "Do I need to install new hardware?",
     answer:
-      "No, you don’t need to install any new hardware. EnergyIQ works with your existing inverter and solar setup. You simply connect your system details or integrate with supported inverter platforms
+      "No, you don’t need to install any new hardware. EnergyIQ works with your existing inverter and solar setup. You simply connect your system details or integrate with supported inverter platforms to start monitoring your energy in real time.",
   },
   {
     question: "Which inverter brands are supported?",

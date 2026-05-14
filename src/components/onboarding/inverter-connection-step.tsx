@@ -122,7 +122,7 @@ export function InverterConnectionStep({
             if (canConnect) onConnected();
           }}
           disabled={!canConnect}
-          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-[#111827] hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100
+          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-[#111827] hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
         >
           {config.connectLabel}
         </Button>

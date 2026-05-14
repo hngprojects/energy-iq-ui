@@ -12,7 +12,7 @@ function Card({
       data-size={size}
       className={cn(
         // Added shadow-sm and updated ring for a sleeker look
-        "group/card bg-card text-card-foreground ring-border flex flex-col gap-4 overflow-hidden rounded-2xl py-6 text-sm shadow-sm ring-1 transition-all hover:shadow-md has-[>img:first-child]:pt-0 da
+        "group/card bg-card text-card-foreground ring-border flex flex-col gap-4 overflow-hidden rounded-2xl py-6 text-sm shadow-sm ring-1 transition-all hover:shadow-md has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4",
         className,
       )}
       {...props}

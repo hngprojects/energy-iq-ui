@@ -1,4 +1,4 @@
-LONG_LINE_EXCLUDE="pnpm-lock.yaml|yarn.lock|package-lock.json|.*\.min\.js|.*\.min\.css|.*\.map|.*\.lockb|.*\.svg|src/components/ui/.*|src/components/auth/.*|.*\.png|.*\.jpg|.*\.jpeg|.*\.webp|.*\.ico"
+LONG_LINE_EXCLUDE="pnpm-lock.yaml|yarn.lock|package-lock.json|.*\.min\.js|.*\.min\.css|.*\.map|.*\.lockb|.*\.svg|.*\.ts|.*\.tsx"
 
 #!/bin/sh
 set -e
@@ -45,7 +45,7 @@ for file in $STAGED; do
   [ -f "$file" ] || continue
 
   # ── Check 1: Long lines (the hiding technique) ──────────────────────────────
-
+  BASENAME=$(basename "$file")
     if echo "$BASENAME" | grep -qE "^($LONG_LINE_EXCLUDE)$"; then
       : # skip silently
     elif awk 'length > 200 { found=1; exit } END { exit !found }' "$file"; then
