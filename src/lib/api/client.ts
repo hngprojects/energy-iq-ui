@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { ApiError } from "./error";
-import { env as serverEnv } from "@/env/server";
+// import { env as serverEnv } from "@/env/server";
 import { useAuthStore } from "@/stores/auth-store";
 
 const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
@@ -9,7 +9,7 @@ const isServer = typeof window === "undefined";
 
 function getBaseUrl(): string | undefined {
   return isServer
-    ? serverEnv.API_BASE_URL
+    ? process.env.API_BASE_URL
     : process.env.NEXT_PUBLIC_API_BASE_URL || "/api/proxy";
 }
 
