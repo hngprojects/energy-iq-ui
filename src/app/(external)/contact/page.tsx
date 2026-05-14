@@ -69,7 +69,7 @@ const ContactTextareaField = forwardRef<
     <textarea
       ref={ref}
       id={id}
-      className="placeholder:text-muted-foreground focus-visible:border-border-active h-60.5 resize-none rounded-[8px] border border-[#D8DBE2] bg-[#FCFCFC] px-7 py-3.5 text-base font-light transition-
+      className="placeholder:text-muted-foreground focus-visible:border-border-active h-60.5 resize-none rounded-[8px] border border-[#D8DBE2] bg-[#FCFCFC] px-7 py-3.5 text-base font-light transition-colors outline-none focus-visible:ring-0 md:text-lg"
       {...props}
     />
     {error && <p className="text-destructive text-sm">{error}</p>}
