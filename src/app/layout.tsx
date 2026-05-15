@@ -20,8 +20,10 @@ const geistMono = Geist_Mono({
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
 const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Energy IQ";
+
+const appDescription =
+  "Energy IQ is a smart energy monitoring platform for tracking usage, optimizing power consumption, and improving energy efficiency.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
@@ -31,8 +33,11 @@ export const metadata: Metadata = {
     template: `%s · ${appName}`,
   },
 
-  description:
-    "Energy IQ is a smart energy monitoring platform for tracking usage, optimizing power consumption, and improving energy efficiency.",
+  description: appDescription,
+
+  applicationName: appName,
+
+  manifest: "/manifest.json",
 
   keywords: [
     "Energy monitoring",
@@ -45,13 +50,30 @@ export const metadata: Metadata = {
 
   authors: [{ name: "Energy IQ Team" }],
 
+  category: "utilities",
+
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: appName,
+  },
+
   openGraph: {
     title: appName,
     description:
       "Track, analyze, and optimize your energy consumption with Energy IQ.",
     url: appUrl,
     siteName: appName,
+    locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${appName} — Smart Energy Monitoring`,
+      },
+    ],
   },
 
   twitter: {
@@ -63,6 +85,13 @@ export const metadata: Metadata = {
 
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
   },
 };
 
