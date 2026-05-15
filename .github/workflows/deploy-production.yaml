@@ -1,0 +1,117 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-deploy-production
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Require CI Pass
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Confirm CI workflow passed for this commit
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          script: |
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+              event: 'push',
+              status: 'success',
+              per_page: 5,
+            });
+            const passed = runs.data.workflow_runs.some(
+              r => r.head_sha === context.sha &&
+                   r.name === 'Frontend CI'
+            );
+            if (!passed) {
+              core.setFailed('Frontend CI has not passed for this commit.');
+            }
+
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: quality-gate
+    environment: main
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Create deployment archive
+        run: |
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.github' \
+            -czf /tmp/fe-prod.tar.gz .
+
+      - name: Copy archive to server
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 #v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: /tmp/fe-prod.tar.gz
+          target: /tmp/
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 #v1.2.5
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            APP_DIR="/home/appuser/frontend/prod/"
+
+            cd '"$APP_DIR"'
+            tar -xzf /tmp/fe-prod.tar.gz -C '"$APP_DIR"'
+
+            pm2 reload fe-prod --update-env || pm2 start pnpm --name fe-prod -- start -H 0.0.0.0 -p 3005
+            pm2 save
+
+            echo "==> Cleaning up..."
+            rm -f /tmp/fe-prod.tar.gz
+
+            echo "Production deploy complete"
+
+      - name: Health check
+        run: |
+          for i in {1..10}; do
+            curl --fail --max-time 10 https://energy-iq.hng14.com && exit 0
+            sleep 5
+          done
+          exit 1
