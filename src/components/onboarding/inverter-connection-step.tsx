@@ -38,6 +38,7 @@ export function InverterConnectionStep({
   const [helperOpen, setHelperOpen] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
 
+
   const connectInverterMutation = useConnectInverter(onConnected);
 
   if (!config) {
@@ -78,20 +79,26 @@ export function InverterConnectionStep({
     };
 
     const brand = inverter.toLowerCase();
+    const byId = Object.fromEntries(
+      config.fields.map((f, i) => [f.id, (values[i] ?? "").trim()]),
+    );
 
     if (brand === "victron") {
-      payload.victronAccessToken = values[0];
+      payload.victronAccessToken = byId["vrm-token"];
     } else if (brand === "growatt") {
-      payload.growattApiToken = values[0];
+      payload.growattApiToken = byId["growatt-token"];
     } else if (brand === "sunsynk" || brand === "deye") {
-      payload.solarmanEmail = values[0];
-      payload.solarmanPassword = values[1];
-      if (values[2]?.trim()) {
-        payload.solarmanPlantId = values[2];
+      const prefix = brand === "sunsynk" ? "sunsynk" : "deye";
+      payload.solarmanEmail = byId[`${prefix}-email`];
+      payload.solarmanPassword = byId[`${prefix}-password`];
+      if (byId[`${prefix}-plant`]) {
+        payload.solarmanPlantId = byId[`${prefix}-plant`];
       }
     }
 
-    connectInverterMutation.mutate(payload);
+    connectInverterMutation.mutate(payload, {
+      onError: () => setTestStatus("error"),
+    });
   };
 
   const runTest = () => {
