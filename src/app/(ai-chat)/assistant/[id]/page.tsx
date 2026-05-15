@@ -1,6 +1,6 @@
 import { ChatWindow } from "@/components/ai-chat/chat/ChatWindow";
 import { MOCK_CONVERSATION, MOCK_CHATS } from "@/components/ai-chat/lib/mockData";
-import { notFound } from "next/navigation";
+
 
 interface Props {
   params: { id: string };

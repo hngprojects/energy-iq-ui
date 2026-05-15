@@ -31,9 +31,14 @@ export function MobileHeader() {
   const pathname = usePathname();
 
   // Close drawer on route change
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+  //useEffect(() => {
+  // setDrawerOpen(false);
+  // }, [pathname]);
+
+
+  const closeDrawer = () => setDrawerOpen(false);
+
+  //<Link href={href} onClick={closeDrawer} ...></Link>
 
   // Prevent body scroll when drawer open
   useEffect(() => {
@@ -71,7 +76,7 @@ export function MobileHeader() {
       {drawerOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40 lg:hidden animate-fade-in"
-          onClick={() => setDrawerOpen(false)}
+          onClick={closeDrawer}
         />
       )}
 
@@ -94,7 +99,7 @@ export function MobileHeader() {
             </span>
           </Link>
           <button
-            onClick={() => setDrawerOpen(false)}
+            onClick={closeDrawer}
             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <X className="w-4 h-4 text-gray-500" />
