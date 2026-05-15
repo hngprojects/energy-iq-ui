@@ -2,6 +2,11 @@
 
 Next.js 16 + React 19 + Tailwind v4 + shadcn (radix-maia). Validated env, typed proxy, and the standard set of route conventions wired up.
 
+## Deployment
+
+- **Production:** https://energy-iq.hng14.com
+- **Staging:** https://staging.energy-iq.hng14.com/
+
 ## Stack
 
 - **Next.js 16** App Router (`proxy.ts`, `forbidden.tsx`, `unauthorized.tsx`)
