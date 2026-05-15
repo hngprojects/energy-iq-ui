@@ -18,7 +18,7 @@ const contactSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Enter a valid email address"),
-  phone: z.string().optional(),
+  phoneNumber: z.string().optional(),
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
@@ -177,8 +177,8 @@ export default function Contact() {
               type="tel"
               label="Phone number"
               placeholder="Enter your phone number"
-              error={errors.phone?.message}
-              {...register("phone")}
+              error={errors.phoneNumber?.message}
+              {...register("phoneNumber")}
             />
           </div>
 
@@ -207,3 +207,4 @@ export default function Contact() {
     </section>
   );
 }
+
