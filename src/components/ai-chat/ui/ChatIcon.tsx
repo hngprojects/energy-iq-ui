@@ -1,6 +1,6 @@
 import { AlertTriangle, Battery, FileText, Sun } from "lucide-react";
 import { ChatItem } from "../lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 interface ChatIconProps {
   icon: ChatItem["icon"];

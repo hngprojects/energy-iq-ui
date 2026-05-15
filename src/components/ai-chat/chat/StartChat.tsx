@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Zap, ChevronUp } from "lucide-react";
+import { ArrowLeft,  } from "lucide-react";
 import Image from "next/image";
 import { ChatInput } from "./ChatInput";
 import { SUGGESTED_QUESTIONS } from "../lib/mockData";
-import { cn } from "@/lib/utils";
+
 
 export function StartChat() {
   const router = useRouter();

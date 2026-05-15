@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Share2, Pen, Pin, Archive, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 interface ContextMenuProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import { ChatTag } from "@/lib/types";
+import { cn } from "../lib/utils";
+import { ChatTag } from "../lib/types";
 
 interface TagBadgeProps {
   tag: ChatTag;
