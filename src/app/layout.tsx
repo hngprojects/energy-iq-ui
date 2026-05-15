@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Figtree } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import QueryProvider from "./providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const figtree = Figtree({
   subsets: ["latin"],
@@ -113,7 +114,11 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+
+          <Toaster position="top-right" richColors />
+        </QueryProvider>
       </body>
     </html>
   );
