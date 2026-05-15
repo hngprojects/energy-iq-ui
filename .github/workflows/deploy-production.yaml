@@ -102,7 +102,7 @@ jobs:
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.github' \
-            -czf /tmp/fe-prod.tar.gz .
+            -czf fe-prod.tar.gz .
 
       - name: Copy archive to server
         uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 #v1.0.0
@@ -110,7 +110,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: /tmp/fe-prod.tar.gz
+          source: fe-prod.tar.gz
           target: /tmp/
 
       - name: Deploy on server
@@ -123,8 +123,8 @@ jobs:
             set -e
             APP_DIR="/home/appuser/frontend/prod/"
 
-            cd '"$APP_DIR"'
-            tar -xzf /tmp/fe-prod.tar.gz -C '"$APP_DIR"'
+            cd "$APP_DIR"
+            tar -xzf /tmp/fe-prod.tar.gz -C "$APP_DIR"
 
             pm2 reload fe-prod --update-env || pm2 start pnpm --name fe-prod -- start -H 0.0.0.0 -p 3006
             pm2 save
