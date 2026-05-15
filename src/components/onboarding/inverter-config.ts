@@ -12,7 +12,7 @@ export interface InverterFieldConfig {
 
 export interface InverterConfig {
   name: string;
-  fields: [InverterFieldConfig, InverterFieldConfig, InverterFieldConfig];
+  fields: InverterFieldConfig[];
   connectLabel: string;
   helper: string[];
 }
@@ -22,18 +22,6 @@ export const INVERTER_CONFIG: Record<InverterType, InverterConfig> = {
     name: "Victron",
     fields: [
       {
-        id: "vrm-email",
-        label: "Enter VRM Email",
-        placeholder: "you@email.com",
-        kind: "email",
-      },
-      {
-        id: "vrm-password",
-        label: "Enter VRM Password",
-        placeholder: "************",
-        kind: "password",
-      },
-      {
         id: "vrm-token",
         label: "Enter VRM API Token",
         placeholder: "************",
@@ -42,7 +30,6 @@ export const INVERTER_CONFIG: Record<InverterType, InverterConfig> = {
     ],
     connectLabel: "Connect",
     helper: [
-      "Use your VRM login details",
       "Find Your Api token in your Profile → API Access Tokens → Generate token",
     ],
   },
@@ -50,29 +37,15 @@ export const INVERTER_CONFIG: Record<InverterType, InverterConfig> = {
     name: "Growatt",
     fields: [
       {
-        id: "growatt-username",
-        label: "Enter ShinePhone Username",
-        placeholder: "you@email.com",
-        kind: "email",
-      },
-      {
-        id: "growatt-password",
-        label: "Enter ShinePhone Password",
+        id: "growatt-token",
+        label: "Enter Growatt API Token",
         placeholder: "************",
         kind: "password",
-      },
-      {
-        id: "growatt-plant",
-        label: "Enter Plant ID (optional)",
-        placeholder: "0A-234-567-897",
-        kind: "text",
-        optional: true,
       },
     ],
     connectLabel: "Connect",
     helper: [
-      "Find your Growatt Email and password, Use your Growatt Shine app login",
-      "For your Growatt Plant ID, we'll auto-detect your system if left blank",
+      "Find your Growatt API token in your ShinePhone settings or developer portal",
     ],
   },
   sunsynk: {
@@ -102,6 +75,35 @@ export const INVERTER_CONFIG: Record<InverterType, InverterConfig> = {
     helper: [
       "Use your Sunsynk / Solarman app login detail",
       "For your Sunsynk Plant ID, we'll auto-detect your system if left blank",
+    ],
+  },
+  deye: {
+    name: "Deye",
+    fields: [
+      {
+        id: "deye-email",
+        label: "Enter Solarman Email",
+        placeholder: "you@email.com",
+        kind: "email",
+      },
+      {
+        id: "deye-password",
+        label: "Enter SolarMan Password",
+        placeholder: "************",
+        kind: "password",
+      },
+      {
+        id: "deye-plant",
+        label: "Enter Plant ID(optional)",
+        placeholder: "0A-234-567-897",
+        kind: "text",
+        optional: true,
+      },
+    ],
+    connectLabel: "Save Inverter",
+    helper: [
+      "Use your Deye / Solarman app login detail",
+      "For your Deye Plant ID, we'll auto-detect your system if left blank",
     ],
   },
 };

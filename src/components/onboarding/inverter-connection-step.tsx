@@ -13,6 +13,9 @@ import {
 import type { InverterType } from "./inverter-type-step";
 import { INVERTER_CONFIG } from "./inverter-config";
 
+import { useInverterQueries } from "@/hooks/use-inverter-queries";
+import { useAuthStore } from "@/stores/auth-store";
+
 interface InverterConnectionStepProps {
   inverter: InverterType;
   onBack: () => void;
@@ -25,10 +28,16 @@ export function InverterConnectionStep({
   onConnected,
 }: InverterConnectionStepProps) {
   const config = INVERTER_CONFIG[inverter.toLowerCase()];
+  const { user } = useAuthStore();
+  const { useConnectInverter } = useInverterQueries();
 
-  const [values, setValues] = useState<[string, string, string]>(["", "", ""]);
+  const [values, setValues] = useState<string[]>(
+    config?.fields.map(() => "") ?? [],
+  );
   const [helperOpen, setHelperOpen] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+
+  const connectInverterMutation = useConnectInverter(onConnected);
 
   if (!config) {
     return (
@@ -44,25 +53,47 @@ export function InverterConnectionStep({
   }
 
   const requiredFilled = config.fields.every(
-    (f, i) => f.optional || values[i].trim().length > 0,
+    (f, i) => f.optional || (values[i] && values[i].trim().length > 0),
   );
-  const canConnect = requiredFilled && testStatus === "success";
+  const canConnect =
+    requiredFilled &&
+    testStatus === "success" &&
+    !connectInverterMutation.isPending;
 
   const setValue = (i: number, v: string) => {
     setValues((prev) => {
-      const next = [...prev] as [string, string, string];
+      const next = [...prev];
       next[i] = v;
       return next;
     });
     if (testStatus !== "loading") setTestStatus("idle");
   };
 
+  const handleConnect = () => {
+    if (!canConnect || !user) return;
+
+    const tokenField = config.fields.find((f) => f.id.includes("token"));
+    const tokenIndex = config.fields.indexOf(tokenField!);
+    const accessToken = values[tokenIndex] || values[0];
+
+    connectInverterMutation.mutate({
+      brand: inverter.toUpperCase(),
+      userId: user.id,
+      accessToken: accessToken,
+    });
+  };
+
   const runTest = () => {
     if (!requiredFilled) return;
     setTestStatus("loading");
     window.setTimeout(() => {
-      const [a, b] = values;
-      const ok = a.includes("@") && b.length >= 4;
+      const ok = config.fields.every((f, i) => {
+        if (f.optional) return true;
+        const val = values[i] || "";
+        if (f.kind === "email") return val.includes("@");
+        if (f.id.includes("token")) return val.length >= 10;
+        return val.length >= 4;
+      });
       setTestStatus(ok ? "success" : "error");
     }, LOADING_TOTAL_MS);
   };
@@ -118,13 +149,11 @@ export function InverterConnectionStep({
         </Button>
         <Button
           type="button"
-          onClick={() => {
-            if (canConnect) onConnected();
-          }}
+          onClick={handleConnect}
           disabled={!canConnect}
           className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-[#111827] hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
         >
-          {config.connectLabel}
+          {connectInverterMutation.isPending ? "Connecting..." : config.connectLabel}
         </Button>
       </div>
 
