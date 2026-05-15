@@ -1,6 +1,6 @@
 # EnergyIQ
 
-EnergyIQ is a smart energy monitoring platformm that connects to a user's existing solar inverter system and transforms raw technical data into clear, actionable intelligence, energy performance, cost
+EnergyIQ is a smart energy monitoring platform that connects to a user's existing solar inverter system and transforms raw technical data into clear, actionable insights on energy performance and cost
 
 ## Deployment
 
