@@ -1,4 +1,4 @@
-# Next.js Starter
+# EnergyIQ
 
 Next.js 16 + React 19 + Tailwind v4 + shadcn (radix-maia). Validated env, typed proxy, and the standard set of route conventions wired up.
 
@@ -92,16 +92,44 @@ Add auth gating, rewrites, or redirects there as needed. Note: `runtime` config 
 
 `forbidden.tsx` and `unauthorized.tsx` require `experimental.authInterrupts: true`, already enabled in [`next.config.ts`](./next.config.ts).
 
-## Project layout
+## Codebase Structure
 
 ```
 src/
-├── app/                # App Router routes & file conventions
-│   └── api/health/     # Liveness probe
-├── components/ui/      # shadcn components (added via `pnpm dlx shadcn@latest add ...`)
-├── lib/utils.ts        # cn() helper
-├── env/
-│   ├── server.ts       # Server-only env schema
-│   └── client.ts       # NEXT_PUBLIC_* env schema
-└── proxy.ts            # Next.js 16 proxy (formerly middleware)
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   ├── onboarding/
+│   │   ├── signup/
+│   │   └── verify-email/
+│   ├── api/
+│   │   └── proxy/      # Backend API proxy
+├── components/         # React components
+│   ├── auth/
+│   ├── onboarding/
+│   └── ui/             # shadcn UI components
+├── services/           # API service layers
+├── stores/             # Zustand state management
+├── lib/                # Shared utilities and schemas
+└── env/                # Environment variable schemas
 ```
+
+## Auth Flow
+
+How Google OAuth works in the app:
+
+1. User clicks **"Continue with Google"**
+2. Frontend redirects to `NEXT_PUBLIC_APP_URL/api/v1/auth/google`
+3. Backend handles OAuth with Google
+4. Google redirects back to backend callback
+5. Backend redirects to frontend with token
+6. Frontend stores token in `localStorage` and `auth-storage` (Zustand)
+7. Frontend redirects to `/onboarding`
+
+## Onboarding Steps
+
+New users go through these steps after first login:
+
+1. **Inverter Type Selection**: Select the type of inverter used (e.g., DEYE, MUST, LUXPOWER, etc.).
+2. **Inverter Connection**: Enter specific connection details for the selected inverter type.
+
