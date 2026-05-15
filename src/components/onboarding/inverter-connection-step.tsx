@@ -1,0 +1,149 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PasswordInput } from "./password-input";
+import {
+  TestConnectionStatus,
+  LOADING_TOTAL_MS,
+  type TestStatus,
+} from "./test-connection-status";
+import type { InverterType } from "./inverter-type-step";
+import { INVERTER_CONFIG } from "./inverter-config";
+
+interface InverterConnectionStepProps {
+  inverter: InverterType;
+  onBack: () => void;
+  onConnected: () => void;
+}
+
+export function InverterConnectionStep({
+  inverter,
+  onBack,
+  onConnected,
+}: InverterConnectionStepProps) {
+  const config = INVERTER_CONFIG[inverter.toLowerCase()];
+
+  const [values, setValues] = useState<[string, string, string]>(["", "", ""]);
+  const [helperOpen, setHelperOpen] = useState(false);
+  const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+
+  if (!config) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg bg-red-50 p-4 text-center text-red-600">
+          Configuration for {inverter} is not currently available.
+        </div>
+        <Button onClick={onBack} variant="outline" className="w-full">
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  const requiredFilled = config.fields.every(
+    (f, i) => f.optional || values[i].trim().length > 0,
+  );
+  const canConnect = requiredFilled && testStatus === "success";
+
+  const setValue = (i: number, v: string) => {
+    setValues((prev) => {
+      const next = [...prev] as [string, string, string];
+      next[i] = v;
+      return next;
+    });
+    if (testStatus !== "loading") setTestStatus("idle");
+  };
+
+  const runTest = () => {
+    if (!requiredFilled) return;
+    setTestStatus("loading");
+    window.setTimeout(() => {
+      const [a, b] = values;
+      const ok = a.includes("@") && b.length >= 4;
+      setTestStatus(ok ? "success" : "error");
+    }, LOADING_TOTAL_MS);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        {config.fields.map((f, i) => (
+          <div key={f.id} className="space-y-2">
+            <Label
+              htmlFor={f.id}
+              className="text-base font-medium text-[#111827] lg:text-lg"
+            >
+              {f.label}
+            </Label>
+            {f.kind === "password" ? (
+              <PasswordInput
+                id={f.id}
+                placeholder={f.placeholder}
+                value={values[i]}
+                onChange={(e) => setValue(i, e.target.value)}
+              />
+            ) : (
+              <Input
+                id={f.id}
+                type={f.kind}
+                placeholder={f.placeholder}
+                value={values[i]}
+                onChange={(e) => setValue(i, e.target.value)}
+                className="h-14 rounded-lg border-[#D8DBE299] bg-[#FCFCFC] text-base placeholder:text-[#9CA3AF] focus-within:bg-white lg:text-lg"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {requiredFilled && (
+        <TestConnectionStatus
+          inverterName={config.name}
+          status={testStatus}
+          onRun={runTest}
+        />
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          className="h-14 cursor-pointer rounded-lg border-[#E5E7EB] bg-white text-base font-medium text-[#111827] hover:bg-[#F9FAFB]"
+        >
+          Back
+        </Button>
+        <Button
+          type="button"
+          onClick={() => {
+            if (canConnect) onConnected();
+          }}
+          disabled={!canConnect}
+          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-[#111827] hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
+        >
+          {config.connectLabel}
+        </Button>
+      </div>
+
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={() => setHelperOpen((o) => !o)}
+          className="cursor-pointer text-base font-medium text-[#2A2F3C] lg:text-lg"
+        >
+          Where do I find these?
+        </button>
+        {helperOpen && (
+          <div className="space-y-1 text-xs text-[#6B7280] md:text-sm">
+            {config.helper.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
