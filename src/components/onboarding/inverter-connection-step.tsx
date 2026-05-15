@@ -15,6 +15,7 @@ import { INVERTER_CONFIG } from "./inverter-config";
 
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
+import type { ConnectInverterRequest } from "@/types/inverter";
 
 interface InverterConnectionStepProps {
   inverter: InverterType;
@@ -72,15 +73,25 @@ export function InverterConnectionStep({
   const handleConnect = () => {
     if (!canConnect || !user) return;
 
-    const tokenField = config.fields.find((f) => f.id.includes("token"));
-    const tokenIndex = config.fields.indexOf(tokenField!);
-    const accessToken = values[tokenIndex] || values[0];
-
-    connectInverterMutation.mutate({
+    const payload: ConnectInverterRequest = {
       brand: inverter.toUpperCase(),
-      userId: user.id,
-      accessToken: accessToken,
-    });
+    };
+
+    const brand = inverter.toLowerCase();
+
+    if (brand === "victron") {
+      payload.victronAccessToken = values[0];
+    } else if (brand === "growatt") {
+      payload.growattApiToken = values[0];
+    } else if (brand === "sunsynk" || brand === "deye") {
+      payload.solarmanEmail = values[0];
+      payload.solarmanPassword = values[1];
+      if (values[2]?.trim()) {
+        payload.solarmanPlantId = values[2];
+      }
+    }
+
+    connectInverterMutation.mutate(payload);
   };
 
   const runTest = () => {
