@@ -102,7 +102,7 @@ jobs:
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.github' \
-            -czf fe-prod.tar.gz .
+            -czf /tmp/fe-prod.tar.gz .
 
       - name: Copy archive to server
         uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 #v1.0.0
@@ -110,7 +110,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: fe-prod.tar.gz
+          source: /tmp/fe-prod.tar.gz
           target: /tmp/
 
       - name: Deploy on server
