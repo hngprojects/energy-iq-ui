@@ -158,7 +158,7 @@ export function AuthSignupForm() {
           </Link>{" "}
           and{" "}
           <Link
-            href="/privacy"
+            href="/privacy-policy"
             className="text-grey-light font-bold hover:underline"
           >
             Privacy Policy
