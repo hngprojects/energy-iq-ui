@@ -1,6 +1,6 @@
 # EnergyIQ
 
-Next.js 16 + React 19 + Tailwind v4 + shadcn (radix-maia). Validated env, typed proxy, and the standard set of route conventions wired up.
+EnergyIQ is a smart energy monitoring platformm that connects to a user's existing solar inverter system and transforms raw technical data into clear, actionable intelligence, energy performance, cost
 
 ## Deployment
 
