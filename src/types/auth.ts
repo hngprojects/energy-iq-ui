@@ -18,9 +18,7 @@ export type LoginResponse = AuthResponse;
 
 export type RegisterResponse = AuthResponse;
 
-export interface VerifyEmailResponse {
-  message: string;
-}
+export type VerifyEmailResponse = AuthResponse;
 
 export interface RefreshTokenResponse {
   accessToken: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
-import { ApiError } from "@/lib/api/error";
 
 export function AuthVerifyEmailForm() {
   const searchParams = useSearchParams();
@@ -20,11 +19,40 @@ export function AuthVerifyEmailForm() {
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(119); 
 
-  const { useVerifyEmail } = useAuthQueries();
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}s`;
+  };
+
+  const { useVerifyEmail, useResendEmailOtp } = useAuthQueries();
   const verifyMutation = useVerifyEmail();
+  const resendMutation = useResendEmailOtp();
 
   const isComplete = otp.length === 6;
+
+  const handleResend = () => {
+    resendMutation.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          setTimeLeft(119); 
+        },
+      },
+    );
+  };
 
   const handleVerify = async () => {
     if (!isComplete) return;
@@ -102,7 +130,7 @@ export function AuthVerifyEmailForm() {
             className="h-14 w-full rounded-xl bg-[#1A1F2C] text-xl font-medium text-white hover:bg-[#1A1F2C]/90"
             asChild
           >
-            <Link href="/login">Continue</Link>
+            <Link href="/onboarding">Continue</Link>
           </Button>
         </div>
       </div>
@@ -149,10 +177,25 @@ export function AuthVerifyEmailForm() {
           </InputOTP>
         </div>
 
-        <p className="mt-8 text-sm">
-          <span className="text-slate-60">Code is valid for </span>
-          <span className="text-foreground font-medium">1:59s</span>
-        </p>
+        <div className="mt-8 text-sm">
+          {timeLeft > 0 ? (
+            <p>
+              <span className="text-slate-60">Code is valid for </span>
+              <span className="text-foreground font-medium">
+                {formatTime(timeLeft)}
+              </span>
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendMutation.isPending}
+              className="font-semibold text-amber-50 hover:underline disabled:cursor-not-allowed disabled:text-slate-400"
+            >
+              {resendMutation.isPending ? "Resending..." : "Resend Code"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-14 flex w-full flex-col gap-4 md:grid md:grid-cols-2 md:gap-6">
