@@ -76,9 +76,6 @@ jobs:
     environment: staging
 
     steps: 
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
@@ -87,18 +84,19 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e 
-              cd /home/appuser/frontend/staging
 
-              git pull origin staging
+            cd /home/appuser/frontend/staging
 
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            git pull origin staging
 
-              pnpm install --frozen-lockfile
-              pnpm build
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-              pm2 reload fe-staging --update-env || pm2 start pnpm --name fe-staging -- start -H 0.0.0.0 -p 3005
-              pm2 save
+            pnpm install --frozen-lockfile
+            pnpm build
+
+            pm2 reload fe-staging --update-env || pm2 start pnpm --name fe-staging -- start -H 0.0.0.0 -p 3005
+            pm2 save
 
       - name: Health check
         run: |
