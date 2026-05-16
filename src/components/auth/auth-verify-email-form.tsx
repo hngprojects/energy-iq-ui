@@ -168,7 +168,7 @@ export function AuthVerifyEmailForm() {
                     "h-10 w-10 rounded-lg border bg-transparent text-lg font-medium shadow-none transition-colors md:h-20 md:w-20",
                     "data-[active=true]:border-positive data-[active=true]:ring-positive/20 data-[active=true]:ring-[3px]",
                     "focus:ring-0 md:text-2xl",
-                    error ? "border-error-text" : "border-[#00000037]",
+                    error ? "border-red-600" : "border-[#00000037]",
                     "focus:border-primary",
                   )}
                 />

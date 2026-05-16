@@ -112,6 +112,7 @@ export async function apiFetch<TResponse>(
       if (status === 401 && typeof window !== "undefined") {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
+         window.location.replace("/login");
       }
 
       const message =
