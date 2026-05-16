@@ -95,7 +95,10 @@ export function DashboardSidebar() {
               label={item.label}
               icon={item.icon}
               href={item.href}
-              isActive={pathname.startsWith(item.href)}
+              isActive={
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`)
+              }
               onClick={closeSidebar}
             />
           ))}

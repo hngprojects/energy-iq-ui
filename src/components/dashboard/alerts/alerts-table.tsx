@@ -263,12 +263,13 @@ export function AlertsTable() {
   const [activeAlert, setActiveAlert] = useState<Alert | null>(null);
 
   const handleRefresh = useCallback(() => {
+    if (isRefreshing) return;
     setIsRefreshing(true);
     setTimeout(() => {
       setIsRefreshing(false);
       setSecondsAgo(0);
     }, 1500);
-  }, []);
+  }, [isRefreshing]);
 
   const handleResolve = useCallback((id: string) => {
     setAlerts((prev) =>
@@ -301,8 +302,9 @@ export function AlertsTable() {
             </span>
             <button
               onClick={handleRefresh}
+              disabled={isRefreshing}
               aria-label="Refresh alerts"
-              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors disabled:pointer-events-none"
             >
               <RefreshCw
                 className={cn(
@@ -386,7 +388,9 @@ export function AlertsTable() {
                               disabled
                               className="bg-muted text-muted-foreground cursor-default rounded-lg px-4 py-2 text-sm font-medium"
                             >
-                              Resolved
+                              {alert.status === "resolved"
+                                ? "Resolved"
+                                : "No action needed"}
                             </Button>
                           )}
                         </td>
