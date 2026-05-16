@@ -112,7 +112,12 @@ export async function apiFetch<TResponse>(
       if (status === 401 && typeof window !== "undefined") {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
-        window.location.replace("/login");
+
+        // Only redirect to login if we're not already on an auth page to prevent unnecessary reloads
+        const authPaths = ["/login", "/signup", "/verify-email", "/forgot-password", "/reset-password"];
+        if (!authPaths.includes(window.location.pathname)) {
+          window.location.replace("/login");
+        }
       }
 
       const message =

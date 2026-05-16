@@ -39,7 +39,9 @@ export const useAuthQueries = () => {
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Invalid email or password"));
+        toast.error(getErrorMessage(error, "Invalid email or password"), {
+          duration: 5000,
+        });
       },
     });
 
@@ -65,7 +67,9 @@ export const useAuthQueries = () => {
         router.push("/login");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Verification failed"));
+        toast.error(getErrorMessage(error, "Verification failed"), {
+          duration: 5000,
+        });
       },
     });
 

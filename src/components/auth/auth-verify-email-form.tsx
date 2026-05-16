@@ -9,16 +9,17 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { ApiError } from "@/lib/api/error";
 
 export function AuthVerifyEmailForm() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { useVerifyEmail } = useAuthQueries();
   const verifyMutation = useVerifyEmail();
@@ -27,6 +28,7 @@ export function AuthVerifyEmailForm() {
 
   const handleVerify = async () => {
     if (!isComplete) return;
+    setError(null);
 
     verifyMutation.mutate(
       { email, otp },
@@ -34,13 +36,10 @@ export function AuthVerifyEmailForm() {
         onSuccess: () => {
           setIsSuccess(true);
         },
-        onError: (error: unknown) => {
-          const message =
-            error instanceof Error
-              ? error.message
-              : (error as { message?: string })?.message ||
-                "Oh no! The code you entered is incorrect.";
-          toast.error(message);
+        onError: (err: any) => {
+          setError(
+            err?.message || "Oh no! The code you entered is incorrect.",
+          );
         },
       },
     );
@@ -120,11 +119,14 @@ export function AuthVerifyEmailForm() {
           Please paste (or type) your 6-digit code
         </p>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col items-center">
           <InputOTP
             maxLength={6}
             value={otp}
-            onChange={(val) => setOtp(val)}
+            onChange={(val) => {
+              setOtp(val);
+              if (error) setError(null);
+            }}
             containerClassName="justify-center gap-2"
           >
             <InputOTPGroup className="gap-2">
@@ -136,7 +138,8 @@ export function AuthVerifyEmailForm() {
                     "h-10 w-10 rounded-lg border bg-transparent text-lg font-medium shadow-none transition-colors md:h-20 md:w-20",
                     "data-[active=true]:border-positive data-[active=true]:ring-positive/20 data-[active=true]:ring-[3px]",
                     "focus:ring-0 md:text-2xl",
-                    "focus:border-primary border-[#00000037]",
+                    error ? "border-error-text" : "border-[#00000037]",
+                    "focus:border-primary",
                   )}
                 />
               ))}
