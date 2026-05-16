@@ -13,14 +13,13 @@ export function StartChat() {
   const [loading, setLoading] = useState(false);
 
   const handleSend = async (message: string) => {
-    /*setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    router.push("/dashboard/ai-assistant/2");*/
+
     if (!message.trim()) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 300));
     // Pass message as a query param so the chat page knows what was asked
-    router.push(`/dashboard/ai-assistant/2?q=${encodeURIComponent(message)}`);
+    // router.push(`/dashboard/ai-assistant/2?q=${encodeURIComponent(message)}`);
+    router.push("/dashboard/ai-assistant/2");
   };
 
   return (
