@@ -1,6 +1,11 @@
-# Next.js Starter
+# EnergyIQ
 
-Next.js 16 + React 19 + Tailwind v4 + shadcn (radix-maia). Validated env, typed proxy, and the standard set of route conventions wired up.
+EnergyIQ is a smart energy monitoring platform that connects to a user's existing solar inverter system and transforms raw technical data into clear, actionable insights on energy performance and cost
+
+## Deployment
+
+- **Production:** https://energy-iq.hng14.com
+- **Staging:** https://staging.energy-iq.hng14.com/
 
 ## Stack
 
@@ -21,13 +26,13 @@ Open <http://localhost:3000>.
 
 ## Scripts
 
-| Command            | What it does                              |
-| ------------------ | ----------------------------------------- |
-| `pnpm dev`         | Dev server                                |
-| `pnpm build`       | Production build (validates env)          |
-| `pnpm start`       | Run the production build                  |
-| `pnpm lint`        | ESLint                                    |
-| `pnpm typecheck`   | `tsc --noEmit`                            |
+| Command          | What it does                     |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Dev server                       |
+| `pnpm build`     | Production build (validates env) |
+| `pnpm start`     | Run the production build         |
+| `pnpm lint`      | ESLint                           |
+| `pnpm typecheck` | `tsc --noEmit`                   |
 
 ## Environment variables
 
@@ -38,13 +43,13 @@ Schemas live in [`src/env/`](./src/env), split by side:
 
 Both are imported in [`next.config.ts`](./next.config.ts) so the build fails on any malformed value. Set `SKIP_ENV_VALIDATION=1` to bypass (Docker, lint-only CI).
 
-| Var                     | Side    | Required | Notes                                          |
-| ----------------------- | ------- | -------- | ---------------------------------------------- |
-| `NODE_ENV`              | server  | auto     | `development` / `test` / `production`          |
-| `API_BASE_URL`          | server  | optional | Upstream API for server-side `fetch`           |
-| `API_SECRET`            | server  | optional | Bearer token forwarded server-side             |
-| `NEXT_PUBLIC_APP_URL`   | client  | optional | Defaults to `http://localhost:3000`            |
-| `NEXT_PUBLIC_APP_NAME`  | client  | optional | Defaults to `Next Starter`                     |
+| Var                    | Side   | Required | Notes                                 |
+| ---------------------- | ------ | -------- | ------------------------------------- |
+| `NODE_ENV`             | server | auto     | `development` / `test` / `production` |
+| `API_BASE_URL`         | server | optional | Upstream API for server-side `fetch`  |
+| `API_SECRET`           | server | optional | Bearer token forwarded server-side    |
+| `NEXT_PUBLIC_APP_URL`  | client | optional | Defaults to `http://localhost:3000`   |
+| `NEXT_PUBLIC_APP_NAME` | client | optional | Defaults to `Next Starter`            |
 
 Use it like:
 
@@ -74,29 +79,57 @@ Add auth gating, rewrites, or redirects there as needed. Note: `runtime` config 
 
 ## Route conventions wired up
 
-| File                              | Purpose                                  |
-| --------------------------------- | ---------------------------------------- |
-| `src/app/loading.tsx`             | Root suspense fallback                   |
-| `src/app/error.tsx`               | Client error boundary (`unstable_retry`) |
-| `src/app/not-found.tsx`           | 404 page                                 |
-| `src/app/forbidden.tsx`           | 403 page (calls `forbidden()`)           |
-| `src/app/unauthorized.tsx`        | 401 page (calls `unauthorized()`)        |
-| `src/app/robots.ts`               | `/robots.txt`                            |
-| `src/app/sitemap.ts`              | `/sitemap.xml`                           |
-| `src/app/api/health/route.ts`     | Liveness probe at `GET /api/health`      |
+| File                          | Purpose                                  |
+| ----------------------------- | ---------------------------------------- |
+| `src/app/loading.tsx`         | Root suspense fallback                   |
+| `src/app/error.tsx`           | Client error boundary (`unstable_retry`) |
+| `src/app/not-found.tsx`       | 404 page                                 |
+| `src/app/forbidden.tsx`       | 403 page (calls `forbidden()`)           |
+| `src/app/unauthorized.tsx`    | 401 page (calls `unauthorized()`)        |
+| `src/app/robots.ts`           | `/robots.txt`                            |
+| `src/app/sitemap.ts`          | `/sitemap.xml`                           |
+| `src/app/api/health/route.ts` | Liveness probe at `GET /api/health`      |
 
 `forbidden.tsx` and `unauthorized.tsx` require `experimental.authInterrupts: true`, already enabled in [`next.config.ts`](./next.config.ts).
 
-## Project layout
+## Codebase Structure
 
 ```
 src/
-├── app/                # App Router routes & file conventions
-│   └── api/health/     # Liveness probe
-├── components/ui/      # shadcn components (added via `pnpm dlx shadcn@latest add ...`)
-├── lib/utils.ts        # cn() helper
-├── env/
-│   ├── server.ts       # Server-only env schema
-│   └── client.ts       # NEXT_PUBLIC_* env schema
-└── proxy.ts            # Next.js 16 proxy (formerly middleware)
+├── app/
+│   ├── (auth)/
+│   │   ├── login/
+│   │   ├── onboarding/
+│   │   ├── signup/
+│   │   └── verify-email/
+│   ├── api/
+│   │   └── proxy/      # Backend API proxy
+├── components/         # React components
+│   ├── auth/
+│   ├── onboarding/
+│   └── ui/             # shadcn UI components
+├── services/           # API service layers
+├── stores/             # Zustand state management
+├── lib/                # Shared utilities and schemas
+└── env/                # Environment variable schemas
 ```
+
+## Auth Flow
+
+How Google OAuth works in the app:
+
+1. User clicks **"Continue with Google"**
+2. Frontend redirects to `NEXT_PUBLIC_APP_URL/api/v1/auth/google`
+3. Backend handles OAuth with Google
+4. Google redirects back to backend callback
+5. Backend redirects to frontend with token
+6. Frontend stores token in `localStorage` and `auth-storage` (Zustand)
+7. Frontend redirects to `/onboarding`
+
+## Onboarding Steps
+
+New users go through these steps after first login:
+
+1. **Inverter Type Selection**: Select the type of inverter used (e.g., DEYE, MUST, LUXPOWER, etc.).
+2. **Inverter Connection**: Enter specific connection details for the selected inverter type.
+

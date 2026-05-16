@@ -2,8 +2,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Figtree } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import QueryProvider from "./providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
-const figtree = Figtree({subsets:['latin'],variable:'--font-sans'});
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,15 +21,79 @@ const geistMono = Geist_Mono({
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Next Starter";
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Energy IQ";
+
+const appDescription =
+  "Energy IQ is a smart energy monitoring platform for tracking usage, optimizing power consumption, and improving energy efficiency.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
+
   title: {
     default: appName,
     template: `%s · ${appName}`,
   },
-  description: `${appName} — a Next.js 16 starter.`,
+
+  description: appDescription,
+
+  applicationName: appName,
+
+  manifest: "/manifest.json",
+
+  keywords: [
+    "Energy monitoring",
+    "Smart energy",
+    "Power usage analytics",
+    "Energy savings",
+    "Solar monitoring",
+    "Energy IQ",
+  ],
+
+  authors: [{ name: "Energy IQ Team" }],
+
+  category: "utilities",
+
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: appName,
+  },
+
+  openGraph: {
+    title: appName,
+    description:
+      "Track, analyze, and optimize your energy consumption with Energy IQ.",
+    url: appUrl,
+    siteName: appName,
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${appName} — Smart Energy Monitoring`,
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: appName,
+    description:
+      "Track, analyze, and optimize your energy consumption with Energy IQ.",
+  },
+
+  icons: {
+    icon: [{ url: "/favicon.ico", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -35,9 +104,23 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", figtree.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        figtree.variable,
+        "font-sans",
+      )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <QueryProvider>
+          {children}
+
+          <Toaster position="top-right" richColors />
+        </QueryProvider>
+      </body>
     </html>
   );
 }
+
