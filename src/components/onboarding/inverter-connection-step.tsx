@@ -13,6 +13,10 @@ import {
 import type { InverterType } from "./inverter-type-step";
 import { INVERTER_CONFIG } from "./inverter-config";
 
+import { useInverterQueries } from "@/hooks/use-inverter-queries";
+import { useAuthStore } from "@/stores/auth-store";
+import type { ConnectInverterRequest } from "@/types/inverter";
+
 interface InverterConnectionStepProps {
   inverter: InverterType;
   onBack: () => void;
@@ -25,10 +29,17 @@ export function InverterConnectionStep({
   onConnected,
 }: InverterConnectionStepProps) {
   const config = INVERTER_CONFIG[inverter.toLowerCase()];
+  const { user } = useAuthStore();
+  const { useConnectInverter } = useInverterQueries();
 
-  const [values, setValues] = useState<[string, string, string]>(["", "", ""]);
+  const [values, setValues] = useState<string[]>(
+    config?.fields.map(() => "") ?? [],
+  );
   const [helperOpen, setHelperOpen] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+
+
+  const connectInverterMutation = useConnectInverter(onConnected);
 
   if (!config) {
     return (
@@ -44,25 +55,63 @@ export function InverterConnectionStep({
   }
 
   const requiredFilled = config.fields.every(
-    (f, i) => f.optional || values[i].trim().length > 0,
+    (f, i) => f.optional || (values[i] && values[i].trim().length > 0),
   );
-  const canConnect = requiredFilled && testStatus === "success";
+  const canConnect =
+    requiredFilled &&
+    testStatus === "success" &&
+    !connectInverterMutation.isPending;
 
   const setValue = (i: number, v: string) => {
     setValues((prev) => {
-      const next = [...prev] as [string, string, string];
+      const next = [...prev];
       next[i] = v;
       return next;
     });
     if (testStatus !== "loading") setTestStatus("idle");
   };
 
+  const handleConnect = () => {
+    if (!canConnect || !user) return;
+
+    const payload: ConnectInverterRequest = {
+      brand: inverter.toUpperCase(),
+    };
+
+    const brand = inverter.toLowerCase();
+    const byId = Object.fromEntries(
+      config.fields.map((f, i) => [f.id, (values[i] ?? "").trim()]),
+    );
+
+    if (brand === "victron") {
+      payload.victronAccessToken = byId["vrm-token"];
+    } else if (brand === "growatt") {
+      payload.growattApiToken = byId["growatt-token"];
+    } else if (brand === "sunsynk" || brand === "deye") {
+      const prefix = brand === "sunsynk" ? "sunsynk" : "deye";
+      payload.solarmanEmail = byId[`${prefix}-email`];
+      payload.solarmanPassword = byId[`${prefix}-password`];
+      if (byId[`${prefix}-plant`]) {
+        payload.solarmanPlantId = byId[`${prefix}-plant`];
+      }
+    }
+
+    connectInverterMutation.mutate(payload, {
+      onError: () => setTestStatus("error"),
+    });
+  };
+
   const runTest = () => {
     if (!requiredFilled) return;
     setTestStatus("loading");
     window.setTimeout(() => {
-      const [a, b] = values;
-      const ok = a.includes("@") && b.length >= 4;
+      const ok = config.fields.every((f, i) => {
+        if (f.optional) return true;
+        const val = values[i] || "";
+        if (f.kind === "email") return val.includes("@");
+        if (f.id.includes("token")) return val.length >= 10;
+        return val.length >= 4;
+      });
       setTestStatus(ok ? "success" : "error");
     }, LOADING_TOTAL_MS);
   };
@@ -74,7 +123,7 @@ export function InverterConnectionStep({
           <div key={f.id} className="space-y-2">
             <Label
               htmlFor={f.id}
-              className="text-base font-medium text-[#111827] lg:text-lg"
+              className="text-base font-medium text-dark-text lg:text-lg"
             >
               {f.label}
             </Label>
@@ -112,19 +161,17 @@ export function InverterConnectionStep({
           type="button"
           variant="outline"
           onClick={onBack}
-          className="h-14 cursor-pointer rounded-lg border-[#E5E7EB] bg-white text-base font-medium text-[#111827] hover:bg-[#F9FAFB]"
+          className="h-14 cursor-pointer rounded-lg border-[#E5E7EB] bg-white text-base font-medium text-dark-text hover:bg-[#F9FAFB]"
         >
           Back
         </Button>
         <Button
           type="button"
-          onClick={() => {
-            if (canConnect) onConnected();
-          }}
+          onClick={handleConnect}
           disabled={!canConnect}
-          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-[#111827] hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
+          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-dark-text hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
         >
-          {config.connectLabel}
+          {connectInverterMutation.isPending ? "Connecting..." : config.connectLabel}
         </Button>
       </div>
 

@@ -51,19 +51,23 @@ const links = [
   { label: "About Us", href: "/about" },
 ];
 
+const validPaths = new Set(["/", "/how-it-works", "/pricing", "/about"]);
+
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("Features");
   const pathname = usePathname();
 
-  // Compute the active label from pathname, preserving click-based updates
   const activeLabel = useMemo(() => {
+    if (!validPaths.has(pathname)) {
+      return null;
+    }
+
     if (pathname === "/about") {
       return "About Us";
     }
 
     if (pathname === "/") {
-      // On home page, keep the user's clicked section highlight
       return selectedLabel;
     }
 
@@ -133,30 +137,49 @@ export function Navbar() {
       <div
         className={cn(
           "border-border bg-background overflow-hidden border-t transition-all duration-300 md:hidden",
-          open ? "max-h-96" : "max-h-0",
+          open ? "max-h-125" : "max-h-0",
         )}
       >
-        <ul className="flex flex-col items-center gap-2 px-4 py-6 text-center">
-          {links.map((l) => (
-            <li key={l.label} className="w-full">
-              <Link
-                href={l.href}
-                onClick={() => {
-                  setSelectedLabel(l.label);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "block w-full rounded-lg px-3 py-3 text-sm transition-colors",
-                  activeLabel === l.label
-                    ? "text-foreground bg-muted/50 font-semibold"
-                    : "text-foreground/60 hover:text-foreground font-medium",
-                )}
-              >
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-6 px-4 py-6">
+          <ul className="flex flex-col items-center gap-2 text-center">
+            {links.map((l) => (
+              <li key={l.label} className="w-full">
+                <Link
+                  href={l.href}
+                  onClick={() => {
+                    setSelectedLabel(l.label);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "block w-full rounded-lg px-3 py-3 text-sm transition-colors",
+                    activeLabel === l.label
+                      ? "text-foreground bg-muted/50 font-semibold"
+                      : "text-foreground/60 hover:text-foreground font-medium",
+                  )}
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <Button
+            variant="outline"
+            className="border-foreground/20 text-foreground hover:bg-muted/30 h-11 w-full rounded-md font-medium justify-center"
+            asChild
+            onClick={() => setOpen(false)}
+          >
+            <Link href="/login">Sign In</Link>
+          </Button>
+
+          <Button
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/90 h-11 w-full rounded-md font-medium justify-center"
+            asChild
+            onClick={() => setOpen(false)}
+          >
+            <Link href="/signup">Get Started</Link>
+          </Button>
+        </div>
       </div>
     </header>
   );
