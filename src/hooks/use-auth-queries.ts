@@ -35,7 +35,9 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken);
-        toast.success("Welcome back!");
+        toast.success("Welcome back!", {
+          duration: 5000,
+        });
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
