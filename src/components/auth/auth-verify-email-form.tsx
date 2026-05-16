@@ -9,7 +9,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { useAuthStore } from "@/stores/auth-store";
