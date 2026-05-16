@@ -33,33 +33,28 @@ jobs:
             const delayMs = 30000;
             const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+            // Hoist SHA computation once before the retry loop
+            const targetSha = context.payload.pull_request?.head?.sha || context.sha;
+            console.log(`Looking for CI run on SHA: ${targetSha}`);
+
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
               console.log(`Checking CI status (Attempt ${attempt}/${maxAttempts})...`);
 
-              const targetSha =
-                context.payload.pull_request?.head?.sha || context.sha;
+              // Paginated fetch to collect all workflow runs
+              const allRuns = await github.paginate(
+                github.rest.actions.listWorkflowRunsForRepo,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: 'staging',
+                  event: 'pull_request',
+                  per_page: 100,
+                }
+              );
 
-              console.log(`Looking for CI run on SHA: ${targetSha}`);
-
-              const runs = await github.rest.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                event: 'pull_request',
-                per_page: 100,
-              });
-
-              const matchingRuns = runs.data.workflow_runs
-                .filter(
-                  r =>
-                    r.head_sha === targetSha &&
-                    r.name === 'CI Quality & Security Gate'
-                )
-                .sort(
-                  (a, b) =>
-                    new Date(b.created_at) - new Date(a.created_at)
-                );
-
-              const targetRun = matchingRuns[0];
+              const targetRun = allRuns.find(
+                r => r.head_sha === targetSha && r.name === 'CI Quality & Security Gate'
+              );
 
               if (targetRun) {
                 if (targetRun.status === 'completed') {
@@ -90,6 +85,7 @@ jobs:
     timeout-minutes: 25
     needs: quality-gate
     environment: staging
+
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
