@@ -41,7 +41,7 @@ export function OnboardingSuccessDialog({
           </div>
 
           <div className="mx-auto w-full text-center sm:max-w-102.25">
-            <DialogTitle className="text-2xl font-bold text-[#111827] sm:text-3xl lg:text-4xl">
+            <DialogTitle className="text-2xl font-bold text-dark-text sm:text-3xl lg:text-4xl">
               You&apos;re all set!
             </DialogTitle>
 
@@ -54,7 +54,7 @@ export function OnboardingSuccessDialog({
           <Button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="mt-8 h-14 rounded-lg bg-[#E5E7EB] px-4 text-base font-medium text-[#111827] hover:bg-[#D1D5DB] sm:w-fit sm:px-16 lg:text-lg"
+            className="mt-8 h-14 rounded-lg bg-[#E5E7EB] px-4 text-base font-medium text-dark-text hover:bg-[#D1D5DB] sm:w-fit sm:px-16 lg:text-lg"
           >
             Continue to dashboard
           </Button>
