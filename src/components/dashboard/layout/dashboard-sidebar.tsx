@@ -25,7 +25,13 @@ interface SidebarItemProps {
   onClick: () => void;
 }
 
-const SidebarItem = ({ label, icon: Icon, href, isActive, onClick }: SidebarItemProps) => {
+const SidebarItem = ({
+  label,
+  icon: Icon,
+  href,
+  isActive,
+  onClick,
+}: SidebarItemProps) => {
   return (
     <Link
       href={href}
@@ -45,10 +51,14 @@ const SidebarItem = ({ label, icon: Icon, href, isActive, onClick }: SidebarItem
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Cost and Savings", icon: Landmark, href: "/cost-and-savings" },
-  { label: "Alert", icon: AlertTriangle, href: "/alerts" },
-  { label: "Reports", icon: FileText, href: "/reports" },
-  { label: "AI Assistant", icon: Headphones, href: "/ai-assistant" },
+  {
+    label: "Cost and Savings",
+    icon: Landmark,
+    href: "/dashboard/cost-and-savings",
+  },
+  { label: "Alert", icon: AlertTriangle, href: "/dashboard/alerts" },
+  { label: "Reports", icon: FileText, href: "/dashboard/reports" },
+  { label: "AI Assistant", icon: Headphones, href: "/dashboard/ai-assistant" },
 ];
 
 export function DashboardSidebar() {
@@ -89,19 +99,23 @@ export function DashboardSidebar() {
 
         {/* Main Navigation */}
         <nav className="flex flex-col gap-2">
-          {NAV_ITEMS.map((item) => (
-            <SidebarItem
-              key={item.href}
-              label={item.label}
-              icon={item.icon}
-              href={item.href}
-              isActive={
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`)
-              }
-              onClick={closeSidebar}
-            />
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const isExactMatch = pathname === item.href;
+            const isSubRoute =
+              item.href !== "/dashboard" &&
+              pathname.startsWith(`${item.href}/`);
+
+            return (
+              <SidebarItem
+                key={item.href}
+                label={item.label}
+                icon={item.icon}
+                href={item.href}
+                isActive={isExactMatch || isSubRoute}
+                onClick={closeSidebar}
+              />
+            );
+          })}
         </nav>
 
         {/* Account / Settings Section */}
