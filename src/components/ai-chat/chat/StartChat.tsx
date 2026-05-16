@@ -16,7 +16,7 @@ export function StartChat() {
   const handleSend = async (message: string) => {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 300));
-    router.push("/assistant/2");
+    router.push("/dashboard/ai-assistant/2");
   };
 
   return (

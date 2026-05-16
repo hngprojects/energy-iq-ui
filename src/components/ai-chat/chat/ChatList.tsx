@@ -61,7 +61,7 @@ function MobileFilters({
           <Download className="w-4 h-4" />
         </button>
         <Link
-          href="/assistant/new"
+          href="/dashboard/ai-assistant/new"
           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl"
         >
           <Plus className="w-4 h-4" />
@@ -112,7 +112,7 @@ function DesktopToolbar({
           <Download className="w-4 h-4" />
         </button>
         <Link
-          href="/assistant/new"
+          href="/dashboard/ai-assistant/new"
           className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
