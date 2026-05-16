@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Landmark,
-  AlertCircle,
+  AlertTriangle,
   FileText,
   Headphones,
   Settings,
@@ -19,13 +20,16 @@ import { cn } from "@/lib/utils";
 interface SidebarItemProps {
   label: string;
   icon: LucideIcon;
-  isActive?: boolean;
+  href: string;
+  isActive: boolean;
+  onClick: () => void;
 }
 
-const SidebarItem = ({ label, icon: Icon, isActive }: SidebarItemProps) => {
+const SidebarItem = ({ label, icon: Icon, href, isActive, onClick }: SidebarItemProps) => {
   return (
     <Link
-      href="#"
+      href={href}
+      onClick={onClick}
       className={cn(
         "flex h-10 w-52 items-center rounded px-3 py-2 font-sans text-[16px] leading-none font-medium transition-colors",
         isActive
@@ -39,8 +43,17 @@ const SidebarItem = ({ label, icon: Icon, isActive }: SidebarItemProps) => {
   );
 };
 
+const NAV_ITEMS = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "Cost and Savings", icon: Landmark, href: "/cost-and-savings" },
+  { label: "Alert", icon: AlertTriangle, href: "/alerts" },
+  { label: "Reports", icon: FileText, href: "/reports" },
+  { label: "AI Assistant", icon: Headphones, href: "/ai-assistant" },
+];
+
 export function DashboardSidebar() {
   const { isSidebarOpen, closeSidebar } = useUIStore();
+  const pathname = usePathname();
 
   return (
     <>
@@ -76,23 +89,16 @@ export function DashboardSidebar() {
 
         {/* Main Navigation */}
         <nav className="flex flex-col gap-2">
-          <SidebarItem
-            label="Dashboard"
-            icon={LayoutDashboard}
-            isActive={true}
-          />
-          <SidebarItem
-            label="Cost and Savings"
-            icon={Landmark}
-            isActive={false}
-          />
-          <SidebarItem label="Alerts" icon={AlertCircle} isActive={false} />
-          <SidebarItem label="Reports" icon={FileText} isActive={false} />
-          <SidebarItem
-            label="AI Assistant"
-            icon={Headphones}
-            isActive={false}
-          />
+          {NAV_ITEMS.map((item) => (
+            <SidebarItem
+              key={item.href}
+              label={item.label}
+              icon={item.icon}
+              href={item.href}
+              isActive={pathname.startsWith(item.href)}
+              onClick={closeSidebar}
+            />
+          ))}
         </nav>
 
         {/* Account / Settings Section */}
