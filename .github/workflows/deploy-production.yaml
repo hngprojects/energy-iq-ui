@@ -74,65 +74,28 @@ jobs:
     timeout-minutes: 25
     needs: quality-gate
     environment: main
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-      - name: Create deployment archive
-        run: |
-          tar \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='.github' \
-            -czf /tmp/fe-prod.tar.gz .
-
-      - name: Copy archive to server
-        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 #v1.0.0
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: /tmp/fe-prod.tar.gz
-          target: /tmp/
-
-      - name: Deploy on server
+    steps: 
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e
-            APP_DIR="/home/appuser/frontend/prod/"
+            set -e 
 
-            cd "$APP_DIR"
-            tar -xzf /tmp/fe-prod.tar.gz -C "$APP_DIR"
+            cd /home/appuser/frontend/prod
+
+            git pull origin main
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            pnpm install --frozen-lockfile
+            pnpm build
 
             pm2 reload fe-prod --update-env || pm2 start pnpm --name fe-prod -- start -H 0.0.0.0 -p 3006
             pm2 save
-
-            echo "==> Cleaning up..."
-            rm -f /tmp/fe-prod.tar.gz
-
-            echo "Production deploy complete"
 
       - name: Health check
         run: |
