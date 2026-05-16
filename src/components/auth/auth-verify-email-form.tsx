@@ -12,10 +12,12 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function AuthVerifyEmailForm() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
+  const tempEmail = useAuthStore((state) => state.tempEmail);
+  const email = tempEmail || searchParams.get("email") || "";
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);

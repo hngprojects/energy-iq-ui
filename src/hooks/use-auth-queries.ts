@@ -24,7 +24,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 export const useAuthQueries = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { setAuth, logout: storeLogout, token: currentToken } = useAuthStore();
+  const { setAuth, logout: storeLogout, token: currentToken, setTempEmail } = useAuthStore();
 
   const useLogin = () =>
     useMutation({
@@ -51,10 +51,9 @@ export const useAuthQueries = () => {
     useMutation({
       mutationFn: AuthService.register,
       onSuccess: (_, variables) => {
+        setTempEmail(variables.email);
         toast.success("Account created successfully!");
-        router.push(
-          `/verify-email?email=${encodeURIComponent(variables.email)}`,
-        );
+        router.push("/verify-email");
       },
       onError: (error: unknown) => {
         toast.error(getErrorMessage(error, "Registration failed"));
