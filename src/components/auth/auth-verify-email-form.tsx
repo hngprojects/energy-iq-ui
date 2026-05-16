@@ -15,9 +15,10 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export function AuthVerifyEmailForm() {
   const tempEmail = useAuthStore((state) => state.tempEmail);
-  const [email] = useState(
-    () => tempEmail || localStorage.getItem("temp_email") || "",
-  );
+  const [email] = useState(() => {
+  if (typeof window === "undefined") return tempEmail ?? "";
+  return tempEmail ?? localStorage.getItem("temp_email") ?? "";
+});
 
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
