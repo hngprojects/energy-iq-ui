@@ -1,5 +1,5 @@
-import { ChatWindow } from "@/components/ai-chat/chat/ChatWindow";
-import { MOCK_CONVERSATION, MOCK_CHATS } from "@/components/ai-chat/lib/mockData";
+import { ChatWindow } from "@/components/dashboard/ai/ChatWindow";
+import { MOCK_CONVERSATION, MOCK_CHATS } from "@/lib/mocks/ai-data";
 
 interface Props {
   params: Promise<{ id: string }>;

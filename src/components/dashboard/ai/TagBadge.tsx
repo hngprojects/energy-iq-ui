@@ -1,5 +1,5 @@
-import { cn } from "../lib/utils";
-import { ChatTag } from "../lib/types";
+import { cn } from "@/lib/utils";
+import { ChatTag } from "@/lib/mocks/ai-data";
 
 interface TagBadgeProps {
   tag: ChatTag;

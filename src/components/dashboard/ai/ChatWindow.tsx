@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, MoreVertical } from "lucide-react";
-import { ChatConversation, Message } from "../lib/types";
-import { ChatIcon } from "@/components/ai-chat/ui/ChatIcon";
-import { MessageBubble } from "@/components/ai-chat/chat/MessageBubble";
-import { ChatInput } from "@/components/ai-chat/chat/ChatInput";
-import { ContextMenu } from "@/components/ai-chat/ui/ContextMenu";
-import { ShareModal } from "@/components/ai-chat/chat/ShareModal";
+import { ChatConversation, Message } from "@/lib/mocks/ai-data";
+import { ChatIcon } from "@/components/dashboard/ai/ChatIcon";
+import { MessageBubble } from "@/components/dashboard/ai/MessageBubble";
+import { ChatInput } from "@/components/dashboard/ai/ChatInput";
+import { ContextMenu } from "@/components/dashboard/ai/ContextMenu";
+import { ShareModal } from "@/components/dashboard/ai/ShareModal";
 
 interface ChatWindowProps {
   conversation: ChatConversation;

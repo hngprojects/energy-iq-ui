@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { History, Download, Plus, MessageSquare } from "lucide-react";
-import { ChatItem, FilterTab } from "../lib/types";
+import { ChatItem, FilterTab } from "@/lib/mocks/ai-data";
 import { ChatListItem } from "./ChatListItem";
-import { groupChatsByDate } from "../lib/mockData";
-import { cn } from "../lib/utils";
+import { groupChatsByDate } from "@/lib/mocks/ai-data";
+import { cn } from "@/lib/utils";
 
 
 const FILTER_TABS: FilterTab[] = ["All", "Solar", "Alerts", "Reports"];

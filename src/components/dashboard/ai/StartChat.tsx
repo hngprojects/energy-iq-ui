@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft,  } from "lucide-react";
 import Image from "next/image";
 import { ChatInput } from "./ChatInput";
-import { SUGGESTED_QUESTIONS } from "../lib/mockData";
+import { SUGGESTED_QUESTIONS } from "@/lib/mocks/ai-data";
 
 
 export function StartChat() {

@@ -1,4 +1,4 @@
-import { Message } from "../lib/types";
+import { Message } from "@/lib/mocks/ai-data";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 

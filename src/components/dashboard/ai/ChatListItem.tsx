@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { MoreVertical } from "lucide-react";
-import { ChatItem } from "../lib/types";
-import { TagBadge } from "../ui/TagBadge";
-import { ChatIcon } from "../ui/ChatIcon";
-import { ContextMenu } from "../ui/ContextMenu";
-import { ShareModal } from "../chat/ShareModal";
+import { ChatItem } from "@/lib/mocks/ai-data";
+import { TagBadge } from "./TagBadge";
+import { ChatIcon } from "./ChatIcon";
+import { ContextMenu } from "./ContextMenu";
+import { ShareModal } from "./ShareModal";
 import { cn } from "@/lib/utils";
 
 interface ChatListItemProps {

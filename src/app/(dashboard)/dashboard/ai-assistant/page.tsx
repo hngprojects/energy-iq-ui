@@ -1,5 +1,5 @@
-import { ChatList } from "@/components/ai-chat/chat/ChatList";
-import { MOCK_CHATS } from "@/components/ai-chat/lib/mockData";
+import { ChatList } from "@/components/dashboard/ai/ChatList";
+import { MOCK_CHATS } from "@/lib/mocks/ai-data";
 
 export default function AssistantPage() {
   return (

@@ -1,4 +1,4 @@
-import { StartChat } from "@/components/ai-chat/chat/StartChat";
+import { StartChat } from "@/components/dashboard/ai/StartChat";
 
 export default function NewChatPage() {
   return (
