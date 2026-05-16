@@ -60,6 +60,17 @@ export const AuthService = {
     );
   },
 
+  resendEmailOtp: async (data: { email: string }) => {
+    return apiFetch<{ message: string }>(
+      "/auth/resend-email-otp",
+      {
+        method: "POST",
+        data,
+      },
+      true,
+    );
+  },
+
   refresh: async (data: RefreshTokenFormValues) => {
     return apiFetch<RefreshTokenResponse>(
       "/auth/refresh",

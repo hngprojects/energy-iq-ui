@@ -39,7 +39,9 @@ export const useAuthQueries = () => {
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Invalid email or password"));
+        toast.error(getErrorMessage(error, "Invalid email or password"), {
+          duration: 5000,
+        });
       },
     });
 
@@ -60,12 +62,30 @@ export const useAuthQueries = () => {
   const useVerifyEmail = () =>
     useMutation({
       mutationFn: AuthService.verifyEmail,
-      onSuccess: () => {
+      onSuccess: (data) => {
+        const token = data.accessToken;
+        const user = data.user;
+        const refreshToken = data.refreshToken;
+
+        setAuth(user, token, refreshToken);
         toast.success("Email verified successfully!");
-        router.push("/login");
+        router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Verification failed"));
+        toast.error(getErrorMessage(error, "Verification failed"), {
+          duration: 5000,
+        });
+      },
+    });
+
+  const useResendEmailOtp = () =>
+    useMutation({
+      mutationFn: AuthService.resendEmailOtp,
+      onSuccess: (data) => {
+        toast.success(data.message || "OTP resent successfully!");
+      },
+      onError: (error: unknown) => {
+        toast.error(getErrorMessage(error, "Failed to resend OTP"));
       },
     });
 
@@ -116,6 +136,7 @@ export const useAuthQueries = () => {
     useLogin,
     useRegister,
     useVerifyEmail,
+    useResendEmailOtp,
     useLogout,
     useMe,
     useForgotPassword,
