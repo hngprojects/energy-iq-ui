@@ -51,12 +51,18 @@ const links = [
   { label: "About Us", href: "/about" },
 ];
 
+const validPaths = new Set(["/", "/how-it-works", "/pricing", "/about"]);
+
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("Features");
   const pathname = usePathname();
 
   const activeLabel = useMemo(() => {
+    if (!validPaths.has(pathname)) {
+      return null;
+    }
+
     if (pathname === "/about") {
       return "About Us";
     }

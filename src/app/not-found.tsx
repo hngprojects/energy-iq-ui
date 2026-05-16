@@ -6,6 +6,9 @@ import { motion } from "motion/react";
 import { Navbar } from "@/components/external/nav-bar";
 import { Button } from "@/components/ui/button";
 
+// Create an animated version of Next.js Link
+const MotionLink = motion.create(Link);
+
 export default function NotFound() {
   return (
     <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden bg-surface-10 text-foreground selection:bg-amber-10 selection:text-amber-800">
@@ -67,17 +70,19 @@ export default function NotFound() {
             Oops! Page not found.
           </h1>
 
+          {/* Corrected: Button passes props directly to MotionLink */}
           <Button
             asChild
             className="bg-[#0F1C2E] hover:bg-[#1A2E48] text-white px-10 py-6 text-base font-medium rounded-md shadow-sm transition-colors duration-200"
           >
-            <motion.div
+            <MotionLink
+              href="/"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
-              <Link href="/">Back To Home</Link>
-            </motion.div>
+              Back To Home
+            </MotionLink>
           </Button>
         </motion.div>
       </main>
