@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
@@ -19,14 +18,45 @@ export function AuthVerifyEmailForm() {
   const email = searchParams.get("email") || "";
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(119); 
 
-  const { useVerifyEmail } = useAuthQueries();
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}s`;
+  };
+
+  const { useVerifyEmail, useResendEmailOtp } = useAuthQueries();
   const verifyMutation = useVerifyEmail();
+  const resendMutation = useResendEmailOtp();
 
   const isComplete = otp.length === 6;
 
+  const handleResend = () => {
+    resendMutation.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          setTimeLeft(119); 
+        },
+      },
+    );
+  };
+
   const handleVerify = async () => {
     if (!isComplete) return;
+    setError(null);
 
     verifyMutation.mutate(
       { email, otp },
@@ -34,13 +64,12 @@ export function AuthVerifyEmailForm() {
         onSuccess: () => {
           setIsSuccess(true);
         },
-        onError: (error: unknown) => {
-          const message =
-            error instanceof Error
-              ? error.message
-              : (error as { message?: string })?.message ||
-                "Oh no! The code you entered is incorrect.";
-          toast.error(message);
+        onError: (err: unknown) => {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Oh no! The code you entered is incorrect.",
+          );
         },
       },
     );
@@ -101,7 +130,7 @@ export function AuthVerifyEmailForm() {
             className="h-14 w-full rounded-xl bg-[#1A1F2C] text-xl font-medium text-white hover:bg-[#1A1F2C]/90"
             asChild
           >
-            <Link href="/login">Continue</Link>
+            <Link href="/onboarding">Continue</Link>
           </Button>
         </div>
       </div>
@@ -120,11 +149,14 @@ export function AuthVerifyEmailForm() {
           Please paste (or type) your 6-digit code
         </p>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col items-center">
           <InputOTP
             maxLength={6}
             value={otp}
-            onChange={(val) => setOtp(val)}
+            onChange={(val) => {
+              setOtp(val);
+              if (error) setError(null);
+            }}
             containerClassName="justify-center gap-2"
           >
             <InputOTPGroup className="gap-2">
@@ -136,7 +168,8 @@ export function AuthVerifyEmailForm() {
                     "h-10 w-10 rounded-lg border bg-transparent text-lg font-medium shadow-none transition-colors md:h-20 md:w-20",
                     "data-[active=true]:border-positive data-[active=true]:ring-positive/20 data-[active=true]:ring-[3px]",
                     "focus:ring-0 md:text-2xl",
-                    "focus:border-primary border-[#00000037]",
+                    error ? "border-red-600" : "border-[#00000037]",
+                    "focus:border-primary",
                   )}
                 />
               ))}
@@ -144,10 +177,25 @@ export function AuthVerifyEmailForm() {
           </InputOTP>
         </div>
 
-        <p className="mt-8 text-sm">
-          <span className="text-slate-60">Code is valid for </span>
-          <span className="text-foreground font-medium">1:59s</span>
-        </p>
+        <div className="mt-8 text-sm">
+          {timeLeft > 0 ? (
+            <p>
+              <span className="text-slate-60">Code is valid for </span>
+              <span className="text-foreground font-medium">
+                {formatTime(timeLeft)}
+              </span>
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendMutation.isPending}
+              className="font-semibold text-amber-50 hover:underline disabled:cursor-not-allowed disabled:text-slate-400"
+            >
+              {resendMutation.isPending ? "Resending..." : "Resend Code"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-14 flex w-full flex-col gap-4 md:grid md:grid-cols-2 md:gap-6">

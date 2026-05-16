@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { motion, useScroll, useSpring } from "motion/react";
 
 const StepCard = ({
   step,
@@ -140,6 +143,13 @@ const StepCard = ({
 };
 
 export const HowItWorks = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
   const steps = [
     {
       step: "01",
@@ -195,6 +205,10 @@ export const HowItWorks = () => {
 
   return (
     <section className="w-full bg-white">
+      <motion.div
+        className="bg-primary fixed top-0 right-0 left-0 z-50 h-1.5 origin-left"
+        style={{ scaleX }}
+      />
       <div className="bg-secondary relative h-[300px] w-full overflow-hidden md:h-[400px]">
         <div
           className="absolute inset-0 z-0 bg-cover bg-center opacity-40"
@@ -202,7 +216,12 @@ export const HowItWorks = () => {
         />
         <div className="from-secondary/40 via-secondary/60 to-secondary absolute inset-0 z-10 bg-gradient-to-b" />
 
-        <div className="container-padding relative z-20 mx-auto flex h-full flex-col items-center justify-center text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="container-padding relative z-20 mx-auto flex h-full flex-col items-center justify-center text-center"
+        >
           <h2
             className="font-sans text-[32px] leading-[100%] font-bold tracking-[-1%] text-white md:text-[48px]"
             style={{ width: "min(100%, 691px)" }}
@@ -217,14 +236,18 @@ export const HowItWorks = () => {
             receive intelligent insights that help reduce fuel costs and improve
             performance.
           </p>
-        </div>
+        </motion.div>
       </div>
 
       <div className="bg-surface-50 mx-auto flex w-full max-w-[1440px] flex-col items-center px-[20px] pb-[100px] md:px-[80px]">
         <div className="flex w-full flex-col items-center">
           {steps.map((step, index) => (
-            <div
+            <motion.div
               key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
               className="flex w-full justify-center"
               style={{ marginTop: index === 0 ? "100px" : "64px" }}
             >
@@ -242,7 +265,7 @@ export const HowItWorks = () => {
                 }}
                 isSpecialCard={step.isSpecialCard}
               />
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

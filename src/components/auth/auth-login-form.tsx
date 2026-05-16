@@ -8,8 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "@/lib/schemas/auth";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthService } from "@/services/auth-service";
-import { toast } from "sonner";
-import { useEffect } from "react";
 
 export function AuthLoginForm() {
   const { useLogin } = useAuthQueries();
@@ -40,17 +38,6 @@ export function AuthLoginForm() {
   });
   const isFormFilled = email.length > 0 && password.length > 0;
 
-  useEffect(() => {
-    const errorMessages = Object.values(errors);
-    if (errorMessages.length > 0) {
-      errorMessages.forEach((error) => {
-        if (error?.message) {
-          toast.error(error.message);
-        }
-      });
-    }
-  }, [errors]);
-
   const onSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data);
   };
@@ -64,6 +51,7 @@ export function AuthLoginForm() {
             id="email"
             placeholder="Enter your email address"
             type="email"
+            error={errors.email?.message}
             {...register("email")}
           />
           <AuthInput
@@ -71,6 +59,7 @@ export function AuthLoginForm() {
             id="password"
             placeholder="************"
             type="password"
+            error={errors.password?.message}
             {...register("password")}
           />
         </div>
