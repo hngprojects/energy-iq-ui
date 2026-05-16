@@ -51,17 +51,13 @@ export const useAuthQueries = () => {
     useMutation({
       mutationFn: AuthService.register,
       onSuccess: (_, variables) => {
-        toast.success("Account created successfully!", {
-          duration: 5000,
-        });
+        toast.success("Account created successfully!");
         router.push(
           `/verify-email?email=${encodeURIComponent(variables.email)}`,
         );
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Registration failed"), {
-          duration: 5000,
-        });
+        toast.error(getErrorMessage(error, "Registration failed"));
       },
     });
 
@@ -74,9 +70,7 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken);
-        toast.success("Email verified successfully!", {
-          duration: 5000,
-        });
+        toast.success("Email verified successfully!");
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
@@ -90,14 +84,10 @@ export const useAuthQueries = () => {
     useMutation({
       mutationFn: AuthService.resendEmailOtp,
       onSuccess: (data) => {
-        toast.success(data.message || "OTP resent successfully!", {
-          duration: 5000,
-        });
+        toast.success(data.message || "OTP resent successfully!");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Failed to resend OTP"), {
-          duration: 5000,
-        });
+        toast.error(getErrorMessage(error, "Failed to resend OTP"));
       },
     });
 
@@ -107,15 +97,11 @@ export const useAuthQueries = () => {
       onSuccess: () => {
         storeLogout();
         queryClient.clear();
-        toast.success("Logged out successfully", {
-          duration: 5000,
-        });
+        toast.success("Logged out successfully");
         router.push("/login");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Logout failed"), {
-          duration: 5000,
-        });
+        toast.error(getErrorMessage(error, "Logout failed"));
       },
     });
 
@@ -130,14 +116,10 @@ export const useAuthQueries = () => {
     useMutation({
       mutationFn: AuthService.forgotPassword,
       onSuccess: (data) => {
-        toast.success(data.message || "Reset link sent to your email!", {
-          duration: 5000,
-        });
+        toast.success(data.message || "Reset link sent to your email!");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Failed to send reset link"), {
-          duration: 5000,
-        });
+        toast.error(getErrorMessage(error, "Failed to send reset link"));
       },
     });
 
@@ -145,14 +127,10 @@ export const useAuthQueries = () => {
     useMutation({
       mutationFn: AuthService.resetPassword,
       onSuccess: () => {
-        toast.success("Password reset successfully!", {
-          duration: 5000,
-        });
+        toast.success("Password reset successfully!");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Reset failed"), {
-          duration: 5000,
-        });
+        toast.error(getErrorMessage(error, "Reset failed"));
       },
     });
 
