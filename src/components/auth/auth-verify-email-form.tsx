@@ -15,13 +15,15 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function AuthVerifyEmailForm() {
-  const searchParams = useSearchParams();
   const tempEmail = useAuthStore((state) => state.tempEmail);
-  const email = tempEmail || searchParams.get("email") || "";
+  const [email] = useState(
+    () => tempEmail || localStorage.getItem("temp_email") || "",
+  );
+
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(119); 
+  const [timeLeft, setTimeLeft] = useState(119);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -50,7 +52,7 @@ export function AuthVerifyEmailForm() {
       { email },
       {
         onSuccess: () => {
-          setTimeLeft(119); 
+          setTimeLeft(119);
         },
       },
     );

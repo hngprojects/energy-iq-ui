@@ -52,6 +52,7 @@ export const useAuthQueries = () => {
       mutationFn: AuthService.register,
       onSuccess: (_, variables) => {
         setTempEmail(variables.email);
+        localStorage.setItem("temp_email", variables.email);
         toast.success("Account created successfully!");
         router.push("/verify-email");
       },
@@ -69,6 +70,7 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken);
+        localStorage.removeItem("temp_email");
         toast.success("Email verified successfully!");
         router.push("/onboarding");
       },
