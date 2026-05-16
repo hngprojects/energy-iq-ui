@@ -1,9 +1,11 @@
 name: Deploy to Staging
 
 on:
-  push:
+  pull_request:
     branches:
       - staging
+    types:
+      - closed
   workflow_dispatch:
 
 permissions:
@@ -17,6 +19,7 @@ jobs:
   quality-gate:
     name: Require CI Pass
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     timeout-minutes: 15
     permissions:
       actions: read
@@ -29,20 +32,28 @@ jobs:
             const maxAttempts = 20;
             const delayMs = 30000;
             const sleep = ms => new Promise(r => setTimeout(r, ms));
-            
+
+            // Hoist SHA computation once before the retry loop
+            const targetSha = context.payload.pull_request?.head?.sha || context.sha;
+            console.log(`Looking for CI run on SHA: ${targetSha}`);
+
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
               console.log(`Checking CI status (Attempt ${attempt}/${maxAttempts})...`);
-              
-              const runs = await github.rest.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                branch: 'staging',
-                event: 'push',
-                per_page: 20, 
-              });
 
-              const targetRun = runs.data.workflow_runs.find(
-                r => r.head_sha === context.sha && r.name === 'CI Quality & Security Gate'
+              // Paginated fetch to collect all workflow runs
+              const allRuns = await github.paginate(
+                github.rest.actions.listWorkflowRunsForRepo,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: 'staging',
+                  event: 'pull_request',
+                  per_page: 100,
+                }
+              );
+
+              const targetRun = allRuns.find(
+                r => r.head_sha === targetSha && r.name === 'CI Quality & Security Gate'
               );
 
               if (targetRun) {
@@ -75,7 +86,7 @@ jobs:
     needs: quality-gate
     environment: staging
 
-    steps: 
+    steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
@@ -83,7 +94,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e 
+            set -e
 
             cd /home/appuser/frontend/staging
 
@@ -101,7 +112,7 @@ jobs:
       - name: Health check
         run: |
           for i in {1..10}; do
-            curl --fail --max-time 10 https://staging.energy-iq.hng14.com && exit 0
+            curl --fail --max-time 10 "${{ secrets.STAGING_HEALTH_URL }}" && exit 0
             sleep 5
           done
           exit 1
