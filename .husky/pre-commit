@@ -1,4 +1,4 @@
-LONG_LINE_EXCLUDE="pnpm-lock.yaml|yarn.lock|package-lock.json|.*\.min\.js|.*\.min\.css|.*\.map|.*\.lockb|.*\.svg|.*\.ts|.*\.tsx|.*\.ico"
+LONG_LINE_EXCLUDE="pnpm-lock.yaml|yarn.lock|package-lock.json|.*\.min\.js|.*\.min\.css|.*\.map|.*\.lockb|.*\.svg|.*\.ts|.*\.tsx|.*\.ico|.*\.png|.*\.jpg|.*\.JPEG"
 
 #!/bin/sh
 set -e
