@@ -19,7 +19,6 @@ jobs:
   quality-gate:
     name: Require CI Pass
     runs-on: ubuntu-latest
-
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     timeout-minutes: 15
     permissions:
@@ -37,17 +36,30 @@ jobs:
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
               console.log(`Checking CI status (Attempt ${attempt}/${maxAttempts})...`);
 
+              const targetSha =
+                context.payload.pull_request?.head?.sha || context.sha;
+
+              console.log(`Looking for CI run on SHA: ${targetSha}`);
+
               const runs = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                branch: 'staging',
                 event: 'pull_request',
-                per_page: 20,
+                per_page: 100,
               });
 
-              const targetRun = runs.data.workflow_runs.find(
-                r => r.head_sha === context.sha && r.name === 'CI Quality & Security Gate'
-              );
+              const matchingRuns = runs.data.workflow_runs
+                .filter(
+                  r =>
+                    r.head_sha === targetSha &&
+                    r.name === 'CI Quality & Security Gate'
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at) - new Date(a.created_at)
+                );
+
+              const targetRun = matchingRuns[0];
 
               if (targetRun) {
                 if (targetRun.status === 'completed') {
@@ -78,7 +90,6 @@ jobs:
     timeout-minutes: 25
     needs: quality-gate
     environment: staging
-
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
