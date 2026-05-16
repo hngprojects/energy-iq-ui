@@ -13,7 +13,7 @@ import { dashboardMock as d } from "@/lib/mocks/dashboard-data";
 
 export default function DashboardPage() {
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-foreground text-2xl font-bold tracking-tight lg:text-3xl">
@@ -71,3 +71,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
