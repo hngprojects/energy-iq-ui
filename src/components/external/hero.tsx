@@ -1,4 +1,7 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,7 +21,12 @@ export function Hero() {
           <div className="from-foreground/80 via-foreground/40 to-foreground/10 md:from-foreground/85 md:via-foreground/55 absolute inset-0 bg-linear-to-b md:bg-linear-to-r md:to-transparent" />
 
           <div className="relative flex min-h-[500px] flex-col justify-center px-4 md:min-h-130 md:px-12 lg:px-2">
-            <div className="text-background ml-0 max-w-2xl md:ml-2 lg:ml-4">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+              className="text-background ml-0 max-w-2xl md:ml-2 lg:ml-4"
+            >
               <h1 className="font-display text-3xl leading-[1.15] font-bold tracking-tight md:text-7xl lg:text-[3.5rem]">
                 One Dashboard For
                 <br />
@@ -45,9 +53,14 @@ export function Hero() {
                   <Link href="/login">Contact Us</Link>
                 </Button> */}
               </div>
-            </div>
+            </motion.div>
 
-            <div className="absolute right-8 bottom-5 left-14 translate-x-4 sm:left-auto sm:w-62 md:right-8 md:bottom-8 md:w-84">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              className="absolute right-8 bottom-5 left-14 translate-x-4 sm:left-auto sm:w-62 md:right-8 md:bottom-8 md:w-84"
+            >
               <div className="bg-background flex items-center gap-3 rounded-xl px-2 py-2 shadow-2xl md:rounded-2xl md:px-5 md:py-6">
                 <Image
                   src="/images/worker.png"
@@ -93,7 +106,7 @@ export function Hero() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

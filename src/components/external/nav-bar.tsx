@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
@@ -73,6 +73,37 @@ export function Navbar() {
 
     return selectedLabel;
   }, [pathname, selectedLabel]);
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+
+    const handleScroll = () => {
+      const sections = [
+        { id: "features", label: "Features" },
+        { id: "faq", label: "Faq" },
+      ];
+
+      if (window.scrollY < 200) {
+        setSelectedLabel("Features");
+        return;
+      }
+
+      for (const section of sections) {
+        const element = document.getElementById(section.id);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+            setSelectedLabel((prev) => (prev !== section.label ? section.label : prev));
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
 
   return (
     <header className="bg-background sticky top-0 z-50 w-full">
