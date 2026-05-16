@@ -35,6 +35,7 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken);
+        localStorage.removeItem("temp_email");
         toast.success("Welcome back!", {
           duration: 5000,
         });
@@ -97,6 +98,7 @@ export const useAuthQueries = () => {
       mutationFn: AuthService.logout,
       onSuccess: () => {
         storeLogout();
+        localStorage.removeItem("temp_email");
         queryClient.clear();
         toast.success("Logged out successfully");
         router.push("/login");

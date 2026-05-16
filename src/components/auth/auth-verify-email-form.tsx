@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   InputOTP,
@@ -14,11 +15,18 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function AuthVerifyEmailForm() {
+  const router = useRouter();
   const tempEmail = useAuthStore((state) => state.tempEmail);
   const [email] = useState(() => {
   if (typeof window === "undefined") return tempEmail ?? "";
   return tempEmail ?? localStorage.getItem("temp_email") ?? "";
 });
+
+  useEffect(() => {
+    if (!email && typeof window !== "undefined") {
+      router.replace("/signup");
+    }
+  }, [email, router]);
 
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -42,10 +50,16 @@ export function AuthVerifyEmailForm() {
   };
 
   const { useVerifyEmail, useResendEmailOtp } = useAuthQueries();
+  const { setTempEmail } = useAuthStore();
   const verifyMutation = useVerifyEmail();
   const resendMutation = useResendEmailOtp();
 
   const isComplete = otp.length === 6;
+
+  const handleBack = () => {
+    setTempEmail(null);
+    localStorage.removeItem("temp_email");
+  };
 
   const handleResend = () => {
     resendMutation.mutate(
@@ -222,6 +236,7 @@ export function AuthVerifyEmailForm() {
           size="lg"
           asChild
           className="text-md h-14 rounded-xl border border-slate-200 bg-transparent font-medium text-slate-900 shadow-none transition-colors hover:bg-slate-50 md:order-1 md:text-lg"
+          onClick={handleBack}
         >
           <Link href="/signup">Back</Link>
         </Button>
