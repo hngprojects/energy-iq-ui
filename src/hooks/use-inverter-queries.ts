@@ -18,7 +18,9 @@ export const useInverterQueries = () => {
     useMutation({
       mutationFn: InverterService.connectInverter,
       onSuccess: () => {
-        toast.success("Inverter connected successfully!");
+        toast.success("Inverter connected successfully!", {
+          duration: 5000,
+        });
         onSuccess?.();
       },
       onError: (error: unknown) => {
@@ -27,7 +29,9 @@ export const useInverterQueries = () => {
             ? error.message
             : (error as { message?: string })?.message ||
               "Failed to connect inverter";
-        toast.error(message);
+        toast.error(message, {
+          duration: 5000,
+        });
       },
     });
 
