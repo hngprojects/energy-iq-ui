@@ -4,14 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft,  } from "lucide-react";
 import Image from "next/image";
-import { ChatInput } from "./ChatInput";
+import { ChatInput } from "./chat-input";
 import { SUGGESTED_QUESTIONS } from "@/lib/mocks/ai-data";
 
 
 export function StartChat() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
 
   const handleSend = async (message: string) => {
     setLoading(true);

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { History, Download, Plus, MessageSquare } from "lucide-react";
 import { ChatItem, FilterTab } from "@/lib/mocks/ai-data";
-import { ChatListItem } from "./ChatListItem";
+import { ChatListItem } from "./chat-list-item";
 import { groupChatsByDate } from "@/lib/mocks/ai-data";
 import { cn } from "@/lib/utils";
 

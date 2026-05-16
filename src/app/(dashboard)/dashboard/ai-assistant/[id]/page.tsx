@@ -1,4 +1,4 @@
-import { ChatWindow } from "@/components/dashboard/ai/ChatWindow";
+import { ChatWindow } from "@/components/dashboard/ai/chat-window";
 import { MOCK_CONVERSATION, MOCK_CHATS } from "@/lib/mocks/ai-data";
 
 interface Props {

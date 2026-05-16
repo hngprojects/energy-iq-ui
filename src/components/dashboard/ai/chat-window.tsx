@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download, MoreVertical } from "lucide-react";
 import { ChatConversation, Message } from "@/lib/mocks/ai-data";
-import { ChatIcon } from "@/components/dashboard/ai/ChatIcon";
-import { MessageBubble } from "@/components/dashboard/ai/MessageBubble";
-import { ChatInput } from "@/components/dashboard/ai/ChatInput";
-import { ContextMenu } from "@/components/dashboard/ai/ContextMenu";
-import { ShareModal } from "@/components/dashboard/ai/ShareModal";
+import { ChatIcon } from "@/components/dashboard/ai/chat-icon";
+import { MessageBubble } from "@/components/dashboard/ai/message-bubble";
+import { ChatInput } from "@/components/dashboard/ai/chat-input";
+import { ContextMenu } from "@/components/dashboard/ai/context-menu";
+import { ShareModal } from "@/components/dashboard/ai/share-modal";
 
 interface ChatWindowProps {
   conversation: ChatConversation;
