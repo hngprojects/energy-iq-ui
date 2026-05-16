@@ -41,6 +41,7 @@ export default function OnboardingPage() {
                 subtitle="Enter specific details of your inverter type"
               />
               <InverterConnectionStep
+                key={inverter}
                 inverter={inverter}
                 onBack={() => setStep("select")}
                 onConnected={() => setSuccessOpen(true)}

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { motion, useScroll, useSpring } from "motion/react";
 import {
   Card,
   CardHeader,
@@ -8,8 +11,19 @@ import {
 import { Clock, Users, Shield, TrendingUp } from "lucide-react";
 
 export default function AboutPage() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
   return (
     <div className="flex flex-col bg-white">
+      <motion.div
+        className="bg-primary fixed top-0 right-0 left-0 z-50 h-1.5 origin-left"
+        style={{ scaleX }}
+      />
       {/* Hero Section */}
       <section className="bg-secondary relative flex h-105 max-w-full items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
@@ -25,18 +39,29 @@ export default function AboutPage() {
         <div className="absolute inset-0 bg-slate-900/80"></div>
 
         {/* Hero Content */}
-        <div className="relative z-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="relative z-10 text-center"
+        >
           <h1 className="mb-6 text-4xl font-bold text-white md:text-5xl">
             About Us
           </h1>
           <p className="text-base font-medium text-white md:text-xl">
             Built to solve Nigeria’s energy visibility problem.
           </p>
-        </div>
+        </motion.div>
       </section>
 
       {/* Stats Section */}
-      <section className="mx-auto w-full max-w-7xl px-6 py-10 text-center">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="mx-auto w-full max-w-7xl px-6 py-10 text-center"
+      >
         <h2 className="mb-4 text-3xl font-bold md:text-4xl">
           Built to Power{" "}
           <span className="text-amber-50">Africa&apos;s Energy</span> Future
@@ -53,11 +78,17 @@ export default function AboutPage() {
           <StatItem label="Inverter brands supported" value="36+" />
           <StatItem label="Uptime guaranteed" value="96%" />
         </div>
-      </section>
+      </motion.section>
 
       {/* Mission Section */}
       <section className="bg-surface-50">
-        <div className="mx-auto w-full max-w-7xl px-6 py-8 md:px-6 md:py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mx-auto w-full max-w-7xl px-6 py-8 md:px-6 md:py-20"
+        >
           <div className="mb-14">
             <h2 className="mb-6 text-2xl font-bold md:text-5xl">
               Our <span className="text-amber-50">Mission</span>
@@ -92,11 +123,17 @@ export default function AboutPage() {
               description="Our AI learns from every connected system to get smarter daily."
             />
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Journey Section */}
-      <section className="mx-auto w-full max-w-7xl px-6 py-8 md:px-6 md:py-20">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="mx-auto w-full max-w-7xl px-6 py-8 md:px-6 md:py-20"
+      >
         <div className="mb-6">
           <h2 className="mb-4 text-2xl font-bold md:text-5xl">
             Our <span className="text-amber-50">Journey</span>
@@ -118,10 +155,16 @@ export default function AboutPage() {
             fill
           />
         </div>
-      </section>
+      </motion.section>
 
       {/* Why We Built Section */}
-      <section className="mx-auto w-full max-w-7xl px-6 py-24">
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="mx-auto w-full max-w-7xl px-6 py-24"
+      >
         <h2 className="mb-8 text-2xl font-bold md:text-5xl">
           Why We Built <span className="text-amber-50">EnergyIQ</span>
         </h2>
@@ -142,7 +185,7 @@ export default function AboutPage() {
             in real time.
           </p>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

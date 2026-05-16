@@ -43,23 +43,23 @@ export function TestConnectionStatus({
   const dotClass = cn(
     "size-4 shrink-0 rounded-full",
     status === "error"
-      ? "size-2.5 bg-[#C81E1E]"
+      ? "size-2.5 bg-danger"
       : status === "success"
-        ? "size-2.5 bg-[#4ADE80]"
-        : "bg-[#111827]",
+        ? "size-2.5 bg-positive"
+        : "bg-dark-text",
   );
 
   const label = `Test connection to ${inverterName} VRM`;
 
   if (status === "success") {
     return (
-      <div className="rounded-xl bg-[#E8FFF0] px-4 py-3">
+      <div className="rounded-xl bg-success-bg px-4 py-3">
         <div className="flex items-center gap-2">
           <span className={dotClass} />
-          <span className="text-xs font-semibold text-[#4ADE80]">{label}</span>
+          <span className="text-xs font-semibold text-positive">{label}</span>
         </div>
-        <div className="mt-1 h-1 w-full bg-linear-to-r from-[#4ADE80] via-[#DDEFD9] to-[#72B800]" />
-        <div className="mt-2 flex items-center gap-2 text-xs text-[#4ADE80]">
+        <div className="mt-1 h-1 w-full bg-positive" />
+        <div className="mt-2 flex items-center gap-2 text-xs text-positive">
           <Check className="size-4" />
           <span>Connection Verified</span>
         </div>
@@ -69,13 +69,13 @@ export function TestConnectionStatus({
 
   if (status === "error") {
     return (
-      <div className="rounded-xl bg-[#FFE8E8] px-4 py-3">
+      <div className="rounded-xl bg-danger-bg px-4 py-3">
         <div className="flex items-center gap-2">
           <span className={dotClass} />
-          <span className="text-xs font-semibold text-red-600">{label}</span>
+          <span className="text-xs font-semibold text-danger">{label}</span>
         </div>
-        <div className="mt-1 h-1 w-full bg-linear-to-r from-[#4ADE80] via-[#DDEFD9] to-[#72B800]" />
-        <div className="mt-2 flex items-center gap-2 text-xs text-red-600">
+        <div className="mt-1 h-1 w-full bg-danger" />
+        <div className="mt-2 flex items-center gap-2 text-xs text-danger">
           <X className="size-4" />
           <span>
             Could not authenticate. Check your credentials and try again.
@@ -91,7 +91,7 @@ export function TestConnectionStatus({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className={dotClass} />
-            <span className="text-base font-medium text-[#111827]">
+            <span className="text-base font-medium text-dark-text">
               {label}
             </span>
           </div>

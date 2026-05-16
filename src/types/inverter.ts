@@ -9,8 +9,11 @@ export interface SupportedBrandsResponse {
 
 export interface ConnectInverterRequest {
   brand: string;
-  userId: string;
-  accessToken: string;
+  victronAccessToken?: string;
+  growattApiToken?: string;
+  solarmanEmail?: string;
+  solarmanPassword?: string;
+  solarmanPlantId?: string;
 }
 
 export interface Inverter {
