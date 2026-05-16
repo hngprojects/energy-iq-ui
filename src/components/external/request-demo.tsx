@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { motion } from "motion/react";
 
 import { Button } from "../ui/button";
 import Image from "next/image";
@@ -59,7 +62,13 @@ export const RequestDemo = () => {
   return (
     <section className="section-padding text-foreground bg-[#F7F7F799] py-16 md:py-24">
       <div className="container-padding mx-auto w-full max-w-7xl">
-        <div className="relative isolate flex min-h-[400px] flex-col justify-between overflow-hidden rounded-[8px] p-6 md:min-h-[730px] md:p-11">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="relative isolate flex min-h-[400px] flex-col justify-between overflow-hidden rounded-[8px] p-6 md:min-h-[730px] md:p-11"
+        >
           <Image
             src="/images/request_demo_bg.png"
             alt="Request a demo background"
@@ -92,8 +101,12 @@ export const RequestDemo = () => {
           </div>
           <div className="no-scrollbar relative z-10 flex snap-x gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:overflow-x-visible md:pb-0">
             {badges.map((badge, index) => (
-              <div
+              <motion.div
                 key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="w-[92%] shrink-0 snap-center md:w-full"
               >
                 <DemoBadge
@@ -101,10 +114,10 @@ export const RequestDemo = () => {
                   description={badge.description}
                   image={badge.image}
                 />
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

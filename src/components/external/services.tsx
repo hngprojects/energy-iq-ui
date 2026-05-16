@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { motion } from "motion/react";
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -73,7 +76,13 @@ export const Services = () => {
   return (
     <section className="section-padding text-foreground w-full bg-[#F7F7F799] py-16 md:py-24">
       <div className="container-padding mx-auto w-full max-w-7xl">
-        <div className="mb-12 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end"
+        >
           <h2 className="max-w-xl text-[32px] leading-tight font-bold md:text-[48px]">
             Everything your <br />
             <span className="text-primary">Energy</span> System Needs
@@ -81,15 +90,22 @@ export const Services = () => {
           <Button size="lg" className="text-secondary px-5 py-5">
             Services
           </Button>
-        </div>
+        </motion.div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {services.map((service, index) => (
-            <ServiceCard
+            <motion.div
               key={index}
-              title={service.title}
-              description={service.description}
-              image={service.image}
-            />
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
+              <ServiceCard
+                title={service.title}
+                description={service.description}
+                image={service.image}
+              />
+            </motion.div>
           ))}
         </div>
       </div>
