@@ -20,9 +20,15 @@ export function OnboardingSuccessDialog({
   onOpenChange,
 }: OnboardingSuccessDialogProps) {
   const router = useRouter();
+  const handleClose = (isOpen: boolean) => {
+    onOpenChange(isOpen);
+    if (!isOpen) {
+      router.push("/dashboard");
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-full sm:h-95 sm:max-w-122.25!">
         <div className="flex flex-col items-center py-4 text-center">
           <div className="mb-6 rounded-full">
@@ -35,7 +41,7 @@ export function OnboardingSuccessDialog({
           </div>
 
           <div className="mx-auto w-full text-center sm:max-w-102.25">
-            <DialogTitle className="text-2xl font-bold text-[#111827] sm:text-3xl lg:text-4xl">
+            <DialogTitle className="text-2xl font-bold text-dark-text sm:text-3xl lg:text-4xl">
               You&apos;re all set!
             </DialogTitle>
 
@@ -48,7 +54,7 @@ export function OnboardingSuccessDialog({
           <Button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="bg-dark-alt mt-8 h-14 rounded-lg px-4 text-base font-medium text-[#FDFDFD] hover:bg-[#111827]/90 sm:w-fit sm:px-16 lg:text-lg"
+            className="mt-8 h-14 rounded-lg bg-[#E5E7EB] px-4 text-base font-medium text-dark-text hover:bg-[#D1D5DB] sm:w-fit sm:px-16 lg:text-lg"
           >
             Continue to dashboard
           </Button>

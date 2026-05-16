@@ -18,7 +18,7 @@ export const InverterService = {
 
   connectInverter: async (data: ConnectInverterRequest) => {
     return apiFetch<ConnectInverterResponse>(
-      "/users/onboarding/connect",
+      "/users/onboard",
       {
         method: "POST",
         data,
