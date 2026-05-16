@@ -36,9 +36,11 @@ export function AuthVerifyEmailForm() {
         onSuccess: () => {
           setIsSuccess(true);
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
           setError(
-            err?.message || "Oh no! The code you entered is incorrect.",
+            err instanceof Error
+              ? err.message
+              : "Oh no! The code you entered is incorrect.",
           );
         },
       },

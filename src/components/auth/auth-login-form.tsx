@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "@/lib/schemas/auth";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthService } from "@/services/auth-service";
-import { toast } from "sonner";
 
 export function AuthLoginForm() {
   const { useLogin } = useAuthQueries();
