@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft,  } from "lucide-react";
+import { ArrowLeft, } from "lucide-react";
 import Image from "next/image";
 import { ChatInput } from "./chat-input";
 import { SUGGESTED_QUESTIONS } from "@/lib/mocks/ai-data";
@@ -13,9 +13,14 @@ export function StartChat() {
   const [loading, setLoading] = useState(false);
 
   const handleSend = async (message: string) => {
+    /*setLoading(true);
+    await new Promise((r) => setTimeout(r, 300));
+    router.push("/dashboard/ai-assistant/2");*/
+    if (!message.trim()) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 300));
-    router.push("/dashboard/ai-assistant/2");
+    // Pass message as a query param so the chat page knows what was asked
+    router.push(`/dashboard/ai-assistant/2?q=${encodeURIComponent(message)}`);
   };
 
   return (
