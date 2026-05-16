@@ -80,7 +80,7 @@ function Button({
     >
       {variant === "google" && (
         <Image
-          src="/google-icon.svg"
+          src="/images/google-icon.svg"
           alt="Google Icon"
           width={20}
           height={20}
