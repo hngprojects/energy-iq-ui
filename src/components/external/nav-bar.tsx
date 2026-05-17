@@ -59,17 +59,11 @@ export function Navbar() {
   const pathname = usePathname();
 
   const activeLabel = useMemo(() => {
-    if (!validPaths.has(pathname)) {
-      return null;
-    }
+    if (pathname === "/how-it-works") return "How It Works";
+    if (pathname === "/pricing") return "Pricing";
+    if (pathname === "/about") return "About Us";
 
-    if (pathname === "/about") {
-      return "About Us";
-    }
-
-    if (pathname === "/") {
-      return selectedLabel;
-    }
+    if (!validPaths.has(pathname)) return null;
 
     return selectedLabel;
   }, [pathname, selectedLabel]);
@@ -92,8 +86,13 @@ export function Navbar() {
         const element = document.getElementById(section.id);
         if (element) {
           const rect = element.getBoundingClientRect();
-          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-            setSelectedLabel((prev) => (prev !== section.label ? section.label : prev));
+          if (
+            rect.top <= window.innerHeight / 2 &&
+            rect.bottom >= window.innerHeight / 2
+          ) {
+            setSelectedLabel((prev) =>
+              prev !== section.label ? section.label : prev,
+            );
           }
         }
       }
