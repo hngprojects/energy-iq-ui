@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   InputOTP,
@@ -9,17 +10,28 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function AuthVerifyEmailForm() {
-  const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
+  const router = useRouter();
+  const tempEmail = useAuthStore((state) => state.tempEmail);
+  const [email] = useState(() => {
+  if (typeof window === "undefined") return tempEmail ?? "";
+  return tempEmail ?? localStorage.getItem("temp_email") ?? "";
+});
+
+  useEffect(() => {
+    if (!email && typeof window !== "undefined") {
+      router.replace("/signup");
+    }
+  }, [email, router]);
+
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(119); 
+  const [timeLeft, setTimeLeft] = useState(119);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -38,17 +50,23 @@ export function AuthVerifyEmailForm() {
   };
 
   const { useVerifyEmail, useResendEmailOtp } = useAuthQueries();
+  const { setTempEmail } = useAuthStore();
   const verifyMutation = useVerifyEmail();
   const resendMutation = useResendEmailOtp();
 
   const isComplete = otp.length === 6;
+
+  const handleBack = () => {
+    setTempEmail(null);
+    localStorage.removeItem("temp_email");
+  };
 
   const handleResend = () => {
     resendMutation.mutate(
       { email },
       {
         onSuccess: () => {
-          setTimeLeft(119); 
+          setTimeLeft(119);
         },
       },
     );
@@ -218,6 +236,7 @@ export function AuthVerifyEmailForm() {
           size="lg"
           asChild
           className="text-md h-14 rounded-xl border border-slate-200 bg-transparent font-medium text-slate-900 shadow-none transition-colors hover:bg-slate-50 md:order-1 md:text-lg"
+          onClick={handleBack}
         >
           <Link href="/signup">Back</Link>
         </Button>
