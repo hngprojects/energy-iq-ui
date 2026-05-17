@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
 import {
@@ -10,8 +11,74 @@ import {
 import { InverterConnectionStep } from "@/components/onboarding/inverter-connection-step";
 import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-success-dialog";
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
+import { useAuthStore } from "@/stores/auth-store";
+import { AuthService } from "@/services/auth-service";
 
 type Step = "select" | "connect";
+
+function GoogleAuthSync() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { setAuth, setUser, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hashString = window.location.hash.replace(/^#/, "");
+    const hashParams = new URLSearchParams(hashString);
+
+    const token =
+      searchParams.get("accessToken") ||
+      searchParams.get("token") ||
+      hashParams.get("accessToken") ||
+      hashParams.get("token");
+
+    const refreshToken =
+      searchParams.get("refreshToken") ||
+      hashParams.get("refreshToken") ||
+      "";
+
+    if (token && !isAuthenticated) {
+      let userObj = null;
+      const userParam = searchParams.get("user") || hashParams.get("user");
+
+      if (userParam) {
+        try {
+          userObj = JSON.parse(decodeURIComponent(userParam));
+        } catch (e) {
+          console.error("Failed to parse user query/hash param", e);
+        }
+      }
+
+      const fallbackUser = userObj || {
+        id: "",
+        email: "",
+        firstName: "",
+        lastName: "",
+        isEmailVerified: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setAuth(fallbackUser, token, refreshToken);
+
+      if (!userObj) {
+        AuthService.me()
+          .then((realUser) => {
+            if (realUser && realUser.id) {
+              setUser(realUser);
+            }
+          })
+          .catch((err) => console.error("Failed to fetch user profile", err));
+      }
+
+      window.location.hash = "";
+      router.replace("/onboarding");
+    }
+  }, [searchParams, setAuth, setUser, isAuthenticated, router]);
+
+  return null;
+}
 
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>("select");
@@ -20,6 +87,9 @@ export default function OnboardingPage() {
 
   return (
     <AuthWrapper>
+      <Suspense fallback={null}>
+        <GoogleAuthSync />
+      </Suspense>
       <div className="mt-28 lg:mt-44">
         {step === "select" ? (
           <>
