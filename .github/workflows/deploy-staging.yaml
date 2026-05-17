@@ -24,7 +24,7 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       contains(github.event.workflow_run.pull_requests[*].base.ref, 'staging'))
+       github.event.workflow_run.head_branch == 'staging')
     environment: staging
 
     steps:
