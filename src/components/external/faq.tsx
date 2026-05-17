@@ -42,16 +42,30 @@ export const Faq = () => {
   return (
     <section className="flex w-full justify-center bg-[#FEFEFE]">
       <div className="flex h-auto min-h-200 w-full max-w-7xl flex-col items-center px-6 py-16 md:px-20 md:py-24">
-        <div className="mb-12 flex flex-col text-left md:text-center lg:w-full">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-12 flex flex-col text-left md:text-center lg:w-full"
+        >
           <h2 className="text-[32px] leading-tight font-bold md:text-5xl">
             <span className="text-secondary">Frequently Asked </span>
             <span className="text-primary">Questions</span>
           </h2>
-        </div>
+        </motion.div>
         <div className="flex w-full flex-col gap-6 lg:w-209.75">
           {faqData.map((faq, index) => (
-            <div
+            <motion.div
               key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{
+                duration: 0.5,
+                delay: index * 0.1,
+                ease: "easeOut",
+              }}
               className="flex flex-col justify-center rounded-[10px] border border-[#E9EFFD] px-5 lg:w-209.75"
             >
               <div
@@ -78,6 +92,7 @@ export const Faq = () => {
                   />
                 </motion.div>
               </div>
+
               <AnimatePresence initial={false}>
                 {openIndex === index && (
                   <motion.div
@@ -91,7 +106,7 @@ export const Faq = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
