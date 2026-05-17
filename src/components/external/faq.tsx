@@ -40,17 +40,18 @@ export const Faq = () => {
   };
 
   return (
-    <section className="flex w-full justify-center bg-[#FEFEFE]">
-      <div className="flex h-auto min-h-200 w-full max-w-7xl flex-col items-center px-6 py-16 md:px-20 md:py-24">
+    <section className="flex w-full justify-center bg-card">
+      <div className="flex h-auto min-h-200 w-full max-w-7xl flex-col items-center px-6 py-16 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="mb-12 flex flex-col text-left md:text-center lg:w-full"
+          className="mb-12 flex flex-col text-left w-full"
         >
-          <h2 className="text-[32px] leading-tight font-bold md:text-5xl">
-            <span className="text-secondary">Frequently Asked </span>
+          <h2 className="max-w-xl text-[32px] leading-tight font-bold md:text-[48px]">
+            Frequently Asked
+            <br />
             <span className="text-primary">Questions</span>
           </h2>
         </motion.div>

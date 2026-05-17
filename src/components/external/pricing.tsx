@@ -125,7 +125,7 @@ export function PricingSection() {
           className="mb-12 text-center"
         >
           <h2 className="text-title1 mx-auto w-full max-w-180 leading-tight font-semibold lg:text-5xl">
-            Start free. <br /> <span className="text-primary">Upgrade</span>{" "}
+            Start free. <br /> <span className="text-primary">Upgrade</span>
             when it pays for itself.
           </h2>
         </motion.div>

@@ -187,20 +187,20 @@ const TermsAndCondition = () => {
                     <p>
                       <span className="font-semibold text-slate-100">
                         &apos;EnergyIQ&apos;
-                      </span>{" "}
+                      </span>
                       – The EnergyIQ energy monitoring and management platform.
                     </p>
                     <p>
                       <span className="font-semibold text-slate-100">
                         &apos;Organization&apos;
-                      </span>{" "}
+                      </span>
                       – The business, household, or solar company using
                       EnergyIQ.
                     </p>
                     <p>
                       <span className="font-semibold text-slate-100">
                         &apos;Users&apos;
-                      </span>{" "}
+                      </span>
                       – Admins, Owners, and Members authorized by the
                       organization.
                     </p>

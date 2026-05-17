@@ -139,7 +139,7 @@ export function AuthSignupForm() {
 
       <div className="flex flex-col gap-4 text-center">
         <p className="text-grey-light text-sm font-normal md:text-base">
-          Already have an account?{" "}
+          Already have an account?
           <Link
             href="/login"
             className="font-semibold text-amber-50 capitalize hover:underline"
@@ -149,14 +149,14 @@ export function AuthSignupForm() {
         </p>
 
         <p className="text-grey-light text-xs font-normal capitalize md:text-base md:leading-none">
-          By signing up, you agree to our{" "}
+          By signing up, you agree to our
           <Link
             href="/terms-and-conditions"
             className="text-grey-light font-bold hover:underline"
           >
             Terms of Service
-          </Link>{" "}
-          and{" "}
+          </Link>
+          and
           <Link
             href="/privacy-policy"
             className="text-grey-light font-bold hover:underline"

@@ -16,7 +16,7 @@ export function SavedTodayCard({
       <p className="text-muted-foreground text-sm">You saved today</p>
       <p className="text-3xl font-bold tracking-tight">{fmt(amount)}</p>
       <p className="text-muted-foreground text-xs leading-relaxed">
-        That&apos;s{" "}
+        That&apos;s
         <span className="text-foreground font-medium">{fmt(diesel)}</span> in
         diesel you didn&apos;t need to burn today
       </p>
