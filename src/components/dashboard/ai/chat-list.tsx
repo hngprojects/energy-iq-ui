@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { History, Download, Plus, MessageSquare } from "lucide-react";
+import { History , Download, Plus, MessageSquare } from "lucide-react";
 import { ChatItem, FilterTab } from "@/lib/mocks/ai-data";
 import { ChatListItem } from "./chat-list-item";
 import { groupChatsByDate } from "@/lib/mocks/ai-data";
@@ -55,7 +55,7 @@ function MobileFilters({
               : "bg-white border-gray-200 text-gray-400"
           )}
         >
-          <History className="w-4 h-4" />
+          <History  className="w-4 h-4" />
         </button>
         <button className="p-2.5 rounded-xl border border-gray-200 text-gray-600">
           <Download className="w-4 h-4" />
@@ -88,8 +88,8 @@ function DesktopToolbar({
             className={cn(
               "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all",
               activeFilter === tab
-                ? "bg-gray-900 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-[#FCF9F1] font-sans text-sm font-medium space-x-2 space-y-4 border border-[#FDE8B4] text-[#0B0C0C]"
+                : "bg-[#F5F5F5] font-sans text-sm font-medium space-x-2 space-y-4 text-[#333333] hover:bg-gray-100"
             )}
           >
             {tab}
@@ -182,27 +182,31 @@ export function ChatList({ chats, isEmpty }: ChatListProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-[#FBFBFB]">
       <MobileFilters {...toolbarProps} />
       <DesktopToolbar {...toolbarProps} />
-      <div className="flex-1 overflow-y-auto px-3 lg:px-4 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto px-3 lg:px-4 py-4">
         {grouped.length === 0 ? (
           <p className="text-center py-12 text-sm text-gray-500">
             No chats found for this filter.
           </p>
         ) : (
-          grouped.map((group) => (
-            <div key={group.label}>
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 px-1">
-                {group.label}
-              </h2>
-              <div className="space-y-2">
-                {group.chats.map((chat) => (
-                  <ChatListItem key={chat.id} chat={chat} />
-                ))}
+          <div className="flex flex-col  gap-6">
+            {grouped.map((group) => (
+              <div key={group.label}
+                className="bg-white rounded-xl border border-[#E8E8E8] p-4 flex flex-col gap-3"
+                >
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 px-1">
+                  {group.label}
+                </h2>
+                <div className="space-y-2">
+                  {group.chats.map((chat) => (
+                    <ChatListItem key={chat.id} chat={chat} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

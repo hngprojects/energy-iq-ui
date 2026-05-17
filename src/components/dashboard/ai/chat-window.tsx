@@ -60,9 +60,9 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-[#FBFBFB]">
       {/* ── Chat header ───────────────────────────── */}
-      <div className="flex items-center gap-2 px-4 lg:px-6 py-3 lg:py-0 lg:h-16 bg-white border-b border-gray-100 flex-shrink-0">
+      <div className="flex items-center gap-2 px-4 -m-4 lg:-m-6 lg:px-6 py-3 lg:py-0 lg:h-16  bg-white border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => router.back()}
           className="p-1.5 -ml-1 rounded-lg hover:bg-gray-100 transition-colors"
@@ -141,7 +141,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       </div>
 
       {/* ── Input bar ─────────────────────────────── */}
-      <div className="px-4 lg:px-6 py-3 bg-white border-t border-gray-100 flex-shrink-0">
+      <div className=" bg-white border-t border-gray-100 flex-shrink-0">
         <ChatInput onSend={handleSend} disabled={isTyping} />
       </div>
 

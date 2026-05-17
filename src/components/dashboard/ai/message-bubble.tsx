@@ -11,29 +11,28 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   if (isUser) {
     return (
-      <div className="flex items-end justify-end gap-2">
-        <div className="max-w-[80%] lg:max-w-[72%]">
-          <div className="bg-gray-900 text-white px-4 py-3 rounded-2xl rounded-br-sm text-sm leading-relaxed">
-            {message.content}
-          </div>
-          <p className="text-xs text-gray-400 mt-1 text-right pr-1">
+      <div className="flex items-end justify-end rounded-t-[8px] rounded-bl-[8px] items-end gap-1">
+        {/* Bubble with timestamp inside */}
+        <div className="max-w-[80%] lg:max-w-[72%] bg-gray-900 text-white px-4 py-3 rounded-2xl rounded-br-sm">
+          <p className="text-sm leading-relaxed">{message.content}</p>
+          <p className="text-xs text-gray-400 mt-1.5 text-right">
             {message.timestamp}
           </p>
         </div>
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center flex-shrink-0 mb-5">
-          <span className="text-white text-xs font-semibold">AA</span>
+        {/* Avatar below bubble */}
+        <div className="w-8 h-8 rounded-full bg-[#EDEDED] flex items-center justify-center flex-shrink-0">
+          <span className="text-[#0B0C0C] text-xs font-bold">AA</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex items-end gap-2">
       <div className="w-8 h-8 rounded-full bg-[#EDEDED] flex items-center justify-center flex-shrink-0 mt-1">
         <span className="text-[#0B0C0C] text-xs font-bold">AI</span>
       </div>
-
-      <div className="max-w-[80%] lg:max-w-[72%] space-y-1.5">
+      <div className="max-w-[80%] rounded-t-[8px] rounded-br-[8px] lg:max-w-[72%] space-y-1.5">
         <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
           {message.content && (
             <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">
@@ -80,10 +79,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               </div>
             </div>
           )}
-        </div>
 
-        <p className="text-xs text-gray-400 ml-1">{message.timestamp}</p>
+          {/* Timestamp inside bubble */}
+          <p className="text-xs text-gray-400 mt-1.5">{message.timestamp}</p>
+        </div>
       </div>
+
     </div>
   );
 }
