@@ -28,7 +28,7 @@ export function ChatInput({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSend();
     }
@@ -48,6 +48,8 @@ export function ChatInput({
       <div className=" relative flex items-center bg-white border border-[#E8E8E8] rounded-[8px] w-full px-[24px] py-[20px]  focus-within:border-gray-300 transition-colors">
         {/* Attach button */}
         <button
+          type="button"
+          aria-label="Add attachment"
           onClick={() => setShowAttachMenu((s) => !s)}
           className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors mb-0.5"
         >
@@ -83,12 +85,17 @@ export function ChatInput({
 
         {/* Mic */}
         <div className="gap-[24px] flex items-center">
-          <button className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors mb-0.5">
+          <button 
+          type="button"
+          aria-label="Voice input"
+          className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors mb-0.5">
             <Mic className="w-4 h-4 text-[#121212]" />
           </button>
 
           {/* Send */}
           <button
+            type="button"
+            aria-label="Send message"
             onClick={handleSend}
             disabled={!value.trim() || disabled}
             className={

@@ -182,10 +182,21 @@ export const MOCK_CONVERSATION: ChatConversation = {
 
 export function groupChatsByDate(chats: ChatItem[]): GroupedChats[] {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-  const weekAgo = new Date(today.getTime() - 7 * 86400000);
-  const monthAgo = new Date(today.getTime() - 30 * 86400000);
+
+  // startOfDay helper — sets time to 00:00:00 using calendar date (DST-safe)
+  const startOfDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const today = startOfDay(now);
+
+  // Using setDate() is DST-safe because it works with calendar days not milliseconds
+  const yesterday = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  const weekAgo = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7));
+  const monthAgo = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
+  const monthLabel = monthAgo.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const groups: GroupedChats[] = [
     {
@@ -201,8 +212,12 @@ export function groupChatsByDate(chats: ChatItem[]): GroupedChats[] {
       chats: chats.filter((c) => c.date >= weekAgo && c.date < yesterday),
     },
     {
-      label: "April 2026",
+      label: monthLabel,
       chats: chats.filter((c) => c.date >= monthAgo && c.date < weekAgo),
+    },
+    {
+      label: "Older",                                    // ← catches everything older than 30 days
+      chats: chats.filter((c) => c.date < monthAgo),
     },
   ];
 
