@@ -83,7 +83,9 @@ export default function Contact() {
       });
       reset();
     } catch (error: unknown) {
-      toast.error((error as Error).message || "Something went wrong", {
+      const message = error instanceof Error ? error.message : typeof error === "string"
+ ? error : "Something went wrong";
+      toast.error(message, {
         description: "Please try again later.",
       });
     }
