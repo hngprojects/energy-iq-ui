@@ -4,25 +4,12 @@ import Image from "next/image";
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api/client";
-
-const contactSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Enter a valid email address"),
-  phoneNumber: z.string().optional(),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-});
-
-type ContactFormValues = z.infer<typeof contactSchema>;
+import { ContactService } from "@/services/contact-service";
+import { contactSchema, ContactFormValues } from "@/lib/schemas/contact";
 
 type ContactInputFieldProps = ComponentPropsWithoutRef<typeof Input> & {
   label: string;
@@ -90,20 +77,13 @@ export default function Contact() {
 
   async function onSubmit(data: ContactFormValues) {
     try {
-      await apiFetch<void>(
-        "/contact",
-        {
-          method: "POST",
-          data,
-        },
-        true,
-      );
+      await ContactService.submitMessage(data);
       toast.success("Message sent!", {
         description: "We'll get back to you as soon as possible.",
       });
       reset();
-    } catch {
-      toast.error("Something went wrong", {
+    } catch (error: unknown) {
+      toast.error((error as Error).message || "Something went wrong", {
         description: "Please try again later.",
       });
     }
