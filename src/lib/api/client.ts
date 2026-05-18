@@ -109,10 +109,14 @@ export async function apiFetch<TResponse>(
     if (err instanceof AxiosError) {
       const status = err.response?.status ?? 500;
 
-      if (status === 401 && typeof window !== "undefined") {
+      if (
+        status === 401 &&
+        typeof window !== "undefined" &&
+        !path.includes("/auth/login")
+      ) {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
-         window.location.replace("/login");
+        window.location.replace("/login");
       }
 
       const message =
