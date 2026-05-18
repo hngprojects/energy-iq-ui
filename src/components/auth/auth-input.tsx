@@ -3,15 +3,32 @@ import { forwardRef, InputHTMLAttributes, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { CircleX, CircleCheck } from "lucide-react";
 
 interface AuthInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
   isSuccess?: boolean;
+  statusColor?: "yellow" | "red" | "green";
+  helperText?: string;
+  hideErrorMessage?: boolean;
 }
 
 export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
-  ({ label, id, type, error, isSuccess, ...props }, ref) => {
+  (
+    {
+      label,
+      id,
+      type,
+      error,
+      isSuccess,
+      statusColor,
+      helperText,
+      hideErrorMessage,
+      ...props
+    },
+    ref,
+  ) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
 
@@ -31,17 +48,44 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
             ref={ref}
             type={isPassword ? (showPassword ? "text" : "password") : type}
             className={cn(
-              "border-border placeholder:text-muted-foreground focus-visible:border-border-active md:text-md h-13 px-7 py-3.25 text-sm",
-              isSuccess && "border-positive focus-visible:border-positive",
-              error && "border-error-text focus-visible:border-error-text",
+              "border-border placeholder:text-muted-foreground focus-visible:border-border-active md:text-md h-13 px-7 py-3.25 text-sm transition-colors",
+              statusColor === "green" &&
+                "border-positive focus-visible:border-positive focus:border-positive",
+              statusColor === "yellow" &&
+                "border-amber-50 focus-visible:border-amber-50 focus:border-amber-50",
+              statusColor === "red" &&
+                "border-destructive focus-visible:border-destructive focus:border-destructive",
+              !statusColor &&
+                isSuccess &&
+                "border-positive focus-visible:border-positive focus:border-positive",
+              !statusColor &&
+                error &&
+                "border-destructive focus-visible:border-destructive focus:border-destructive",
+              (statusColor === "red" || statusColor === "green") &&
+                (isPassword ? "pr-20" : "pr-12"),
             )}
             {...props}
           />
+          {statusColor === "red" && (
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none">
+              <CircleX className="fill-destructive text-white w-5 h-5" />
+            </div>
+          )}
+          {statusColor === "green" && (
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none">
+              <CircleCheck className="fill-positive text-white w-5 h-5" />
+            </div>
+          )}
           {isPassword && (
             <button
               type="button"
               onClick={togglePassword}
-              className="text-slate-60 hover:text-grey-light absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer"
+              className={cn(
+                "text-slate-60 hover:text-grey-light absolute top-1/2 -translate-y-1/2 cursor-pointer transition-all",
+                statusColor === "red" || statusColor === "green"
+                  ? "right-12"
+                  : "right-4",
+              )}
             >
               {showPassword ? (
                 <svg
@@ -81,11 +125,22 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
             </button>
           )}
         </div>
-        {error && (
-          <p className="text-error-text mt-2 text-[12px] leading-none font-semibold">
+        {!hideErrorMessage && helperText ? (
+          <p
+            className={cn(
+              "mt-2 text-[12px] leading-tight font-semibold",
+              statusColor === "green" && "text-positive",
+              statusColor === "yellow" && "text-amber-50",
+              statusColor === "red" && "text-destructive",
+            )}
+          >
+            {helperText}
+          </p>
+        ) : !hideErrorMessage && error ? (
+          <p className="text-destructive mt-2 text-[12px] leading-tight font-semibold">
             {error}
           </p>
-        )}
+        ) : null}
       </div>
     );
   },

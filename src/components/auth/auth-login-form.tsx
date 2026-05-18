@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "@/lib/schemas/auth";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthService } from "@/services/auth-service";
+import { useEffect } from "react";
 
 export function AuthLoginForm() {
   const { useLogin } = useAuthQueries();
@@ -38,6 +39,31 @@ export function AuthLoginForm() {
   });
   const isFormFilled = email.length > 0 && password.length > 0;
 
+  const isLoginError = loginMutation.isError || !!errors.password;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPasswordValid = password.length >= 8;
+  const isBothValid = isEmailValid && isPasswordValid && !isLoginError;
+
+  let emailStatusColor: "green" | "red" | undefined = undefined;
+  if (errors.email) {
+    emailStatusColor = "red";
+  } else if (isBothValid) {
+    emailStatusColor = "green";
+  }
+
+  let passwordStatusColor: "red" | "green" | undefined = undefined;
+  if (isLoginError) {
+    passwordStatusColor = "red";
+  } else if (isBothValid) {
+    passwordStatusColor = "green";
+  }
+
+  useEffect(() => {
+    if (loginMutation.isError) {
+      loginMutation.reset();
+    }
+  }, [email, password, loginMutation]);
+
   const onSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data);
   };
@@ -52,6 +78,8 @@ export function AuthLoginForm() {
             placeholder="Enter your email address"
             type="email"
             error={errors.email?.message}
+            statusColor={emailStatusColor}
+            hideErrorMessage={true}
             {...register("email")}
           />
           <AuthInput
@@ -60,6 +88,8 @@ export function AuthLoginForm() {
             placeholder="************"
             type="password"
             error={errors.password?.message}
+            statusColor={passwordStatusColor}
+            hideErrorMessage={true}
             {...register("password")}
           />
         </div>
