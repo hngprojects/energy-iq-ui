@@ -156,7 +156,7 @@ export const HowItWorks = () => {
       title: "Select your Inverter type",
       description:
         "EnergyIQ supports multiple inverter brands used across Nigerian businesses. Select your inverter to securely sync your energy data and unlock real-time monitoring, AI-powered insights, smart alerts, and savings analytics.",
-      image: "/images/how_it_works_1.png",
+      image: "/images/how_it_works_1.jpg",
       isReversed: false,
       height: "544px",
       imageLayout: {
@@ -172,7 +172,7 @@ export const HowItWorks = () => {
       title: "Connect your Inverter",
       description:
         "Connect your inverter system securely using your inverter credentials or API access to begin monitoring your energy performance, battery health, solar output, generator usage, and operational savings in one intelligent dashboard.",
-      image: "/images/how_it_works_2.png",
+      image: "/images/how_it_works_2.jpg",
       isReversed: true,
       height: "544px",
       imageLayout: {
@@ -189,7 +189,7 @@ export const HowItWorks = () => {
       title: "Move to Dashboard",
       description:
         "You’re all set. Your inverter has been successfully connected and EnergyIQ is now ready to monitor your energy system in real time. Access your dashboard to track performance, receive smart alerts, analyze savings, and gain AI-powered insights into your power usage, insights, smart alerts, and savings analytics.",
-      image: "/images/how_it_works_3.png",
+      image: "/images/how_it_works_3.jpg",
       isReversed: false,
       height: "321px",
       imageLayout: {
