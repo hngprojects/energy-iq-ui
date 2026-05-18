@@ -63,7 +63,7 @@ export default function AboutPage() {
         className="mx-auto w-full max-w-7xl px-6 py-10 text-center"
       >
         <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-          Built to Power
+          Built to Power{" "}
           <span className="text-amber-50">Africa&apos;s Energy</span> Future
         </h2>
         <p className="text-muted-foreground mx-auto mb-16 max-w-3xl leading-relaxed">

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Learn how the EnergyIQ platform works.",
 };
 
-export default function HowItWorksPage() {
+export default function AboutUsPage() {
   return (
     <div className="flex w-full flex-col">
       <AboutPage />

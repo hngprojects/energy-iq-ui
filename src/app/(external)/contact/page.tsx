@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Get in touch with the EnergyIQ team.",
 };
 
-export default function HowItWorksPage() {
+export default function ContactPage() {
   return (
     <div className="flex w-full flex-col">
       <Contact />

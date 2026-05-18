@@ -127,6 +127,7 @@ export default function Contact() {
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           className="relative z-10 flex max-w-3xl flex-col items-center px-4 text-center"
         >
+          {" "}
           <h1 className="mb-6 text-3xl font-bold text-white md:text-5xl">
             Contact us
           </h1>
@@ -148,6 +149,7 @@ export default function Contact() {
         transition={{ duration: 0.6 }}
         className="mx-auto w-full max-w-4xl px-6 py-12 md:py-16"
       >
+        {" "}
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-8"
