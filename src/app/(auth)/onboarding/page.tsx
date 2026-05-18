@@ -39,39 +39,22 @@ function GoogleAuthSync() {
       "";
 
     if (token && !isAuthenticated) {
-      let userObj = null;
-      const userParam = searchParams.get("user") || hashParams.get("user");
+      window.history.replaceState(null, "", window.location.pathname);
+      useAuthStore.setState({ token, refreshToken });
 
-      if (userParam) {
-        try {
-          userObj = JSON.parse(decodeURIComponent(userParam));
-        } catch (e) {
-          console.error("Failed to parse user query/hash param", e);
-        }
-      }
-
-      if (userObj) {
-        setAuth(userObj, token, refreshToken);
-        window.location.hash = "";
-        router.replace("/onboarding");
-      } else {
-        useAuthStore.setState({ token, refreshToken });
-
-        AuthService.me()
-          .then((realUser) => {
-            if (realUser && realUser.id) {
-              setAuth(realUser, token, refreshToken);
-              window.location.hash = "";
-              router.replace("/onboarding");
-            } else {
-              logout();
-            }
-          })
-          .catch((err) => {
-            console.error("Failed to fetch user profile", err);
+      AuthService.me()
+        .then((realUser) => {
+          if (realUser?.id) {
+            setAuth(realUser, token, refreshToken);
+            router.replace("/onboarding");
+          } else {
             logout();
-          });
-      }
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch user profile", err);
+          logout();
+        });
     }
   }, [searchParams, setAuth, logout, isAuthenticated, router]);
 
