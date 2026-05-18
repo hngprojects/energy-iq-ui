@@ -107,24 +107,14 @@ export function AuthSignupForm() {
         />
       </div>
 
-      <div className="mt-8 flex flex-col gap-10 md:mt-12 md:gap-16">
-        <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            asChild
-            className="border-border text-dark-text h-12 w-full rounded-lg px-8 py-4 text-sm font-semibold hover:bg-slate-50 sm:flex-1 md:h-14 md:py-5 md:text-lg"
-          >
-            <Link href="/login">Sign In</Link>
-          </Button>
+      <div className="mt-8 flex flex-col gap-4 md:mt-12">
           <Button
             type="submit"
             disabled={registerMutation.isPending || !isFormFilled}
-            className="bg-secondary hover:bg-secondary/90 h-12 w-full rounded-lg px-8 py-4 text-sm font-medium text-white disabled:opacity-50 sm:flex-1 md:h-14 md:py-5 md:text-lg"
+            className="w-full max-w-[527px] h-[54px] rounded-lg px-16 py-2 text-base font-semibold md:text-lg transition-colors flex items-center justify-center mx-auto shadow-sm bg-secondary text-white hover:bg-secondary/90 disabled:bg-[#E8E8E8] disabled:text-dark-text disabled:opacity-100 disabled:shadow-none disabled:cursor-not-allowed"
           >
-            {registerMutation.isPending ? "Creating..." : "Create Account"}
+            {registerMutation.isPending ? "Signing Up..." : "Sign Up"}
           </Button>
-        </div>
 
         <div className="space-y-4">
           <div className="relative">
