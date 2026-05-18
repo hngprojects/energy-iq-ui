@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "../ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -71,13 +70,11 @@ export const HowItWorksSection = () => {
           How it <span className="text-primary">Works</span>
         </h2>
 
-        <Link href="/how-it-works">
-          <Button
-            size="lg"
-            className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold"
-          >
-            Show More
-          </Button>
+        <Link
+          href="/how-it-works"
+          className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold inline-flex h-11 items-center justify-center text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+        >
+          Show More
         </Link>
       </motion.div>
 
