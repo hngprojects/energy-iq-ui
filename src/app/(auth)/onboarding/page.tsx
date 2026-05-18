@@ -65,6 +65,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>("select");
   const [inverter, setInverter] = useState<InverterType | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <AuthWrapper>
@@ -82,6 +83,7 @@ export default function OnboardingPage() {
               selected={inverter}
               onSelect={setInverter}
               onNext={() => inverter && setStep("connect")}
+              onCancel={() => router.push("/")}
             />
           </>
         ) : (
