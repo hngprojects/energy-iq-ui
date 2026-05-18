@@ -19,7 +19,7 @@ type Step = "select" | "connect";
 function GoogleAuthSync() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setAuth, setUser, isAuthenticated } = useAuthStore();
+  const { setAuth, logout, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -50,32 +50,30 @@ function GoogleAuthSync() {
         }
       }
 
-      const fallbackUser = userObj || {
-        id: "",
-        email: "",
-        firstName: "",
-        lastName: "",
-        isEmailVerified: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (userObj) {
+        setAuth(userObj, token, refreshToken);
+        window.location.hash = "";
+        router.replace("/onboarding");
+      } else {
+        useAuthStore.setState({ token, refreshToken });
 
-      setAuth(fallbackUser, token, refreshToken);
-
-      if (!userObj) {
         AuthService.me()
           .then((realUser) => {
             if (realUser && realUser.id) {
-              setUser(realUser);
+              setAuth(realUser, token, refreshToken);
+              window.location.hash = "";
+              router.replace("/onboarding");
+            } else {
+              logout();
             }
           })
-          .catch((err) => console.error("Failed to fetch user profile", err));
+          .catch((err) => {
+            console.error("Failed to fetch user profile", err);
+            logout();
+          });
       }
-
-      window.location.hash = "";
-      router.replace("/onboarding");
     }
-  }, [searchParams, setAuth, setUser, isAuthenticated, router]);
+  }, [searchParams, setAuth, logout, isAuthenticated, router]);
 
   return null;
 }
