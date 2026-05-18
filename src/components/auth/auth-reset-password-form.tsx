@@ -12,17 +12,12 @@ import { useEffect, useState, Suspense } from "react";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { useSearchParams } from "next/navigation";
 
+import { passwordValidation } from "@/lib/schemas/auth";
+
 // Validation schema for the UI
 const resetPasswordSchema = z
   .object({
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters long")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(
-        /[!@#$%^&*(),.?":{}|<>]/,
-        "Password must include a special character",
-      ),
+    password: passwordValidation,
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {

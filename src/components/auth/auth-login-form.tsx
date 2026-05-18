@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "@/lib/schemas/auth";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthService } from "@/services/auth-service";
+import { useEffect } from "react";
 
 export function AuthLoginForm() {
   const { useLogin } = useAuthQueries();
@@ -38,6 +39,31 @@ export function AuthLoginForm() {
   });
   const isFormFilled = email.length > 0 && password.length > 0;
 
+  const isLoginError = loginMutation.isError || !!errors.password;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPasswordValid = password.length >= 8;
+  const isBothValid = isEmailValid && isPasswordValid && !isLoginError;
+
+  let emailStatusColor: "green" | "red" | undefined = undefined;
+  if (errors.email) {
+    emailStatusColor = "red";
+  } else if (isBothValid) {
+    emailStatusColor = "green";
+  }
+
+  let passwordStatusColor: "red" | "green" | undefined = undefined;
+  if (isLoginError) {
+    passwordStatusColor = "red";
+  } else if (isBothValid) {
+    passwordStatusColor = "green";
+  }
+
+  useEffect(() => {
+    if (loginMutation.isError) {
+      loginMutation.reset();
+    }
+  }, [email, password, loginMutation]);
+
   const onSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data);
   };
@@ -52,6 +78,8 @@ export function AuthLoginForm() {
             placeholder="Enter your email address"
             type="email"
             error={errors.email?.message}
+            statusColor={emailStatusColor}
+            hideErrorMessage={true}
             {...register("email")}
           />
           <AuthInput
@@ -60,6 +88,8 @@ export function AuthLoginForm() {
             placeholder="************"
             type="password"
             error={errors.password?.message}
+            statusColor={passwordStatusColor}
+            hideErrorMessage={true}
             {...register("password")}
           />
         </div>
@@ -87,24 +117,14 @@ export function AuthLoginForm() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-10 md:mt-12 md:gap-16">
-        <div className="flex gap-2 md:gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            asChild
-            className="border-border text-dark-text hover:bg-slate-10 md:text-md flex-1 rounded-lg px-4 py-4 text-sm font-medium md:px-8 md:py-6 md:leading-none"
-          >
-            <Link href="/signup">Sign Up</Link>
-          </Button>
+      <div className="mt-8 flex flex-col gap-4 md:mt-12">
           <Button
             type="submit"
             disabled={loginMutation.isPending || !isFormFilled}
-            className="bg-secondary hover:bg-secondary/90 md:text-md flex-1 rounded-lg px-4 py-4 text-sm font-semibold text-white disabled:opacity-50 md:px-8 md:py-6 md:leading-none"
+            className="w-full max-w-[527px] h-[54px] rounded-lg px-16 py-2 text-base font-semibold md:text-lg transition-colors flex items-center justify-center mx-auto shadow-sm bg-secondary text-white hover:bg-secondary/90 disabled:bg-[#E8E8E8] disabled:text-dark-text disabled:opacity-100 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {loginMutation.isPending ? "Signing In..." : "Sign In"}
           </Button>
-        </div>
 
         <div className="space-y-4">
           <div className="relative">

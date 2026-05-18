@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+export const passwordValidation = z
+  .string()
+  .min(
+    8,
+    "Password is short. Minimum of least 8 characters and a special key",
+  )
+  .regex(
+    /[!@#$%^&*(),.?":{}|<>]/,
+    "Password is short. Minimum of least 8 characters and a special key",
+  );
+
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -9,11 +20,7 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+  password: passwordValidation,
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
 });
@@ -35,12 +42,7 @@ export type RefreshTokenFormValues = z.infer<typeof refreshTokenSchema>;
 
 export const resetPasswordSchema = z
   .object({
-    password: z
-      .string()
-      .min(8)
-      .regex(/[A-Z]/)
-      .regex(/[!@#$%^&*(),.?":{}|<>]/),
-
+    password: passwordValidation,
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
