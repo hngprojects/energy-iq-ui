@@ -43,15 +43,18 @@ const IconX = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const links = [
+const NAV_LINKS = [
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/how-it-works" },
   { label: "Pricing", href: "/pricing" },
   { label: "Faq", href: "/#faq" },
   { label: "About Us", href: "/about" },
-];
+] as const;
 
-const validPaths = new Set(["/", "/how-it-works", "/pricing", "/about"]);
+const VALID_PATHS = new Set<string>([
+  "/",
+  ...NAV_LINKS.map((link) => link.href),
+]);
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -59,11 +62,10 @@ export function Navbar() {
   const pathname = usePathname();
 
   const activeLabel = useMemo(() => {
-    if (pathname === "/how-it-works") return "How It Works";
-    if (pathname === "/pricing") return "Pricing";
-    if (pathname === "/about") return "About Us";
+    const matchedLink = NAV_LINKS.find((link) => link.href === pathname);
+    if (matchedLink) return matchedLink.label;
 
-    if (!validPaths.has(pathname)) return null;
+    if (!VALID_PATHS.has(pathname)) return null;
 
     return selectedLabel;
   }, [pathname, selectedLabel]);
@@ -110,7 +112,7 @@ export function Navbar() {
         <Logo size="md" />
 
         <ul className="hidden items-center gap-8 md:flex">
-          {links.map((l) => {
+          {NAV_LINKS.map((l) => {
             const isActive = activeLabel === l.label;
 
             return (
@@ -172,7 +174,7 @@ export function Navbar() {
       >
         <div className="flex flex-col gap-6 px-4 py-6">
           <ul className="flex flex-col items-center gap-2 text-center">
-            {links.map((l) => (
+            {NAV_LINKS.map((l) => (
               <li key={l.label} className="w-full">
                 <Link
                   href={l.href}

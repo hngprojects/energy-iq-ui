@@ -4,10 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 
-interface StepCardProps {
+interface Step {
   title: string;
   description: string;
   image: string;
+}
+
+interface StepCardProps extends Step {
   index: number;
 }
 
@@ -37,7 +40,7 @@ const StepCard = ({ title, description, image, index }: StepCardProps) => {
   );
 };
 
-const STEPS = [
+const STEPS: readonly Step[] = [
   {
     title: "Select your Inverter type",
     description: "Choose your brand and connect in minutes.",
