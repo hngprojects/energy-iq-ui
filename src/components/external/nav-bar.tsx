@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { Logo } from "../ui/logo";
 import { cn } from "@/lib/utils";
+import { NAV_LINKS, VALID_PATHS } from "@/constants/navlinks";
 
 const IconMenu = ({ className }: { className?: string }) => (
   <svg
@@ -42,19 +43,6 @@ const IconX = ({ className }: { className?: string }) => (
     />
   </svg>
 );
-
-const NAV_LINKS = [
-  { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/how-it-works" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Faq", href: "/#faq" },
-  { label: "About Us", href: "/about" },
-] as const;
-
-const VALID_PATHS = new Set<string>([
-  "/",
-  ...NAV_LINKS.map((link) => link.href),
-]);
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
