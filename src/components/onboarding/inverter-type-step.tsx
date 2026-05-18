@@ -10,12 +10,14 @@ interface InverterTypeStepProps {
   selected: InverterType | null;
   onSelect: (type: InverterType) => void;
   onNext: () => void;
+  onCancel?: () => void;
 }
 
 export function InverterTypeStep({
   selected,
   onSelect,
   onNext,
+  onCancel,
 }: InverterTypeStepProps) {
   const { useSupportedBrands } = useInverterQueries();
   const { data: brandsResponse, isLoading, error } = useSupportedBrands();
@@ -64,7 +66,17 @@ export function InverterTypeStep({
         ))}
       </div>
 
-      <div className="flex sm:justify-end">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="h-14 w-full cursor-pointer rounded-lg border-foreground/20 text-base font-medium sm:max-w-61.75 lg:text-lg"
+          >
+            Back
+          </Button>
+        )}
         <Button
           type="button"
           onClick={onNext}
