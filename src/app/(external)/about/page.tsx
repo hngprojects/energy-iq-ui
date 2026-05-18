@@ -2,8 +2,8 @@ import AboutPage from "@/components/external/about-us";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "How It Works | EnergyIQ",
-  description: "Learn how the EnergyIQ platform works.",
+  title: "About Us | EnergyIQ",
+  description: "Discover the mission, team, and technology driving EnergyIQ.",
 };
 
 export default function AboutUsPage() {
