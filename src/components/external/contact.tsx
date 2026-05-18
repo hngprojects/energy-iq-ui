@@ -27,21 +27,31 @@ const contactInputClassName =
   "h-12.5 rounded-[8px] border border-[#D8DBE2] bg-[#FCFCFC] px-7 py-3.5 text-base font-light placeholder:text-[#9CA3AF] md:text-lg";
 
 const ContactInputField = forwardRef<HTMLInputElement, ContactInputFieldProps>(
-  ({ id, label, error, ...props }, ref) => (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={id} className={contactLabelClassName}>
-        {label}
-      </Label>
-      <Input
-        ref={ref}
-        id={id}
-        aria-invalid={error ? "true" : "false"}
-        className={contactInputClassName}
-        {...props}
-      />
-      {error && <p className="text-destructive text-sm">{error}</p>}
-    </div>
-  ),
+  ({ id, label, error, ...props }, ref) => {
+    const errorId = id ? `${id}-error` : undefined;
+
+    return (
+      <div className="flex flex-col gap-2">
+        <Label htmlFor={id} className={contactLabelClassName}>
+          {label}
+        </Label>
+        <Input
+          ref={ref}
+          id={id}
+          className={contactInputClassName}
+          {...props}
+          aria-describedby={error ? errorId : undefined}
+          // Only adds the attribute to the DOM if an error actually exists
+          {...(error ? { "aria-invalid": "true" } : {})}
+        />
+        {error && (
+          <p id={errorId} className="text-destructive text-sm" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  },
 );
 
 ContactInputField.displayName = "ContactInputField";
@@ -49,20 +59,31 @@ ContactInputField.displayName = "ContactInputField";
 const ContactTextareaField = forwardRef<
   HTMLTextAreaElement,
   ContactTextareaFieldProps
->(({ id, label, error, ...props }, ref) => (
-  <div className="flex flex-col gap-2">
-    <Label htmlFor={id} className={contactLabelClassName}>
-      {label}
-    </Label>
-    <textarea
-      ref={ref}
-      id={id}
-      className="placeholder:text-muted-foreground focus-visible:border-border-active h-60.5 resize-none rounded-[8px] border border-[#D8DBE2] bg-[#FCFCFC] px-7 py-3.5 text-base font-light transition-colors outline-none focus-visible:ring-0 md:text-lg"
-      {...props}
-    />
-    {error && <p className="text-destructive text-sm">{error}</p>}
-  </div>
-));
+>(({ id, label, error, ...props }, ref) => {
+  const errorId = id ? `${id}-error` : undefined;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={id} className={contactLabelClassName}>
+        {label}
+      </Label>
+      <textarea
+        ref={ref}
+        id={id}
+        className="placeholder:text-muted-foreground focus-visible:border-border-active h-60.5 resize-none rounded-[8px] border border-[#D8DBE2] bg-[#FCFCFC] px-7 py-3.5 text-base font-light transition-colors outline-none focus-visible:ring-0 md:text-lg"
+        {...props}
+        aria-describedby={error ? errorId : undefined}
+        // Only adds the attribute to the DOM if an error actually exists
+        {...(error ? { "aria-invalid": "true" } : {})}
+      />
+      {error && (
+        <p id={errorId} className="text-destructive text-sm" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+});
 
 ContactTextareaField.displayName = "ContactTextareaField";
 
@@ -127,7 +148,6 @@ export default function Contact() {
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           className="relative z-10 flex max-w-3xl flex-col items-center px-4 text-center"
         >
-          {" "}
           <h1 className="mb-6 text-3xl font-bold text-white md:text-5xl">
             Contact us
           </h1>
@@ -149,7 +169,6 @@ export default function Contact() {
         transition={{ duration: 0.6 }}
         className="mx-auto w-full max-w-4xl px-6 py-12 md:py-16"
       >
-        {" "}
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-8"
