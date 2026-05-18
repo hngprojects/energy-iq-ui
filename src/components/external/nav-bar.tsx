@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { Logo } from "../ui/logo";
 import { cn } from "@/lib/utils";
+import { NAV_LINKS, VALID_PATHS } from "@/constants/navlinks";
 
 const IconMenu = ({ className }: { className?: string }) => (
   <svg
@@ -43,33 +44,16 @@ const IconX = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const links = [
-  { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/how-it-works" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Faq", href: "/#faq" },
-  { label: "About Us", href: "/about" },
-];
-
-const validPaths = new Set(["/", "/how-it-works", "/pricing", "/about"]);
-
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("Features");
   const pathname = usePathname();
 
   const activeLabel = useMemo(() => {
-    if (!validPaths.has(pathname)) {
-      return null;
-    }
+    const matchedLink = NAV_LINKS.find((link) => link.href === pathname);
+    if (matchedLink) return matchedLink.label;
 
-    if (pathname === "/about") {
-      return "About Us";
-    }
-
-    if (pathname === "/") {
-      return selectedLabel;
-    }
+    if (!VALID_PATHS.has(pathname)) return null;
 
     return selectedLabel;
   }, [pathname, selectedLabel]);
@@ -92,8 +76,13 @@ export function Navbar() {
         const element = document.getElementById(section.id);
         if (element) {
           const rect = element.getBoundingClientRect();
-          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-            setSelectedLabel((prev) => (prev !== section.label ? section.label : prev));
+          if (
+            rect.top <= window.innerHeight / 2 &&
+            rect.bottom >= window.innerHeight / 2
+          ) {
+            setSelectedLabel((prev) =>
+              prev !== section.label ? section.label : prev,
+            );
           }
         }
       }
@@ -111,7 +100,7 @@ export function Navbar() {
         <Logo size="md" />
 
         <ul className="hidden items-center gap-8 md:flex">
-          {links.map((l) => {
+          {NAV_LINKS.map((l) => {
             const isActive = activeLabel === l.label;
 
             return (
@@ -173,7 +162,7 @@ export function Navbar() {
       >
         <div className="flex flex-col gap-6 px-4 py-6">
           <ul className="flex flex-col items-center gap-2 text-center">
-            {links.map((l) => (
+            {NAV_LINKS.map((l) => (
               <li key={l.label} className="w-full">
                 <Link
                   href={l.href}

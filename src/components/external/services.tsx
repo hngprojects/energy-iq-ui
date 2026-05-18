@@ -87,7 +87,10 @@ export const Services = () => {
             Everything your <br />
             <span className="text-primary">Energy</span> System Needs
           </h2>
-          <Button size="lg" className="text-secondary px-5 py-5">
+          <Button
+            size="lg"
+            className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold"
+          >
             Services
           </Button>
         </motion.div>
