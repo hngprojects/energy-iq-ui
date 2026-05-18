@@ -44,19 +44,19 @@ const STEPS: readonly Step[] = [
   {
     title: "Select your Inverter type",
     description: "Choose your brand and connect in minutes.",
-    image: "/images/how_it_works_1.png",
+    image: "/images/how_it_works_1.jpg",
   },
   {
     title: "Connect your Inverter",
     description:
       "Securely link your inverter to Energy IQ. It takes less than 5 min.",
-    image: "/images/how_it_works_2.png",
+    image: "/images/how_it_works_2.jpg",
   },
   {
     title: "Move to Dashboard",
     description:
       "Once connected, everything comes into one clean dashboard, so you stop switching between apps.",
-    image: "/images/how_it_works_3.png",
+    image: "/images/how_it_works_3.jpg",
   },
 ] as const;
 
