@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { Logo } from "../ui/logo";
 import { cn } from "@/lib/utils";
+import { NAV_LINKS, VALID_PATHS } from "@/constants/navlinks";
+import { useAuthStore } from "@/stores/auth-store";
+import { useAuthActions } from "@/hooks/use-auth-actions";
+import { useMounted } from "@/hooks/use-mounted";
+import { UserAvatar, UserDropdown } from "./nav-user-menu";
+import { LogOut } from "lucide-react";
 
 const IconMenu = ({ className }: { className?: string }) => (
   <svg
@@ -43,33 +49,42 @@ const IconX = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const links = [
-  { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/how-it-works" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Faq", href: "/#faq" },
-  { label: "About Us", href: "/about" },
-];
-
-const validPaths = new Set(["/", "/how-it-works", "/pricing", "/about"]);
-
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("Features");
+  const mounted = useMounted();
   const pathname = usePathname();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user, isAuthenticated } = useAuthStore();
+  const { logout } = useAuthActions();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout(() => {
+      setDropdownOpen(false);
+      setOpen(false);
+    });
+  };
 
   const activeLabel = useMemo(() => {
-    if (!validPaths.has(pathname)) {
-      return null;
-    }
+    const matchedLink = NAV_LINKS.find((link) => link.href === pathname);
+    if (matchedLink) return matchedLink.label;
 
-    if (pathname === "/about") {
-      return "About Us";
-    }
-
-    if (pathname === "/") {
-      return selectedLabel;
-    }
+    if (!VALID_PATHS.has(pathname)) return null;
 
     return selectedLabel;
   }, [pathname, selectedLabel]);
@@ -92,8 +107,13 @@ export function Navbar() {
         const element = document.getElementById(section.id);
         if (element) {
           const rect = element.getBoundingClientRect();
-          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-            setSelectedLabel((prev) => (prev !== section.label ? section.label : prev));
+          if (
+            rect.top <= window.innerHeight / 2 &&
+            rect.bottom >= window.innerHeight / 2
+          ) {
+            setSelectedLabel((prev) =>
+              prev !== section.label ? section.label : prev,
+            );
           }
         }
       }
@@ -111,7 +131,7 @@ export function Navbar() {
         <Logo size="md" />
 
         <ul className="hidden items-center gap-8 md:flex">
-          {links.map((l) => {
+          {NAV_LINKS.map((l) => {
             const isActive = activeLabel === l.label;
 
             return (
@@ -134,20 +154,32 @@ export function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button
-            variant="outline"
-            className="border-foreground/20 text-foreground hover:bg-background/90 h-10 rounded-md px-6 font-medium"
-            asChild
-          >
-            <Link href="/login">Sign In</Link>
-          </Button>
+          {mounted && isAuthenticated && user ? (
+            <UserDropdown
+              user={user}
+              isOpen={dropdownOpen}
+              onToggle={() => setDropdownOpen(!dropdownOpen)}
+              onLogout={handleLogout}
+              dropdownRef={dropdownRef}
+            />
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                className="border-foreground/20 text-foreground hover:bg-background/90 h-10 rounded-md px-6 font-medium"
+                asChild
+              >
+                <Link href="/login">Sign In</Link>
+              </Button>
 
-          <Button
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/90 h-10 rounded-md px-5 font-medium"
-            asChild
-          >
-            <Link href="/signup">Get Started</Link>
-          </Button>
+              <Button
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 h-10 rounded-md px-5 font-medium"
+                asChild
+              >
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <Button
@@ -168,12 +200,12 @@ export function Navbar() {
       <div
         className={cn(
           "border-border bg-background overflow-hidden border-t transition-all duration-300 md:hidden",
-          open ? "max-h-125" : "max-h-0",
+          open ? "max-h-150" : "max-h-0",
         )}
       >
         <div className="flex flex-col gap-6 px-4 py-6">
           <ul className="flex flex-col items-center gap-2 text-center">
-            {links.map((l) => (
+            {NAV_LINKS.map((l) => (
               <li key={l.label} className="w-full">
                 <Link
                   href={l.href}
@@ -194,22 +226,49 @@ export function Navbar() {
             ))}
           </ul>
 
-          <Button
-            variant="outline"
-            className="border-foreground/20 text-foreground hover:bg-muted/30 h-11 w-full rounded-md font-medium justify-center"
-            asChild
-            onClick={() => setOpen(false)}
-          >
-            <Link href="/login">Sign In</Link>
-          </Button>
+          {mounted && isAuthenticated && user ? (
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/dashboard"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-lg bg-muted/30 p-3"
+              >
+                <UserAvatar user={user} />
+                <div className="flex flex-col text-left">
+                  <span className="text-foreground text-sm font-semibold">
+                    {user.firstName} {user.lastName}
+                  </span>
+                  <span className="text-foreground/60 text-xs">{user.email}</span>
+                </div>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-3 rounded-lg p-3 text-sm font-medium transition-colors cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                className="border-foreground/20 text-foreground hover:bg-muted/30 h-11 w-full rounded-md font-medium justify-center"
+                asChild
+                onClick={() => setOpen(false)}
+              >
+                <Link href="/login">Sign In</Link>
+              </Button>
 
-          <Button
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/90 h-11 w-full rounded-md font-medium justify-center"
-            asChild
-            onClick={() => setOpen(false)}
-          >
-            <Link href="/signup">Get Started</Link>
-          </Button>
+              <Button
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 h-11 w-full rounded-md font-medium justify-center"
+                asChild
+                onClick={() => setOpen(false)}
+              >
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

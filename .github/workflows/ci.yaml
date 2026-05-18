@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - dev
+      - staging
+      - main
   workflow_dispatch:
 
 permissions:
