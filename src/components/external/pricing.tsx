@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, type Variants } from "motion/react";
 
 type BillingPeriod = "monthly" | "yearly";
 
@@ -82,18 +83,52 @@ const pricingTiers: PricingTier[] = [
   },
 ];
 
+const containerVariants: Variants = {
+  hidden: {
+    opacity: 0,
+  },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
+
+const cardVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 30,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
 export function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
 
   return (
     <section className="w-full bg-white px-4 py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-12 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
+        >
           <h2 className="text-title1 mx-auto w-full max-w-180 leading-tight font-semibold lg:text-5xl">
-            Start free. <br /> <span className="text-[#E08A1E]">Upgrade</span>{" "}
+            Start free. <br /> <span className="text-primary">Upgrade</span>
             when it pays for itself.
           </h2>
-        </div>
+        </motion.div>
 
         <div className="mb-12 flex justify-center">
           <button
@@ -120,14 +155,26 @@ export function PricingSection() {
           </button>
         </div>
 
-        <div className="mx-auto grid w-full max-w-240 grid-cols-1 items-center gap-6 md:grid-cols-3">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto grid w-full max-w-240 grid-cols-1 items-center gap-6 md:grid-cols-3"
+        >
           {pricingTiers.map((tier) => (
-            <div
+            <motion.div
               key={tier.id}
-              className={`flex flex-col overflow-hidden rounded-3xl p-8 transition-all md:min-h-129.75 ${
+              variants={cardVariants}
+              whileHover={{
+                y: -8,
+                scale: 1.02,
+                transition: { duration: 0.2 },
+              }}
+              className={`flex flex-col overflow-hidden rounded-3xl p-8 transition-all md:min-h-[520px] ${
                 tier.highlighted
                   ? "bg-[#1a2332] text-white shadow-2xl ring-2 ring-transparent hover:ring-[#E08A1E]"
-                  : "border border-[#E7E7E7] bg-[#FDFDFD] shadow-none hover:shadow-md"
+                  : "border border-[#E7E7E7] bg-[#FDFDFD] hover:shadow-md"
               }`}
             >
               {tier.badge && (
@@ -206,9 +253,9 @@ export function PricingSection() {
                   {tier.cta}
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

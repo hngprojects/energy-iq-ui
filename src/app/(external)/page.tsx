@@ -5,6 +5,7 @@ import { PricingSection } from "@/components/external/pricing";
 import { RequestDemo } from "@/components/external/request-demo";
 import { Services } from "@/components/external/services";
 import { TestimonialsSection } from "@/components/external/testimonial";
+import { HowItWorksSection } from "@/components/external/how-it-works-section";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <section id="features" className="w-full px-6">
         <WorksWith />
         <Services />
+        <HowItWorksSection />
       </section>
       <RequestDemo />
       <TestimonialsSection />

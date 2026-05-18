@@ -59,17 +59,17 @@ export const Services = () => {
     {
       title: "AI Energy Agent",
       description: "Ask questions in plain english",
-      image: "/images/services_3.png",
+      image: "/images/services_3.jpg",
     },
     {
       title: "Naira Savings Tracker",
       description: "Track daily savings vs diesel payback",
-      image: "/images/services_2.png",
+      image: "/images/services_2.jpg",
     },
     {
       title: "Whatsapp Native Alerts",
       description: "GetAlerts on battery and panel fault",
-      image: "/images/services_1.png",
+      image: "/images/services_1.jpg",
     },
   ];
 
@@ -87,7 +87,10 @@ export const Services = () => {
             Everything your <br />
             <span className="text-primary">Energy</span> System Needs
           </h2>
-          <Button size="lg" className="text-secondary px-5 py-5">
+          <Button
+            size="lg"
+            className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold"
+          >
             Services
           </Button>
         </motion.div>

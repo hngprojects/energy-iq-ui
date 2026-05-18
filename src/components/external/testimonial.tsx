@@ -60,11 +60,7 @@ const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => (
   >
     <div className="mb-6 flex">
       {Array.from({ length: testimonial.rating }).map((_, i) => (
-        <Star
-          key={i}
-          size={18}
-          className="fill-primary text-primary"
-        />
+        <Star key={i} size={18} className="fill-primary text-primary" />
       ))}
     </div>
 
@@ -144,9 +140,9 @@ export function TestimonialsSection() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-12">
           <h2 className="mb-1 text-3xl leading-tight font-bold md:text-5xl">
-            Meet the companies
+            Trusted by Installers.
             <br />
-            <span className="text-primary">Leveling</span> up with EnergyIQ
+            <span className="text-primary">Relied</span> on by Businesses.
           </h2>
         </div>
       </div>

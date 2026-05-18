@@ -4,8 +4,16 @@ import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuthStore } from "@/stores/auth-store";
+import { useMounted } from "@/hooks/use-mounted";
 
 export function Hero() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const mounted = useMounted();
+
+  const buttonText = mounted && isAuthenticated ? "Continue to Dashboard" : "Get Started";
+  const buttonHref = mounted && isAuthenticated ? "/dashboard" : "/signup";
+
   return (
     <section className="w-full px-4 pt-2 pb-10 md:px-8 md:pt-4 md:pb-16">
       <div className="mx-auto max-w-7xl">
@@ -42,16 +50,10 @@ export function Hero() {
                 <Button
                   size="lg"
                   className="bg-primary text-foreground hover:bg-primary/80 h-11 rounded-md px-7 font-medium"
+                  asChild
                 >
-                  <Link href="/signup">Get Started</Link>
+                  <Link href={buttonHref}>{buttonText}</Link>
                 </Button>
-
-                {/* <Button
-                  size="lg"
-                  className="bg-primary text-foreground hover:bg-primary/90 hidden h-12 rounded-md px-7 font-medium md:inline-flex"
-                >
-                  <Link href="/login">Contact Us</Link>
-                </Button> */}
               </div>
             </motion.div>
 
