@@ -30,9 +30,9 @@ const footerLinks = [
   {
     title: "Download",
     links: [
-      { name: "iOS", href: "#" },
-      { name: "Android", href: "#" },
-      { name: "Windows", href: "#" },
+      { name: "iOS", href: "/coming-soon" },
+      { name: "Android", href: "/coming-soon" },
+      { name: "Windows", href: "/coming-soon" },
     ],
   },
 ];
