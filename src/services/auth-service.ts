@@ -113,7 +113,7 @@ export const AuthService = {
     );
   },
 
-  resetPassword: async (data: { token: string; password: string }) => {
+  resetPassword: async (data: { token: string; password: string; email?: string }) => {
     return apiFetch<{ message: string }>(
       "auth/reset-password",
       {
