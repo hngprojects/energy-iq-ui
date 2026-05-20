@@ -25,13 +25,13 @@ export const registerSchema = z.object({
     .string()
     .trim()
     .min(2, "First name must be at least 2 characters")
-    .max(255, "First name must be at most 255 characters")
+    .max(40, "First name must be at most 40 characters")
     .regex(/^[\p{L}]+(?:[ '-][\p{L}]+){0,2}$/u, "Names can only contain letters, spaces, hyphens, or apostrophes"),
   lastName: z
     .string()
     .trim()
     .min(2, "Last name must be at least 2 characters")
-    .max(255, "Last name must be at most 255 characters")
+    .max(40, "Last name must be at most 40 characters")
     .regex(/^[\p{L}]+(?:[ '-][\p{L}]+){0,2}$/u, "Names can only contain letters, spaces, hyphens, or apostrophes"),
 });
 
