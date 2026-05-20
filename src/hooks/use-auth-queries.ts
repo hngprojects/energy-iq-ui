@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { LoginFormValues } from "@/lib/schemas/auth";
 
 type ErrorWithMessage = {
   message?: string;
@@ -28,13 +29,14 @@ export const useAuthQueries = () => {
 
   const useLogin = () =>
     useMutation({
-      mutationFn: AuthService.login,
-      onSuccess: (data) => {
+      mutationFn: (variables: LoginFormValues & { rememberMe?: boolean }) =>
+        AuthService.login({ email: variables.email, password: variables.password }),
+      onSuccess: (data, variables) => {
         const token = data.accessToken;
         const user = data.user;
         const refreshToken = data.refreshToken;
 
-        setAuth(user, token, refreshToken);
+        setAuth(user, token, refreshToken, variables.rememberMe ?? false);
         localStorage.removeItem("temp_email");
         toast.success("Welcome back!", {
           duration: 5000,
