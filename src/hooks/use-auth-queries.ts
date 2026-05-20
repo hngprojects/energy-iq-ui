@@ -67,10 +67,12 @@ export const useAuthQueries = () => {
       },
       onError: (error: unknown) => {
         const message = getErrorMessage(error, "The provided email or password is incorrect");
-        const finalMessage =
-          message === "We couldn't find an account matching that email address."
-            ? "The provided email or password is incorrect"
-            : message;
+        const safeMessages = new Set([
+          "Too many attempts. Please try again later.",
+        ]);
+        const finalMessage = safeMessages.has(message)
+          ? message
+          : "The provided email or password is incorrect";
 
         toast.error(finalMessage, {
           duration: 5000,

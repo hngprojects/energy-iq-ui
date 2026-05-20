@@ -48,7 +48,15 @@ const resolveRequestUrl = (path: string, proxy?: boolean): string => {
 };
 
 const isAuthEndpoint = (path: string): boolean => {
-  const normalized = path.replace(/^\/+/, "");
+  let normalized = path.replace(/^\/+/, "");
+  try {
+    const asUrl = new URL(path, "http://localhost");
+    normalized = asUrl.pathname.replace(/^\/+/, "");
+    if (normalized.startsWith("api/proxy/")) {
+      normalized = normalized.replace(/^api\/proxy\//, "");
+    }
+  } catch {
+  }
   return normalized === "auth/login" || normalized === "auth/forgot-password";
 };
 

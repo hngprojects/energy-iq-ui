@@ -12,7 +12,7 @@ export const passwordValidation = z
   );
 
 export const loginSchema = z.object({
-  email: z.string().min(1, "The provided email or password is incorrect"),
+  email: z.string().trim().min(1, "The provided email or password is incorrect"),
   password: z
     .string()
     .min(1, "The provided email or password is incorrect")
