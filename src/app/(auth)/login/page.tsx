@@ -1,17 +1,23 @@
 "use client";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { AuthLoginForm } from "@/components/auth/auth-login-form";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function LoginPage() {
-  const { setTempEmail } = useAuthStore();
+  const { setTempEmail, isAuthenticated, token } = useAuthStore();
+  const router = useRouter();
 
   useEffect(() => {
+    if (isAuthenticated && token) {
+      router.replace("/dashboard");
+      return;
+    }
     setTempEmail(null);
     localStorage.removeItem("temp_email");
-  }, [setTempEmail]);
+  }, [isAuthenticated, token, router, setTempEmail]);
 
   return (
     <AuthWrapper>
