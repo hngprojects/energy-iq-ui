@@ -54,7 +54,7 @@ export default function NewChatPage() {
   };
 
   return (
-    <div className="flex h-full w-full  flex-col items-center justify-center bg-background px-6 py-12 text-foreground">
+    <div className="flex min-h-[calc(100vh-70px)] w-full flex-col items-center justify-start md:justify-center bg-background px-6 py-8 md:py-12 text-foreground overflow-y-auto">
       <div className="flex w-full max-w-7xl flex-col items-center text-center">
         <div className="mb-6 flex h-16 w-16 items-center justify-center">
           <Image

@@ -96,7 +96,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   };
 
   return (
-    
     <div className="flex h-[calc(100vh-64px)] lg:h-[calc(100vh-70px)] w-full flex-col overflow-hidden bg-background text-foreground">
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
         <button
