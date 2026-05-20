@@ -109,11 +109,17 @@ export async function apiFetch<TResponse>(
     if (err instanceof AxiosError) {
       const status = err.response?.status ?? 500;
 
-      if (
-        status === 401 &&
-        typeof window !== "undefined" &&
-        !path.includes("/auth/login")
-      ) {
+      const AUTH_PUBLIC_PATHS = [
+        "/auth/login",
+        "/auth/register",
+        "/auth/verify-email",
+        "/auth/resend-email-otp",
+        "/auth/forgot-password",
+        "/auth/reset-password",
+      ];
+      const isPublicAuthPath = AUTH_PUBLIC_PATHS.some((p) => path.includes(p));
+
+      if (status === 401 && typeof window !== "undefined" && !isPublicAuthPath) {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
         window.location.replace("/login");
