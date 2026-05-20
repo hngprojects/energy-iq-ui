@@ -54,7 +54,7 @@ export function Logo({
       {showText && (
         <span
           className={cn(
-            "font-display tracking-tight text-[#111827]",
+            "font-display tracking-tight text-dark-text",
             sizes[size].text,
             textClassName,
           )}

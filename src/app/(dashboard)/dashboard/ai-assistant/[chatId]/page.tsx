@@ -1,0 +1,271 @@
+"use client";
+
+import { useState, useRef, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Battery,
+  Download,
+  Mic,
+  Plus,
+  Send,
+  Sun,
+  Zap,
+} from "lucide-react";
+import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  MOCK_AI_CHATS,
+  getMockAIResponse,
+  Message,
+} from "@/lib/mocks/ai-chats";
+import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
+
+interface ChatDetailPageProps {
+  params: Promise<{ chatId: string }>;
+}
+
+export default function ChatDetailPage({ params }: ChatDetailPageProps) {
+  const router = useRouter();
+  const resolvedParams = use(params);
+
+  const chatSession = MOCK_AI_CHATS[resolvedParams.chatId] ?? {
+    title: "New chat",
+    dateLabel: "",
+    iconType: "default" as const,
+    messages: [] as Message[],
+  };
+
+  const [messages, setMessages] = useState<Message[]>(chatSession.messages);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const resetComposer = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const wrapper = el.parentElement?.parentElement;
+    if (wrapper) {
+      wrapper.classList.remove("items-end");
+      wrapper.classList.add("items-center");
+    }
+  };
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: text,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      userInitials: "AA",
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    resetComposer();
+    setLoading(true);
+
+    try {
+      const simulatedAI = await getMockAIResponse(text);
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "ai",
+        content: simulatedAI.content || "Processing complete.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const renderHeaderIcon = () => {
+    switch (chatSession.iconType) {
+      case "solar":
+        return <Sun className="h-4 w-4 text-amber-500" />;
+      case "grid":
+        return <Zap className="h-4 w-4 text-blue-500" />;
+      default:
+        return <Battery className="h-4 w-4 text-destructive" />;
+    }
+  };
+
+  return (
+    <div className="relative flex h-[calc(100vh-130px)] md:h-[calc(100vh-140px)] w-full flex-col overflow-hidden bg-background text-foreground">
+      {/* ── HEADER ── */}
+      <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Go back"
+          aria-label="Go back"
+          onClick={() => router.push("/dashboard/ai-assistant")}
+          className="h-8 w-8 text-muted-foreground hover:bg-muted"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+          {renderHeaderIcon()}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">
+            {chatSession.title}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {chatSession.dateLabel} &nbsp;·&nbsp; {messages.length} messages
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Download"
+              aria-label="Download"
+              className="h-9 w-9 text-muted-foreground hover:bg-muted"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+
+            <ChatActionsMenu
+              chatId={resolvedParams.chatId}
+              triggerClassName="h-9 w-9"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── SCROLLABLE CHAT BOX ── */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">Today</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="flex flex-col gap-5">
+          {messages.map((msg) => (
+            <ChatMessageBubble key={msg.id} message={msg} />
+          ))}
+
+          {loading && (
+            <div className="flex items-end gap-3">
+              <div className="rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm">
+                <div className="flex gap-1">
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:0ms]" />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:150ms]" />
+                  <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:300ms]" />
+                </div>
+              </div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                AI
+              </div>
+            </div>
+          )}
+        </div>
+        <div ref={bottomRef} />
+      </div>
+
+      {/* ── INPUT CONTROL FOOTER ── */}
+      <div className="shrink-0 border-t border-border bg-card px-6 py-4">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="Attach"
+            aria-label="Attach"
+            className="h-7 w-7 shrink-0 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+
+          <div className="flex-1 flex items-center min-h-8">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask anything about your energy system"
+              rows={1}
+              className={cn(
+                "w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none py-1 h-auto",
+                "max-h-32 leading-5 shadow-none border-0 p-0 min-h-0 focus-visible:ring-0",
+              )}
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+
+                const parent = el.parentElement;
+                if (parent) {
+                  if (el.scrollHeight > 36) {
+                    parent.parentElement?.classList.remove("items-center");
+                    parent.parentElement?.classList.add("items-end");
+                  } else {
+                    parent.parentElement?.classList.remove("items-end");
+                    parent.parentElement?.classList.add("items-center");
+                  }
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2 self-end mb-px md:self-auto md:mb-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="Voice input"
+              aria-label="Toggle microphone"
+              className="h-8 w-8 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              title="Send message"
+              aria-label="Send message"
+              onClick={handleSend}
+              disabled={!input.trim() || loading}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors shadow-none border-0 p-0",
+                input.trim() && !loading
+                  ? "bg-secondary text-secondary-foreground hover:opacity-90"
+                  : "bg-muted text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <Send className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
