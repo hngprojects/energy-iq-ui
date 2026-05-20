@@ -6,6 +6,7 @@ export const passwordValidation = z
     8,
     "Password is short. Minimum of least 8 characters and a special key",
   )
+  .max(72, "Password must be at most 72 characters")
   .regex(
     /[!@#$%^&*(),.?":{}|<>]/,
     "Password is short. Minimum of least 8 characters and a special key",
@@ -13,7 +14,10 @@ export const passwordValidation = z
 
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "The provided email or password is incorrect")
+    .max(72, "Password must be at most 72 characters"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

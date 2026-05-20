@@ -42,7 +42,7 @@ export const useAuthQueries = () => {
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Invalid email or password"), {
+        toast.error(getErrorMessage(error, "The provided email or password is incorrect"), {
           duration: 5000,
         });
       },
