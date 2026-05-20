@@ -8,11 +8,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "@/lib/schemas/auth";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthService } from "@/services/auth-service";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function AuthLoginForm() {
   const { useLogin } = useAuthQueries();
   const loginMutation = useLogin();
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     register,
@@ -39,23 +40,14 @@ export function AuthLoginForm() {
   });
   const isFormFilled = email.length > 0 && password.length > 0;
 
-  const isLoginError = loginMutation.isError || !!errors.password;
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isPasswordValid = password.length >= 8;
-  const isBothValid = isEmailValid && isPasswordValid && !isLoginError;
-
   let emailStatusColor: "green" | "red" | undefined = undefined;
   if (errors.email) {
     emailStatusColor = "red";
-  } else if (isBothValid) {
-    emailStatusColor = "green";
   }
 
   let passwordStatusColor: "red" | "green" | undefined = undefined;
-  if (isLoginError) {
+  if (loginMutation.isError || (errors.password && errors.password.type === "too_big")) {
     passwordStatusColor = "red";
-  } else if (isBothValid) {
-    passwordStatusColor = "green";
   }
 
   useEffect(() => {
@@ -65,11 +57,14 @@ export function AuthLoginForm() {
   }, [email, password, loginMutation]);
 
   const onSubmit = (data: LoginFormValues) => {
-    loginMutation.mutate(data);
+    loginMutation.mutate({ ...data, rememberMe });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-4 md:space-y-6"
+    >
       <div className="flex flex-col gap-2">
         <div className="space-y-3 md:space-y-4">
           <AuthInput
@@ -87,9 +82,9 @@ export function AuthLoginForm() {
             id="password"
             placeholder="************"
             type="password"
-            error={errors.password?.message}
+            error={errors.password?.type === "too_big" ? errors.password.message : undefined}
             statusColor={passwordStatusColor}
-            hideErrorMessage={true}
+            hideErrorMessage={errors.password?.type !== "too_big"}
             {...register("password")}
           />
         </div>
@@ -99,6 +94,8 @@ export function AuthLoginForm() {
             <input
               type="checkbox"
               id="remember"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
               className="border-amber-30 checked:bg-amber-30 relative h-4 w-4 cursor-pointer appearance-none rounded-sm border transition-colors before:absolute before:inset-0 before:flex before:items-center before:justify-center before:text-[10px] before:font-bold before:text-white before:content-[''] checked:before:content-['✔'] focus:outline-none"
             />
             <label

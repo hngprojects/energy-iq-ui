@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { ApiError } from "./error";
 // import { env as serverEnv } from "@/env/server";
 import { useAuthStore } from "@/stores/auth-store";
+import { AUTH_PUBLIC_PATHS } from "@/constants/auth";
 
 const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
 const isInternalApiPath = (path: string): boolean => path.startsWith("/api/");
@@ -45,6 +46,14 @@ const resolveRequestUrl = (path: string, proxy?: boolean): string => {
   }
 
   return normalizeBackendPath(path);
+};
+
+const isAuthEndpoint = (path: string): boolean => {
+  const normalized = path.replace(/^\/+/, "").replace(/^api\/proxy\//, "");
+  return AUTH_PUBLIC_PATHS.some((p) => {
+    const trimmedP = p.replace(/^\/+/, "");
+    return normalized === trimmedP || normalized.startsWith(trimmedP + "/");
+  });
 };
 
 export async function apiFetch<TResponse>(
@@ -112,7 +121,7 @@ export async function apiFetch<TResponse>(
       if (
         status === 401 &&
         typeof window !== "undefined" &&
-        !path.includes("/auth/login")
+        !isAuthEndpoint(path)
       ) {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
