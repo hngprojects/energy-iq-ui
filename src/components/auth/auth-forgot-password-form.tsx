@@ -51,9 +51,7 @@ export function AuthForgotPasswordForm({
     forgotPassword(data, {
       onSuccess: () => {
         localStorage.setItem("reset_email", data.email);
-
-        console.log("Email saved for resend:", data.email);
-
+        sessionStorage.setItem("reset_email", data.email);
         onSuccess?.();
       },
     });
