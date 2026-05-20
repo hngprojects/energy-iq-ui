@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { ApiError } from "./error";
 // import { env as serverEnv } from "@/env/server";
 import { useAuthStore } from "@/stores/auth-store";
+import { AUTH_PUBLIC_PATHS } from "@/constants/auth";
 
 const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
 const isInternalApiPath = (path: string): boolean => path.startsWith("/api/");
@@ -57,7 +58,10 @@ const isAuthEndpoint = (path: string): boolean => {
     }
   } catch {
   }
-  return normalized === "auth/login" || normalized === "auth/forgot-password";
+  return AUTH_PUBLIC_PATHS.some((p) => {
+    const trimmedP = p.replace(/^\/+/, "");
+    return normalized === trimmedP;
+  });
 };
 
 export async function apiFetch<TResponse>(
