@@ -1,4 +1,5 @@
-import { NextResponse, type NextProxy } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextProxy } from "next/server";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
@@ -13,6 +14,18 @@ export const proxy: NextProxy = (request) => {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);
+
+  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    const hasSession = request.cookies.has("auth_session");
+    if (!hasSession) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set(
+        "redirect",
+        request.nextUrl.pathname + request.nextUrl.search,
+      );
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   const response = NextResponse.next({
     request: { headers: requestHeaders },
