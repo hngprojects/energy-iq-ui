@@ -9,12 +9,14 @@ export const contactSchema = z.object({
     .email("Enter a valid email address"),
   phoneNumber: z
     .string()
-    .max(20, "Phone number must be at most 20 characters")
-    .optional()
-    .refine((val) => !val || /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/.test(val), {
-      message: "Enter a valid phone number",
-    }),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+    .trim()
+    .min(1, "Please enter a valid phone number")
+    .regex(/^\+?\d{7,20}$/, "Please enter a valid phone number"),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Message must be at least 10 characters")
+    .max(2000, "Message must be at most 2000 characters"),
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;
