@@ -11,15 +11,37 @@ type ErrorWithMessage = {
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
+  let message = fallback;
+
   if (error instanceof Error) {
-    return error.message;
+    message = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    message = (error as ErrorWithMessage).message ?? fallback;
   }
 
-  if (typeof error === "object" && error !== null && "message" in error) {
-    return (error as ErrorWithMessage).message ?? fallback;
+  const lowercaseMessage = message.toLowerCase();
+
+  if (lowercaseMessage === "the request conflicts with the current resource state") {
+    return "This email is already registered";
   }
 
-  return fallback;
+  if (lowercaseMessage.includes("too many requests")) {
+    return "Too many attempts. Please try again later.";
+  }
+
+  if (
+    lowercaseMessage === "authentication is required or has failed" ||
+    lowercaseMessage === "unauthorized" ||
+    lowercaseMessage === "user not found"
+  ) {
+    return "We couldn't find an account matching that email address.";
+  }
+
+  if (lowercaseMessage === "password must be longer than or equal to 8 characters") {
+    return "The provided email or password is incorrect";
+  }
+
+  return message;
 };
 
 export const useAuthQueries = () => {
@@ -44,7 +66,15 @@ export const useAuthQueries = () => {
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Invalid email or password"), {
+        const message = getErrorMessage(error, "The provided email or password is incorrect");
+        const safeMessages = new Set([
+          "Too many attempts. Please try again later.",
+        ]);
+        const finalMessage = safeMessages.has(message)
+          ? message
+          : "The provided email or password is incorrect";
+
+        toast.error(finalMessage, {
           duration: 5000,
         });
       },
@@ -150,3 +180,4 @@ export const useAuthQueries = () => {
     useResetPassword,
   };
 };
+
