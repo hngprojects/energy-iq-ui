@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronDown, ChevronUp, Mic, Plus, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SuggestionCard {
   title: string;
@@ -77,62 +79,80 @@ export default function NewChatPage() {
         </p>
 
         <div className="mt-8 w-full rounded-xl border border-border bg-card p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
-          <div className="flex items-end gap-3 px-3 py-2">
-            <button
+          <div className="flex items-center gap-3 px-3 py-1.5">
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               title="Add prompt"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:text-foreground"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:text-foreground hover:bg-transparent"
             >
               <Plus className="h-5 w-5" />
-            </button>
+            </Button>
 
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your energy system"
-              rows={1}
-              className={cn(
-                "flex-1 resize-none bg-transparent py-1 text-sm text-foreground placeholder-muted-foreground outline-none",
-                "max-h-32 min-h-6 leading-5",
-              )}
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = `${el.scrollHeight}px`;
-              }}
-            />
+            <div className="flex-1 flex items-center min-h-9">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask anything about your energy system"
+                rows={1}
+                className={cn(
+                  "w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none py-1 h-auto",
+                  "max-h-32 min-h-0 leading-5 border-0 p-0 shadow-none focus-visible:ring-0",
+                )}
+                onInput={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
 
-            <div className="flex shrink-0 items-center gap-2">
-              <button
+                  const parent = el.parentElement;
+                  if (parent) {
+                    if (el.scrollHeight > 40) {
+                      parent.parentElement?.classList.remove("items-center");
+                      parent.parentElement?.classList.add("items-end");
+                    } else {
+                      parent.parentElement?.classList.remove("items-end");
+                      parent.parentElement?.classList.add("items-center");
+                    }
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2 self-end mb-0.5 md:self-auto md:mb-0">
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 title="Record voice message"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:text-foreground hover:bg-transparent"
               >
                 <Mic className="h-4 w-4" />
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 title="Send message"
                 onClick={() => handleStartConversation(input)}
                 disabled={!input.trim()}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors border-0 p-0 shadow-none",
                   input.trim()
-                    ? "bg-foreground text-background hover:opacity-90"
-                    : "bg-muted text-muted-foreground",
+                    ? "bg-foreground text-background hover:opacity-90 hover:bg-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted",
                 )}
               >
                 <Send className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         <div className="mt-10 w-full text-left">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setShowSuggestions(!showSuggestions)}
-            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent p-0 h-auto"
           >
             <span>Suggested Questions</span>
             {showSuggestions ? (
@@ -140,23 +160,24 @@ export default function NewChatPage() {
             ) : (
               <ChevronDown className="h-3.5 w-3.5" />
             )}
-          </button>
+          </Button>
 
           {showSuggestions && (
             <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {SUGGESTIONS.map((card, i) => (
-                <button
+                <Button
                   key={i}
+                  variant="outline"
                   onClick={() => handleStartConversation(card.promptText)}
-                  className="flex flex-col text-left rounded-xl border border-border cursor-pointer bg-card p-6 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20"
+                  className="flex flex-col items-start h-auto text-left rounded-xl border border-border cursor-pointer bg-card p-6 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20 whitespace-normal"
                 >
                   <span className="text-sm font-semibold text-foreground line-clamp-2">
                     {card.title}
                   </span>
-                  <span className="mt-1.5 text-xs text-muted-foreground line-clamp-2">
+                  <span className="mt-1.5 text-xs text-muted-foreground line-clamp-2 font-normal">
                     {card.description}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           )}

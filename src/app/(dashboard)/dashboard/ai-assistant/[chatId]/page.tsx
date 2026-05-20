@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   MOCK_AI_CHATS,
   getMockAIResponse,
@@ -97,16 +99,17 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   return (
     <div className="relative flex h-[calc(100vh-130px)] md:h-[calc(100vh-140px)] w-full flex-col overflow-hidden bg-background text-foreground">
-      {" "}
       {/* ── HEADER ── */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           title="Go back"
           onClick={() => router.push("/dashboard/ai-assistant")}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted"
+          className="h-8 w-8 text-muted-foreground hover:bg-muted"
         >
           <ArrowLeft className="h-4 w-4" />
-        </button>
+        </Button>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
           {renderHeaderIcon()}
         </div>
@@ -119,20 +122,25 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             title="Download"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted"
+            className="h-9 w-9 text-muted-foreground hover:bg-muted"
           >
             <Download className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             title="More options"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted"
+            className="h-9 w-9 text-muted-foreground hover:bg-muted"
           >
             <MoreVertical className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </div>
+
       {/* ── SCROLLABLE CHAT BOX ── */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="mb-6 flex items-center gap-3">
@@ -163,54 +171,75 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         </div>
         <div ref={bottomRef} />
       </div>
+
       {/* ── INPUT CONTROL FOOTER ── */}
       <div className="shrink-0 border-t border-border bg-card px-6 py-4">
-        <div className="flex items-end gap-3 rounded-xl border border-border bg-muted/50 px-4 py-3">
-          <button
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             title="Attach"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:text-foreground"
+            className="h-7 w-7 shrink-0 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
           >
             <Plus className="h-4 w-4" />
-          </button>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask anything about your energy system"
-            rows={1}
-            className={cn(
-              "flex-1 resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none h-auto",
-              "max-h-32 leading-5",
-            )}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              el.style.height = "auto";
-              el.style.height = `${el.scrollHeight}px`;
-            }}
-          />
-          <div className="flex shrink-0 items-center gap-2">
-            <button
+          </Button>
+
+          <div className="flex-1 flex items-center min-h-8">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask anything about your energy system"
+              rows={1}
+              className={cn(
+                "w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none py-1 h-auto",
+                "max-h-32 leading-5 shadow-none border-0 p-0 min-h-0 focus-visible:ring-0",
+              )}
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+
+                // Handles shifting layouts for clean long paragraphs
+                const parent = el.parentElement;
+                if (parent) {
+                  if (el.scrollHeight > 36) {
+                    parent.parentElement?.classList.remove("items-center");
+                    parent.parentElement?.classList.add("items-end");
+                  } else {
+                    parent.parentElement?.classList.remove("items-end");
+                    parent.parentElement?.classList.add("items-center");
+                  }
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2 self-end mb-px md:self-auto md:mb-0">
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               title="Voice input"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:text-foreground"
+              className="h-8 w-8 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
             >
               <Mic className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               title="Send message"
               onClick={handleSend}
               disabled={!input.trim() || loading}
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors shadow-none border-0 p-0",
                 input.trim() && !loading
                   ? "bg-secondary text-secondary-foreground hover:opacity-90"
-                  : "bg-muted text-muted-foreground",
+                  : "bg-muted text-muted-foreground hover:bg-muted",
               )}
             >
               <Send className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

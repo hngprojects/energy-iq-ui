@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Battery, FileText, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type FilterType = "All" | "Solar" | "Alerts" | "Reports";
 type TagType = "Solar" | "Alert" | "Report";
@@ -175,18 +176,19 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
       {/* Filter tabs */}
       <div className="flex gap-2">
         {filters.map((f) => (
-          <button
+          <Button
             key={f}
+            variant={filter === f ? "outline" : "ghost"}
             onClick={() => setFilter(f)}
             className={cn(
-              "rounded-lg cursor-pointer px-4 py-1.5 text-sm font-medium transition-colors border",
+              "h-auto rounded-lg px-4 py-1.5 text-sm font-medium transition-colors shadow-none",
               filter === f
-                ? "border-primary text-primary bg-transparent"
+                ? "border-primary text-primary bg-transparent hover:bg-transparent hover:text-primary"
                 : "bg-muted text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800",
             )}
           >
             {f}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -224,14 +226,16 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
                         <span className="whitespace-nowrap text-xs text-muted-foreground">
                           {item.timestamp}
                         </span>
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={(e) => e.stopPropagation()}
-                          className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          className="h-7 w-7 rounded p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
                           aria-label="More options"
                           title="More options"
                         >
                           <MoreVertical className="h-4 w-4" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
