@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ChevronDown, ChevronUp, Mic, Plus, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,11 +41,8 @@ export default function NewChatPage() {
     const cleanText = text.trim();
     if (!cleanText) return;
 
-    // Directing them straight to our dynamic route layout using a fresh id string
     const newChatId = `chat-${Date.now()}`;
 
-    // You can pass the initial message text via search parameters or state managers if needed,
-    // or let it act as an entryway to the workspace view.
     router.push(`/dashboard/ai-assistant/${newChatId}`);
   };
 
@@ -56,25 +54,19 @@ export default function NewChatPage() {
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-background px-6 py-12 text-foreground">
-      <div className="flex w-full max-w-3xl flex-col items-center text-center">
-        {/* ── Center Logo / Icon Badge ─────────────────────────────────────── */}
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-8 w-8"
-          >
-            <path
-              fillRule="evenodd"
-              d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"
-              clipRule="evenodd"
-            />
-          </svg>
+    <div className="flex h-full w-full  flex-col items-center justify-center bg-background px-6 py-12 text-foreground">
+      <div className="flex w-full max-w-7xl flex-col items-center text-center">
+        <div className="mb-6 flex h-16 w-16 items-center justify-center">
+          <Image
+            src="/images/logo.svg"
+            alt="EnergyIQ Logo"
+            width={64}
+            height={64}
+            className="h-12 w-12 object-contain"
+            priority
+          />
         </div>
 
-        {/* ── Headings ─────────────────────────────────────────────────────── */}
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Ask EnergyIQ anything about <br /> your power system
         </h1>
@@ -84,12 +76,12 @@ export default function NewChatPage() {
           language.
         </p>
 
-        {/* ── Input Box UI ─────────────────────────────────────────────────── */}
         <div className="mt-8 w-full rounded-xl border border-border bg-card p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
           <div className="flex items-end gap-3 px-3 py-2">
             <button
               type="button"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+              title="Add prompt"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:text-foreground"
             >
               <Plus className="h-5 w-5" />
             </button>
@@ -102,9 +94,8 @@ export default function NewChatPage() {
               rows={1}
               className={cn(
                 "flex-1 resize-none bg-transparent py-1 text-sm text-foreground placeholder-muted-foreground outline-none",
-                "max-h-32 min-h-[24px] leading-5",
+                "max-h-32 min-h-6 leading-5",
               )}
-              style={{ height: "auto" }}
               onInput={(e) => {
                 const el = e.currentTarget;
                 el.style.height = "auto";
@@ -115,12 +106,14 @@ export default function NewChatPage() {
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                title="Record voice message"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground transition-colors hover:text-foreground"
               >
                 <Mic className="h-4 w-4" />
               </button>
               <button
                 type="button"
+                title="Send message"
                 onClick={() => handleStartConversation(input)}
                 disabled={!input.trim()}
                 className={cn(
@@ -136,7 +129,6 @@ export default function NewChatPage() {
           </div>
         </div>
 
-        {/* ── Suggested Section ────────────────────────────────────────────── */}
         <div className="mt-10 w-full text-left">
           <button
             onClick={() => setShowSuggestions(!showSuggestions)}
@@ -151,12 +143,12 @@ export default function NewChatPage() {
           </button>
 
           {showSuggestions && (
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {SUGGESTIONS.map((card, i) => (
                 <button
                   key={i}
                   onClick={() => handleStartConversation(card.promptText)}
-                  className="flex flex-col text-left rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20"
+                  className="flex flex-col text-left rounded-xl border border-border cursor-pointer bg-card p-6 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20"
                 >
                   <span className="text-sm font-semibold text-foreground line-clamp-2">
                     {card.title}

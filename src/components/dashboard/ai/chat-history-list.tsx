@@ -224,13 +224,15 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
                       <p className="truncate text-sm font-semibold text-foreground">
                         {item.title}
                       </p>
-                      <div className="flex flex-shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         <span className="whitespace-nowrap text-xs text-muted-foreground">
                           {item.timestamp}
                         </span>
                         <button
                           onClick={(e) => e.stopPropagation()}
                           className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          aria-label="More options"
+                          title="More options"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
