@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
 import {
@@ -26,6 +27,19 @@ function GoogleAuthSync() {
 
     const hashString = window.location.hash.replace(/^#/, "");
     const hashParams = new URLSearchParams(hashString);
+
+    const error =
+      searchParams.get("error") || hashParams.get("error");
+
+    if (error) {
+      window.history.replaceState(null, "", window.location.pathname);
+      toast.error(
+        "An account with this email already exists. Please sign in with your email and password.",
+        { duration: 6000 },
+      );
+      router.replace("/login");
+      return;
+    }
 
     const token =
       searchParams.get("accessToken") ||
