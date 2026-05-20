@@ -42,19 +42,20 @@ export const Footer = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleJoinWaitlist = async () => {
-    if (!email) {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
       toast.error("Please enter your email");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
     try {
-      await WaitlistService.joinWaitlist(email);
+      await WaitlistService.joinWaitlist(normalizedEmail);
       toast.success("Joined waitlist successfully!");
       setEmail("");
    } catch (error: unknown) {
@@ -67,6 +68,8 @@ export const Footer = () => {
       toast.error(message, {
         description: "Please try again later.",
       });
+      } finally {
++    setIsLoading(false);
     }
   }
 

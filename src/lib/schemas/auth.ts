@@ -12,14 +12,14 @@ export const passwordValidation = z
   );
 
 export const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().trim().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().trim().email("Please enter a valid email address"),
   password: passwordValidation,
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
@@ -28,7 +28,7 @@ export const registerSchema = z.object({
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const verifyEmailSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().email("Invalid email address"),
   otp: z.string().length(6, "OTP must be 6 digits"),
 });
 
