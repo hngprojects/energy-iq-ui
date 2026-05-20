@@ -8,7 +8,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   tempEmail: string | null;
-  setAuth: (user: User, token: string, refreshToken: string) => void;
+  setAuth: (user: User, token: string, refreshToken: string, rememberMe?: boolean) => void;
   setUser: (user: User) => void;
   setTempEmail: (email: string | null) => void;
   logout: () => void;
@@ -22,12 +22,24 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       tempEmail: null,
-      setAuth: (user, token, refreshToken) => {
+      setAuth: (user, token, refreshToken, rememberMe = false) => {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("session_active", "1");
+          if (rememberMe) {
+            localStorage.setItem("remember_me", "1");
+          } else {
+            localStorage.removeItem("remember_me");
+          }
+        }
         set({ user, token, refreshToken, isAuthenticated: true, tempEmail: null });
       },
       setUser: (user) => set({ user }),
       setTempEmail: (email) => set({ tempEmail: email }),
       logout: () => {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("session_active");
+          localStorage.removeItem("remember_me");
+        }
         set({
           user: null,
           token: null,
@@ -39,6 +51,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
+      onRehydrateStorage: () => (state) => {
+        if (typeof window === "undefined" || !state) return;
+        const rememberMe = localStorage.getItem("remember_me") === "1";
+        const sessionActive = sessionStorage.getItem("session_active") === "1";
+        if (state.isAuthenticated && !rememberMe && !sessionActive) {
+          state.logout();
+        }
+      },
     },
   ),
 );
