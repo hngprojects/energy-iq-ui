@@ -10,15 +10,19 @@ type ErrorWithMessage = {
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
+  let message = fallback;
+
   if (error instanceof Error) {
-    return error.message;
+    message = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    message = (error as ErrorWithMessage).message ?? fallback;
   }
 
-  if (typeof error === "object" && error !== null && "message" in error) {
-    return (error as ErrorWithMessage).message ?? fallback;
+  if (message === "The request conflicts with the current resource state") {
+    return "This email is already registered";
   }
 
-  return fallback;
+  return message;
 };
 
 export const useAuthQueries = () => {

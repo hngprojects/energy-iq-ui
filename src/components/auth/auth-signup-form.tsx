@@ -81,6 +81,7 @@ export function AuthSignupForm() {
             id="firstName"
             placeholder="Enter first name"
             type="text"
+            error={errors.firstName?.message}
             {...register("firstName")}
           />
           <AuthInput
@@ -88,6 +89,7 @@ export function AuthSignupForm() {
             id="lastName"
             placeholder="Enter last name"
             type="text"
+            error={errors.lastName?.message}
             {...register("lastName")}
           />
         </div>
@@ -96,6 +98,7 @@ export function AuthSignupForm() {
           id="email"
           placeholder="Enter your email address"
           type="email"
+          error={errors.email?.message}
           {...register("email")}
         />
         <AuthInput

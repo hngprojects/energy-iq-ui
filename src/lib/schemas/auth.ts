@@ -22,8 +22,14 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 export const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: passwordValidation,
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  firstName: z
+    .string()
+    .min(2, "First name must be at least 2 characters")
+    .regex(/^[A-Za-z\s'-]+$/, "Numbers are not allowed in the name field"),
+  lastName: z
+    .string()
+    .min(2, "Last name must be at least 2 characters")
+    .regex(/^[A-Za-z\s'-]+$/, "Numbers are not allowed in the name field"),
 });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
