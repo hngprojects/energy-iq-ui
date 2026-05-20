@@ -4,21 +4,44 @@ import { toast } from "sonner";
 
 import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
+import { LoginFormValues } from "@/lib/schemas/auth";
 
 type ErrorWithMessage = {
   message?: string;
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
+  let message = fallback;
+
   if (error instanceof Error) {
-    return error.message;
+    message = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    message = (error as ErrorWithMessage).message ?? fallback;
   }
 
-  if (typeof error === "object" && error !== null && "message" in error) {
-    return (error as ErrorWithMessage).message ?? fallback;
+  const lowercaseMessage = message.toLowerCase();
+
+  if (lowercaseMessage === "the request conflicts with the current resource state") {
+    return "This email is already registered";
   }
 
-  return fallback;
+  if (lowercaseMessage.includes("too many requests")) {
+    return "Too many attempts. Please try again later.";
+  }
+
+  if (
+    lowercaseMessage === "authentication is required or has failed" ||
+    lowercaseMessage === "unauthorized" ||
+    lowercaseMessage === "user not found"
+  ) {
+    return "We couldn't find an account matching that email address.";
+  }
+
+  if (lowercaseMessage === "password must be longer than or equal to 8 characters") {
+    return "The provided email or password is incorrect";
+  }
+
+  return message;
 };
 
 export const useAuthQueries = () => {
@@ -28,13 +51,14 @@ export const useAuthQueries = () => {
 
   const useLogin = () =>
     useMutation({
-      mutationFn: AuthService.login,
-      onSuccess: (data) => {
+      mutationFn: (variables: LoginFormValues & { rememberMe?: boolean }) =>
+        AuthService.login({ email: variables.email, password: variables.password }),
+      onSuccess: (data, variables) => {
         const token = data.accessToken;
         const user = data.user;
         const refreshToken = data.refreshToken;
 
-        setAuth(user, token, refreshToken);
+        setAuth(user, token, refreshToken, variables.rememberMe ?? false);
         localStorage.removeItem("temp_email");
         toast.success("Welcome back!", {
           duration: 5000,
@@ -42,7 +66,15 @@ export const useAuthQueries = () => {
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Invalid email or password"), {
+        const message = getErrorMessage(error, "The provided email or password is incorrect");
+        const safeMessages = new Set([
+          "Too many attempts. Please try again later.",
+        ]);
+        const finalMessage = safeMessages.has(message)
+          ? message
+          : "The provided email or password is incorrect";
+
+        toast.error(finalMessage, {
           duration: 5000,
         });
       },
@@ -148,3 +180,4 @@ export const useAuthQueries = () => {
     useResetPassword,
   };
 };
+
