@@ -50,7 +50,6 @@ export function AuthForgotPasswordForm({
   const onSubmit = (data: ForgotPasswordValues) => {
     forgotPassword(data, {
       onSuccess: () => {
-        localStorage.setItem("reset_email", data.email);
         sessionStorage.setItem("reset_email", data.email);
         onSuccess?.();
       },

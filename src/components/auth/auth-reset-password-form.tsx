@@ -35,10 +35,7 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
   const { mutate: resetPassword, isPending } = useResetPassword();
 
   const token = searchParams.get("token");
-  const savedEmail =
-    localStorage.getItem("reset_email") ||
-    sessionStorage.getItem("reset_email") ||
-    null;
+  const savedEmail = sessionStorage.getItem("reset_email") || null;
 
   const {
     register,
@@ -84,7 +81,6 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
     resetPassword(payload, {
       onSuccess: () => {
         setIsSuccess(true);
-        localStorage.removeItem("reset_email");
         sessionStorage.removeItem("reset_email");
         onSuccess?.();
       },
