@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 interface SuggestionCard {
   title: string;
   description: string;
-  promptText: string;
 }
 
 const SUGGESTIONS: SuggestionCard[] = [
@@ -19,18 +18,15 @@ const SUGGESTIONS: SuggestionCard[] = [
     title: "Why did my battery drain fast last night?",
     description:
       "Analyze overnight usage and identify what consumed the most power.",
-    promptText: "Why did my battery drain fast last night?",
   },
   {
     title: "Is my inverter overloaded?",
     description: "Identify dangerous load spikes and system overload periods.",
-    promptText: "Is my inverter overloaded?",
   },
   {
     title: "Are my solar panels underperforming?",
     description:
       "Detect weather impact, shading issues, or reduced solar output.",
-    promptText: "Are my solar panels underperforming?",
   },
 ];
 
@@ -38,6 +34,9 @@ export default function NewChatPage() {
   const router = useRouter();
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [isTextareaExpanded, setIsTextareaExpanded] = useState(false);
+
+  const EXPAND_THRESHOLD = 40;
 
   const handleStartConversation = (text: string) => {
     const cleanText = text.trim();
@@ -56,7 +55,8 @@ export default function NewChatPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-70px)] w-full flex-col items-center justify-start md:justify-center bg-background px-6 py-8 md:py-12 text-foreground overflow-y-auto">
+    <div className="flex h-[calc(100vh-130px)] md:h-[calc(100vh-140px)] w-full flex-col items-center justify-center bg-background px-6 text-foreground overflow-hidden">
+      {" "}
       <div className="flex w-full max-w-7xl flex-col items-center text-center">
         <div className="mb-6 flex h-16 w-16 items-center justify-center">
           <Image
@@ -64,7 +64,7 @@ export default function NewChatPage() {
             alt="EnergyIQ Logo"
             width={64}
             height={64}
-            className="h-12 w-12 object-contain"
+            className="h-10 w-10 object-contain"
             priority
           />
         </div>
@@ -79,12 +79,18 @@ export default function NewChatPage() {
         </p>
 
         <div className="mt-8 w-full rounded-xl border border-border bg-card p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
-          <div className="flex items-center gap-3 px-3 py-1.5">
+          <div
+            className={cn(
+              "flex gap-3 px-3 py-1.5",
+              isTextareaExpanded ? "items-end" : "items-center",
+            )}
+          >
+            {/* TODO: wire onClick to attach */}
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              title="Add prompt"
+              title="Attach"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:text-foreground hover:bg-transparent"
             >
               <Plus className="h-5 w-5" />
@@ -105,22 +111,13 @@ export default function NewChatPage() {
                   const el = e.currentTarget;
                   el.style.height = "auto";
                   el.style.height = `${el.scrollHeight}px`;
-
-                  const parent = el.parentElement;
-                  if (parent) {
-                    if (el.scrollHeight > 40) {
-                      parent.parentElement?.classList.remove("items-center");
-                      parent.parentElement?.classList.add("items-end");
-                    } else {
-                      parent.parentElement?.classList.remove("items-end");
-                      parent.parentElement?.classList.add("items-center");
-                    }
-                  }
+                  setIsTextareaExpanded(el.scrollHeight > EXPAND_THRESHOLD);
                 }}
               />
             </div>
 
             <div className="flex shrink-0 items-center gap-2 self-end mb-0.5 md:self-auto md:mb-0">
+              {/* TODO: wire onClick to startVoiceRecording() when voice input is implemented */}
               <Button
                 type="button"
                 variant="ghost"
@@ -168,7 +165,7 @@ export default function NewChatPage() {
                 <Button
                   key={i}
                   variant="outline"
-                  onClick={() => handleStartConversation(card.promptText)}
+                  onClick={() => handleStartConversation(card.title)}
                   className="flex flex-col items-start h-auto text-left rounded-xl border border-border cursor-pointer bg-card p-6 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20 whitespace-normal"
                 >
                   <span className="text-sm font-semibold text-foreground line-clamp-2">

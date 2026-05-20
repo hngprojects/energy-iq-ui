@@ -7,7 +7,6 @@ import {
   Battery,
   Download,
   Mic,
-  MoreVertical,
   Plus,
   Send,
   Sun,
@@ -22,6 +21,7 @@ import {
   getMockAIResponse,
   Message,
 } from "@/lib/mocks/ai-chats";
+import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
@@ -31,18 +31,33 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
   const resolvedParams = use(params);
 
-  const chatSession =
-    MOCK_AI_CHATS[resolvedParams.chatId] ||
-    MOCK_AI_CHATS["battery-critical-101"];
+  const chatSession = MOCK_AI_CHATS[resolvedParams.chatId] ?? {
+    title: "New chat",
+    dateLabel: "",
+    iconType: "default" as const,
+    messages: [] as Message[],
+  };
 
   const [messages, setMessages] = useState<Message[]>(chatSession.messages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const resetComposer = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const wrapper = el.parentElement?.parentElement;
+    if (wrapper) {
+      wrapper.classList.remove("items-end");
+      wrapper.classList.add("items-center");
+    }
+  };
 
   const handleSend = async () => {
     const text = input.trim();
@@ -61,22 +76,26 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    resetComposer();
     setLoading(true);
 
-    const simulatedAI = await getMockAIResponse(text);
+    try {
+      const simulatedAI = await getMockAIResponse(text);
 
-    const aiMsg: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "ai",
-      content: simulatedAI.content || "Processing complete.",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-    };
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "ai",
+        content: simulatedAI.content || "Processing complete.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      };
 
-    setMessages((prev) => [...prev, aiMsg]);
-    setLoading(false);
+      setMessages((prev) => [...prev, aiMsg]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -105,6 +124,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           variant="ghost"
           size="icon"
           title="Go back"
+          aria-label="Go back"
           onClick={() => router.push("/dashboard/ai-assistant")}
           className="h-8 w-8 text-muted-foreground hover:bg-muted"
         >
@@ -122,22 +142,22 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Download"
-            className="h-9 w-9 text-muted-foreground hover:bg-muted"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="More options"
-            className="h-9 w-9 text-muted-foreground hover:bg-muted"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Download"
+              aria-label="Download"
+              className="h-9 w-9 text-muted-foreground hover:bg-muted"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+
+            <ChatActionsMenu
+              chatId={resolvedParams.chatId}
+              triggerClassName="h-9 w-9"
+            />
+          </div>
         </div>
       </div>
 
@@ -180,6 +200,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             variant="ghost"
             size="icon"
             title="Attach"
+            aria-label="Attach"
             className="h-7 w-7 shrink-0 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
           >
             <Plus className="h-4 w-4" />
@@ -187,6 +208,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
           <div className="flex-1 flex items-center min-h-8">
             <Textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -201,7 +223,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 el.style.height = "auto";
                 el.style.height = `${el.scrollHeight}px`;
 
-                // Handles shifting layouts for clean long paragraphs
                 const parent = el.parentElement;
                 if (parent) {
                   if (el.scrollHeight > 36) {
@@ -222,6 +243,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               variant="ghost"
               size="icon"
               title="Voice input"
+              aria-label="Toggle microphone"
               className="h-8 w-8 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
             >
               <Mic className="h-4 w-4" />
@@ -229,6 +251,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             <Button
               type="button"
               title="Send message"
+              aria-label="Send message"
               onClick={handleSend}
               disabled={!input.trim() || loading}
               className={cn(

@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Battery, FileText, MoreVertical } from "lucide-react";
+import { AlertTriangle, Battery, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 
 type FilterType = "All" | "Solar" | "Alerts" | "Reports";
 type TagType = "Solar" | "Alert" | "Report";
@@ -28,7 +29,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
     label: "Today",
     items: [
       {
-        id: "1",
+        id: "solar-optimization-202",
         title: "Solar Output Drop – Unit 3",
         description:
           "Identified a 28% drop vs forecast. Likely inverter throttling",
@@ -37,7 +38,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
         icon: "alert",
       },
       {
-        id: "2",
+        id: "battery-critical-101",
         title: "Battery Critically Low – 3%",
         description: "Battery at 3% – recommend load shedding immediately",
         tag: "Alert",
@@ -50,7 +51,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
     label: "Yesterday",
     items: [
       {
-        id: "3",
+        id: "weekly-report-301",
         title: "Weekly Report – 28 Apr",
         description: "Report generated and sent to 3 recipients.",
         tag: "Report",
@@ -63,7 +64,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
     label: "This Week",
     items: [
       {
-        id: "4",
+        id: "solar-optimization-202",
         title: "Solar Output Drop – Unit 3",
         description:
           "Identified a 28% drop vs forecast. Likely inverter throttling",
@@ -72,7 +73,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
         icon: "alert",
       },
       {
-        id: "5",
+        id: "battery-critical-101",
         title: "Battery Critically Low – 3%",
         description: "Battery at 3% – recommend load shedding immediately",
         tag: "Alert",
@@ -80,7 +81,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
         icon: "battery",
       },
       {
-        id: "6",
+        id: "battery-critical-101",
         title: "Battery Critically Low – 5%",
         description: "Battery at 5% – recommend load shedding immediately",
         tag: "Alert",
@@ -88,7 +89,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
         icon: "alert",
       },
       {
-        id: "7",
+        id: "battery-critical-101",
         title: "Battery Critically Low – 3%",
         description: "Battery at 3% – recommend load shedding immediately",
         tag: "Alert",
@@ -99,7 +100,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
   },
 ];
 
-// ─── Tag badge ───────────────────────────────────────────────────────────────
+// ─── Tag badge ────────────────────────────────────────────────────────────────
 const TAG_STYLES: Record<TagType, string> = {
   Solar: "bg-success-bg text-chart-battery border border-chart-battery/20",
   Alert: "bg-danger-bg text-danger border border-danger/20",
@@ -197,7 +198,7 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
         {visible.map((group) => (
           <div
             key={group.label}
-            className="overflow-hidden rounded-xl border border-border bg-card"
+            className="rounded-xl border border-border bg-card"
           >
             <div className="px-5 py-3">
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -205,15 +206,17 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
               </span>
             </div>
             <div className="divide-y divide-border">
-              {group.items.map((item) => (
+              {group.items.map((item, idx) => (
                 <div
-                  key={item.id}
+                  key={`${item.id}-${idx}`}
                   onClick={() =>
                     router.push(`/dashboard/ai-assistant/${item.id}`)
                   }
                   className={cn(
                     "flex cursor-pointer items-start gap-3 px-5 py-4 transition-colors hover:bg-muted/40",
                     selectedId === item.id && "bg-muted/60",
+                    idx === 0 && "rounded-t-none",
+                    idx === group.items.length - 1 && "rounded-b-xl",
                   )}
                 >
                   <RowIcon type={item.icon} />
@@ -226,16 +229,7 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
                         <span className="whitespace-nowrap text-xs text-muted-foreground">
                           {item.timestamp}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-7 w-7 rounded p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          aria-label="More options"
-                          title="More options"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <ChatActionsMenu chatId={item.id} />
                       </div>
                     </div>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
