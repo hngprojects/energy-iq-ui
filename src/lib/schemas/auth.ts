@@ -22,7 +22,7 @@ export const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().trim().email("Please enter a valid email address"),
   password: passwordValidation,
   firstName: z
     .string()
@@ -41,7 +41,7 @@ export const registerSchema = z.object({
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const verifyEmailSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().email("Invalid email address"),
   otp: z.string().length(6, "OTP must be 6 digits"),
 });
 

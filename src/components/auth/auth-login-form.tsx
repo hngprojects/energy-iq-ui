@@ -40,6 +40,14 @@ export function AuthLoginForm() {
   });
   const isFormFilled = email.length > 0 && password.length > 0;
 
+<<<<<<< HEAD
+=======
+  const isLoginError = loginMutation.isError || !!errors.password;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isPasswordValid = password.length >= 8;
+  const isBothValid = isEmailValid && isPasswordValid && !isLoginError;
+
+>>>>>>> 25605693d20331aa627cc106183d272cdc068f53
   let emailStatusColor: "green" | "red" | undefined = undefined;
   if (errors.email) {
     emailStatusColor = "red";
