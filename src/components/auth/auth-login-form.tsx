@@ -41,7 +41,7 @@ export function AuthLoginForm() {
   const isFormFilled = email.length > 0 && password.length > 0;
 
   const isLoginError = loginMutation.isError || !!errors.password;
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const isPasswordValid = password.length >= 8;
   const isBothValid = isEmailValid && isPasswordValid && !isLoginError;
 
