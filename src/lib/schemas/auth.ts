@@ -2,14 +2,11 @@ import { z } from "zod";
 
 export const passwordValidation = z
   .string()
-  .min(
-    8,
-    "Password is short. Minimum of least 8 characters and a special key",
-  )
+  .min(8, "Password must be at least 8 characters")
   .max(72, "Password must be at most 72 characters")
   .regex(
     /[!@#$%^&*(),.?":{}|<>]/,
-    "Password is short. Minimum of least 8 characters and a special key",
+    "Password must include at least one special character",
   );
 
 export const loginSchema = z.object({

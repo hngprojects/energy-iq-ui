@@ -53,16 +53,18 @@ export function AuthSignupForm() {
 
   if (errors.password?.message) {
     passwordStatus = "red";
-    passwordHelperText =
-      "Password is short. Minimum of least 8 characters and a special key";
+    passwordHelperText = errors.password.message;
   } else if (passwordVal.length > 0) {
     if (isPasswordValid) {
       passwordStatus = "green";
       passwordHelperText = "Successful";
     } else {
       passwordStatus = "yellow";
-      passwordHelperText =
-        "Password must be at least 8 characters and a special key";
+      if (!hasMinLength) {
+        passwordHelperText = "Password must be at least 8 characters";
+      } else if (!hasSpecialChar) {
+        passwordHelperText = "Password must include a special character";
+      }
     }
   }
 
