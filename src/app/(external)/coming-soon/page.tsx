@@ -10,7 +10,7 @@ export default function ComingSoonPage() {
         </h1>
         <p className="max-w-3xl text-base text-balance text-secondary/70 md:text-lg">
           We&apos;re working hard to bring you something amazing. Stay tuned for
-          updates on our blog, careers, and news.
+          updates on our blog, careers, news and more.
         </p>
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row mt-7">
           <Button
