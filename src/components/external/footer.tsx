@@ -6,6 +6,8 @@ import { Logo } from "../ui/logo";
 import { useState } from "react";
 import { toast } from "sonner";
 import { WaitlistService } from "@/services/waitlist-service";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 const footerLinks = [
   {
@@ -22,17 +24,17 @@ const footerLinks = [
     title: "Company",
     links: [
       { name: "About", href: "/about" },
-      { name: "Blog", href: "/blog" },
-      { name: "Career", href: "/careers" },
-      { name: "News", href: "/news" },
+      { name: "Blog", href: "/coming-soon" },
+      { name: "Career", href: "/coming-soon" },
+      { name: "News", href: "/coming-soon" },
     ],
   },
   {
     title: "Download",
     links: [
-      { name: "iOS", href: "#" },
-      { name: "Android", href: "#" },
-      { name: "Windows", href: "#" },
+      { name: "iOS", href: "/coming-soon" },
+      { name: "Android", href: "/coming-soon" },
+      { name: "Windows", href: "/coming-soon" },
     ],
   },
 ];
@@ -93,22 +95,22 @@ export const Footer = () => {
                 Enter your email to get mails concerning us.
               </p>
               <div className="flex max-w-md items-center gap-2 rounded-xl bg-white p-1.5 focus-within:ring-2 focus-within:ring-[#F5A623]">
-                <input
+                <Input
                   type="email"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
-                  className="w-full bg-transparent px-4 py-2 text-[#1A1F2C] outline-none placeholder:text-gray-400 disabled:opacity-50"
+                  className="w-full bg-transparent px-4 py-2 text-[#1A1F2C] outline-none placeholder:text-gray-400 disabled:opacity-50 border-none "
                   onKeyDown={(e) => e.key === "Enter" && handleJoinWaitlist()}
                 />
-                <button
+                <Button
                   onClick={handleJoinWaitlist}
                   disabled={isLoading}
                   className="rounded-lg bg-[#F5A623] px-6 py-2 font-bold text-[#1A1F2C] transition-colors hover:bg-[#E59513] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? "Sending..." : "Send"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -141,23 +143,29 @@ export const Footer = () => {
             Reserved
           </p>
           <div className="flex gap-5">
-            {["facebook", "twitter", "instagram", "linkedin", "youtube"].map(
-              (social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="relative size-5 transition-opacity hover:opacity-80"
-                  aria-label={social}
-                >
-                  <Image
-                    src={`/images/${social}.svg`}
-                    alt={social}
-                    fill
-                    className="object-contain"
-                  />
-                </a>
-              ),
-            )}
+            {[
+              { id: "facebook", url: "https://facebook.com" },
+              { id: "twitter", url: "https://x.com" },
+              { id: "instagram", url: "https://instagram.com" },
+              { id: "linkedin", url: "https://linkedin.com" },
+              { id: "youtube", url: "https://youtube.com" },
+            ].map((social) => (
+              <a
+                key={social.id}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative size-5 transition-opacity hover:opacity-80"
+                aria-label={social.id}
+              >
+                <Image
+                  src={`/images/${social.id}.svg`}
+                  alt={social.id}
+                  fill
+                  className="object-contain"
+                />
+              </a>
+            ))}
           </div>
         </div>
       </div>
