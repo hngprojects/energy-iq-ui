@@ -12,7 +12,7 @@ export function AuthSuccessView() {
 
   const [email] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem("reset_email");
+    return sessionStorage.getItem("reset_email") || null;
   });
 
   const handleResend = () => {
@@ -21,7 +21,14 @@ export function AuthSuccessView() {
       return;
     }
 
-    resend({ email });
+    resend(
+      { email },
+      {
+        onSuccess: () => {
+          sessionStorage.setItem("reset_email", email);
+        },
+      },
+    );
   };
 
   return (
