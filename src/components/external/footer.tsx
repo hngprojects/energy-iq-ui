@@ -145,7 +145,7 @@ export const Footer = () => {
           <div className="flex gap-5">
             {[
               { id: "facebook", url: "https://facebook.com" },
-              { id: "twitter", url: "https://twitter.com" },
+              { id: "twitter", url: "https://x.com" },
               { id: "instagram", url: "https://instagram.com" },
               { id: "linkedin", url: "https://linkedin.com" },
               { id: "youtube", url: "https://youtube.com" },
