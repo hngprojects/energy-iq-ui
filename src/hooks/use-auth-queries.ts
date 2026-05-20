@@ -24,9 +24,14 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 
   if (
     message.toLowerCase() === "authentication is required or has failed" ||
-    message.toLowerCase() === "unauthorized"
+    message.toLowerCase() === "unauthorized" ||
+    message.toLowerCase() === "user not found"
   ) {
     return "We couldn't find an account matching that email address.";
+  }
+
+  if (message.toLowerCase() === "password must be longer than or equal to 8 characters") {
+    return "The provided email or password is incorrect";
   }
 
   return message;
@@ -53,7 +58,13 @@ export const useAuthQueries = () => {
         router.push("/onboarding");
       },
       onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "The provided email or password is incorrect"), {
+        const message = getErrorMessage(error, "The provided email or password is incorrect");
+        const finalMessage =
+          message === "We couldn't find an account matching that email address."
+            ? "The provided email or password is incorrect"
+            : message;
+
+        toast.error(finalMessage, {
           duration: 5000,
         });
       },

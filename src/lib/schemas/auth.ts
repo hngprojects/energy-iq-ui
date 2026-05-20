@@ -13,8 +13,8 @@ export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z
     .string()
-    .min(8, "The provided email or password is incorrect")
-    .max(72, "Password must be at most 72 characters"),
+    .min(1, "The provided email or password is incorrect")
+    .max(72, "The provided email or password is incorrect"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
@@ -24,12 +24,14 @@ export const registerSchema = z.object({
   password: passwordValidation,
   firstName: z
     .string()
+    .trim()
     .min(2, "First name must be at least 2 characters")
-    .regex(/^[A-Za-z\s'-]+$/, "Numbers are not allowed in the name field"),
+    .regex(/^[\p{L}](?!.*[ '-]{2})[\p{L}\s'-]*[\p{L}]$/u, "Name contains invalid characters or consecutive symbols"),
   lastName: z
     .string()
+    .trim()
     .min(2, "Last name must be at least 2 characters")
-    .regex(/^[A-Za-z\s'-]+$/, "Numbers are not allowed in the name field"),
+    .regex(/^[\p{L}](?!.*[ '-]{2})[\p{L}\s'-]*[\p{L}]$/u, "Name contains invalid characters or consecutive symbols"),
 });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;

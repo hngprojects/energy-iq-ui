@@ -11,7 +11,12 @@ export const contactSchema = z.object({
     .string()
     .trim()
     .min(1, "Please enter a valid phone number")
-    .regex(/^\+?\d{7,20}$/, "Please enter a valid phone number"),
+    .transform((val) => val.replace(/[\s()\-.]/g, ""))
+    .pipe(
+      z
+        .string()
+        .regex(/^\+?\d{7,20}$/, "Please enter a valid phone number (7-20 digits)")
+    ),
   message: z
     .string()
     .trim()

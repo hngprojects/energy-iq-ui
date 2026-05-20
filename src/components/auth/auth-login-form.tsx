@@ -62,12 +62,8 @@ export function AuthLoginForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit, (formErrors) => {
-        if (formErrors.password?.type === "too_big") {
-          toast.error("Password must be at most 72 characters");
-        } else {
-          toast.error("The provided email or password is incorrect");
-        }
+      onSubmit={handleSubmit(onSubmit, () => {
+        toast.error("The provided email or password is incorrect");
       })}
       className="space-y-4 md:space-y-6"
     >
