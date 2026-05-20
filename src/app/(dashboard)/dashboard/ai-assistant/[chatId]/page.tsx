@@ -96,7 +96,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] lg:h-[calc(100vh-70px)] w-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-[calc(100vh-130px)] md:h-[calc(100vh-140px)] w-full flex-col overflow-hidden bg-background text-foreground">
+      {" "}
+      {/* ── HEADER ── */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
         <button
           title="Go back"
@@ -131,9 +133,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </button>
         </div>
       </div>
-
+      {/* ── SCROLLABLE CHAT BOX ── */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
-        {/* Date divider */}
         <div className="mb-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs text-muted-foreground">Today</span>
@@ -162,7 +163,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         </div>
         <div ref={bottomRef} />
       </div>
-
+      {/* ── INPUT CONTROL FOOTER ── */}
       <div className="shrink-0 border-t border-border bg-card px-6 py-4">
         <div className="flex items-end gap-3 rounded-xl border border-border bg-muted/50 px-4 py-3">
           <button
