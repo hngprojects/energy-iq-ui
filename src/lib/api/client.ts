@@ -49,18 +49,10 @@ const resolveRequestUrl = (path: string, proxy?: boolean): string => {
 };
 
 const isAuthEndpoint = (path: string): boolean => {
-  let normalized = path.replace(/^\/+/, "");
-  try {
-    const asUrl = new URL(path, "http://localhost");
-    normalized = asUrl.pathname.replace(/^\/+/, "");
-    if (normalized.startsWith("api/proxy/")) {
-      normalized = normalized.replace(/^api\/proxy\//, "");
-    }
-  } catch {
-  }
+  const normalized = path.replace(/^\/+/, "").replace(/^api\/proxy\//, "");
   return AUTH_PUBLIC_PATHS.some((p) => {
     const trimmedP = p.replace(/^\/+/, "");
-    return normalized === trimmedP;
+    return normalized === trimmedP || normalized.startsWith(trimmedP + "/");
   });
 };
 
