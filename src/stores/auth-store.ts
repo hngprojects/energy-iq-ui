@@ -7,7 +7,8 @@ const SESSION_COOKIE = "auth_session";
 function setSessionCookie(persist = false) {
   if (typeof document === "undefined") return;
   const maxAge = persist ? "; Max-Age=2592000" : ""; // 30 days if rememberMe, else session
-  document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax${maxAge}`;
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax${maxAge}${secure}`;
 }
 
 function clearSessionCookie() {
