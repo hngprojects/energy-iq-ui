@@ -1,5 +1,3 @@
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface Message {
   id: string;
 
@@ -35,8 +33,6 @@ export interface ChatSession {
 
   messages: Message[];
 }
-
-// ─── Mock Database by Chat ID ─────────────────────────────────────────────────
 
 export const MOCK_AI_CHATS: Record<string, ChatSession> = {
   "battery-critical-101": {
@@ -156,19 +152,9 @@ export const MOCK_AI_CHATS: Record<string, ChatSession> = {
   },
 };
 
-// ─── Simulation Engine ────────────────────────────────────────────────────────
-
-/**
-
-* Simulates an AI responding contextually back to the user's input string.
-
-*/
-
 export async function getMockAIResponse(
   userPrompt: string,
 ): Promise<Partial<Message>> {
-  // Simulate network latency
-
   await new Promise((resolve) => setTimeout(resolve, 1200));
 
   const cleanPrompt = userPrompt.toLowerCase();

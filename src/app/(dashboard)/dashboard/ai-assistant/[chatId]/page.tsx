@@ -96,11 +96,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   };
 
   return (
-    /* 1. CRITICAL: Fixed height calculation that pins the component to the window bounds.
-         overflow-hidden stops the layout/body from growing or scrolling.
-    */
+    
     <div className="flex h-[calc(100vh-64px)] lg:h-[calc(100vh-70px)] w-full flex-col overflow-hidden bg-background text-foreground">
-      {/* ── HEADER (Stays perfectly static at the top of this container) ── */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
         <button
           title="Go back"
@@ -136,7 +133,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         </div>
       </div>
 
-      {/* ── SCROLLABLE CHAT BOX (Only this specific element scrolls) ── */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {/* Date divider */}
         <div className="mb-6 flex items-center gap-3">
@@ -168,7 +164,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── INPUT CONTROL FOOTER (Stays perfectly locked at the bottom) ── */}
       <div className="shrink-0 border-t border-border bg-card px-6 py-4">
         <div className="flex items-end gap-3 rounded-xl border border-border bg-muted/50 px-4 py-3">
           <button

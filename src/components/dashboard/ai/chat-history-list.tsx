@@ -22,7 +22,6 @@ interface ChatHistoryGroup {
   items: ChatHistoryItem[];
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
 const MOCK_HISTORY: ChatHistoryGroup[] = [
   {
     label: "Today",
@@ -99,7 +98,7 @@ const MOCK_HISTORY: ChatHistoryGroup[] = [
   },
 ];
 
-// ─── Tag badge ────────────────────────────────────────────────────────────────
+// ─── Tag badge ───────────────────────────────────────────────────────────────
 const TAG_STYLES: Record<TagType, string> = {
   Solar: "bg-success-bg text-chart-battery border border-chart-battery/20",
   Alert: "bg-danger-bg text-danger border border-danger/20",
@@ -119,7 +118,6 @@ function TagBadge({ tag }: { tag: TagType }) {
   );
 }
 
-// ─── Row icon ─────────────────────────────────────────────────────────────────
 function RowIcon({ type }: { type: ChatHistoryItem["icon"] }) {
   const base =
     "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-muted";
@@ -145,7 +143,6 @@ function RowIcon({ type }: { type: ChatHistoryItem["icon"] }) {
   );
 }
 
-// ─── Filter helpers ───────────────────────────────────────────────────────────
 function filterGroups(
   groups: ChatHistoryGroup[],
   filter: FilterType,
@@ -163,7 +160,6 @@ function filterGroups(
     .filter((g) => g.items.length > 0);
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
 interface ChatHistoryListProps {
   selectedId?: string;
 }
