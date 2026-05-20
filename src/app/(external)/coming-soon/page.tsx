@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Coming Soon | EnergyIQ",
+  description:
+    "We're working hard to bring you something amazing. Stay tuned for updates on our blog, careers, news and more.",
+};
 
 export default function ComingSoonPage() {
   return (
