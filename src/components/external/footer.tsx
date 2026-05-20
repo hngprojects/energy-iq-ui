@@ -44,20 +44,20 @@ export const Footer = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleJoinWaitlist = async () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
       toast.error("Please enter your email");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
     try {
-      await WaitlistService.joinWaitlist(trimmedEmail);
+      await WaitlistService.joinWaitlist(normalizedEmail);
       toast.success("Joined waitlist successfully!");
       setEmail("");
    } catch (error: unknown) {
@@ -70,6 +70,8 @@ export const Footer = () => {
       toast.error(message, {
         description: "Please try again later.",
       });
+      } finally {
++    setIsLoading(false);
     }
   }
 
@@ -141,23 +143,29 @@ export const Footer = () => {
             Reserved
           </p>
           <div className="flex gap-5">
-            {["facebook", "twitter", "instagram", "linkedin", "youtube"].map(
-              (social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="relative size-5 transition-opacity hover:opacity-80"
-                  aria-label={social}
-                >
-                  <Image
-                    src={`/images/${social}.svg`}
-                    alt={social}
-                    fill
-                    className="object-contain"
-                  />
-                </a>
-              ),
-            )}
+            {[
+              { id: "facebook", url: "https://facebook.com" },
+              { id: "twitter", url: "https://twitter.com" },
+              { id: "instagram", url: "https://instagram.com" },
+              { id: "linkedin", url: "https://linkedin.com" },
+              { id: "youtube", url: "https://youtube.com" },
+            ].map((social) => (
+              <a
+                key={social.id}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative size-5 transition-opacity hover:opacity-80"
+                aria-label={social.id}
+              >
+                <Image
+                  src={`/images/${social.id}.svg`}
+                  alt={social.id}
+                  fill
+                  className="object-contain"
+                />
+              </a>
+            ))}
           </div>
         </div>
       </div>
