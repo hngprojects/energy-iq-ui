@@ -1,18 +1,46 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextProxy } from "next/server";
 
-export function proxy(request: NextRequest) {
-  const hasSession = request.cookies.has("auth_session");
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
 
-  if (!hasSession) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+export const proxy: NextProxy = (request) => {
+  const requestId =
+    request.headers.get("x-request-id") ?? crypto.randomUUID();
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
+  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    const hasSession = request.cookies.has("auth_session");
+    if (!hasSession) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set(
+        "redirect",
+        request.nextUrl.pathname + request.nextUrl.search,
+      );
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  return NextResponse.next();
-}
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  response.headers.set("x-request-id", requestId);
+
+  return response;
+};
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$).*)",
+  ],
 };

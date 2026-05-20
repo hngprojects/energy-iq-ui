@@ -4,9 +4,10 @@ import { User } from "@/types/auth";
 
 const SESSION_COOKIE = "auth_session";
 
-function setSessionCookie() {
+function setSessionCookie(persist = false) {
   if (typeof document === "undefined") return;
-  document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax`;
+  const maxAge = persist ? "; Max-Age=2592000" : ""; // 30 days if rememberMe, else session
+  document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax${maxAge}`;
 }
 
 function clearSessionCookie() {
@@ -48,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem("remember_me");
           }
         }
+        setSessionCookie(rememberMe);
         set({
           user,
           token,
@@ -63,6 +65,7 @@ export const useAuthStore = create<AuthState>()(
           sessionStorage.removeItem("session_active");
           localStorage.removeItem("remember_me");
         }
+        clearSessionCookie();
         set({
           user: null,
           token: null,
@@ -80,6 +83,9 @@ export const useAuthStore = create<AuthState>()(
         const sessionActive = sessionStorage.getItem("session_active") === "1";
         if (state.isAuthenticated && !rememberMe && !sessionActive) {
           state.logout();
+        } else if (state.isAuthenticated) {
+          // Recreate the cookie in case it expired or was cleared (e.g. after browser restart)
+          setSessionCookie(rememberMe);
         }
       },
     },
