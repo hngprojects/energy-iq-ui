@@ -29,11 +29,13 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
   const searchParams = useSearchParams();
   const { useResetPassword } = useAuthQueries();
   const { mutate: resetPassword, isPending } = useResetPassword();
 
   const token = searchParams.get("token");
+  const savedEmail = sessionStorage.getItem("reset_email") || null;
 
   const {
     register,
@@ -50,7 +52,8 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
 
   const passwordValue = useWatch({ control, name: "password" });
   const confirmPasswordValue = useWatch({ control, name: "confirmPassword" });
-  const isFormFilled = !!(passwordValue && confirmPasswordValue && token);
+  const resolvedEmail = savedEmail || emailInput.trim();
+  const isFormFilled = !!(passwordValue && confirmPasswordValue && token && resolvedEmail);
 
   useEffect(() => {
     Object.values(errors).forEach((error) => {
@@ -59,9 +62,6 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
   }, [errors]);
 
   const onSubmit = (data: ResetPasswordValues) => {
-    // Retrieve the email saved during the Forgot Password step
-    const savedEmail = localStorage.getItem("reset_email");
-
     if (!token) {
       toast.error(
         "Reset token is missing. Please use the link sent to your email.",
@@ -69,21 +69,19 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    if (!savedEmail) {
-      toast.error("Session expired. Please request a new reset link.");
-      return;
-    }
-
-    const payload = {
-      email: savedEmail,
-      token: token,
+    const payload: { token: string; password: string; email?: string } = {
+      token,
       password: data.password,
     };
+
+    if (resolvedEmail) {
+      payload.email = resolvedEmail;
+    }
 
     resetPassword(payload, {
       onSuccess: () => {
         setIsSuccess(true);
-        localStorage.removeItem("reset_email");
+        sessionStorage.removeItem("reset_email");
         onSuccess?.();
       },
       onError: (err: unknown) => {
@@ -110,6 +108,17 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
     <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex flex-col gap-2">
         <div className="space-y-3 md:space-y-4">
+          {!savedEmail && (
+            <AuthInput
+              label="Email Address"
+              id="reset-email"
+              type="email"
+              placeholder="Enter your email address"
+              disabled={isPending}
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+            />
+          )}
           <AuthInput
             label="New Password"
             id="password"
