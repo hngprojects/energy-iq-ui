@@ -183,9 +183,9 @@ export function ChatHistoryList({ selectedId }: ChatHistoryListProps) {
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "rounded-lg px-4 py-1.5 text-sm font-medium transition-colors",
+              "rounded-lg cursor-pointer px-4 py-1.5 text-sm font-medium transition-colors border",
               filter === f
-                ? "bg-secondary text-secondary-foreground"
+                ? "border-primary text-primary bg-transparent"
                 : "bg-muted text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800",
             )}
           >

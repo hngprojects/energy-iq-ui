@@ -16,9 +16,7 @@ export default async function AIAssistantPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Top action bar – only visible when there is history */}
       <div className="flex items-center justify-between px-6 py-4">
-        {/* spacer – tabs are rendered inside ChatHistoryList */}
         <div />
         <div className="flex items-center gap-2">
           <button
