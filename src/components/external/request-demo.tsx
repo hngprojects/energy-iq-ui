@@ -37,10 +37,21 @@ interface DemoBadgeProps {
 }
 
 const DemoBadge = ({ title, description, image, isActive, onClick }: DemoBadgeProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div 
       onClick={onClick}
-      className={`flex cursor-pointer items-center gap-4 rounded-[12px] p-4 shadow-xl transition-all duration-300 ${
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isActive}
+      className={`flex cursor-pointer items-center gap-4 rounded-[12px] p-4 shadow-xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
         isActive ? "bg-white ring-2 ring-primary" : "bg-white/90 hover:bg-white"
       }`}
     >
@@ -71,6 +82,7 @@ const DemoBadge = ({ title, description, image, isActive, onClick }: DemoBadgePr
 
 export const RequestDemo = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [videoError, setVideoError] = useState(false);
 
   return (
     <section className="section-padding text-foreground bg-[#F7F7F799] py-16 md:py-24">
@@ -104,16 +116,28 @@ export const RequestDemo = () => {
                 transition={{ duration: 1 }}
                 className="absolute inset-0 z-0"
               >
-                <video
-                  key={badges[activeIndex].video}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="h-full w-full object-cover"
-                >
-                  <source src={badges[activeIndex].video} type="video/mp4" />
-                </video>
+                {!videoError ? (
+                  <video
+                    key={badges[activeIndex].video}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    aria-label={`Video demonstration for ${badges[activeIndex].title}`}
+                    className="h-full w-full object-cover"
+                    onError={() => setVideoError(true)}
+                  >
+                    <source src={badges[activeIndex].video} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <Image
+                    src={badges[activeIndex].image}
+                    alt={badges[activeIndex].title}
+                    fill
+                    className="object-cover"
+                  />
+                )}
                 <div className="absolute inset-0 bg-[#0D1624]/50" />
               </motion.div>
             )}
@@ -130,13 +154,13 @@ export const RequestDemo = () => {
               >
                 {activeIndex === null ? (
                   <>
-                    Smart Energy, <br className="hidden md:block" />
+                    Smart Energy,
                     Smarter Business
                   </>
                 ) : (
-                  badges[activeIndex].description.split(", ").map((text, i) => (
+                  badges[activeIndex].heading.split(", ").map((text, i) => (
                     <React.Fragment key={i}>
-                      {text}{i === 0 && <> <br className="hidden md:block" /></>}
+                      {text}{i === 0 && badges[activeIndex].heading.includes(", ") && <> <br className="hidden md:block" /></>}
                     </React.Fragment>
                   ))
                 )}
@@ -158,7 +182,10 @@ export const RequestDemo = () => {
                   description={badge.description}
                   image={badge.image}
                   isActive={activeIndex === index}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => {
+                    setActiveIndex(index);
+                    setVideoError(false);
+                  }}
                 />
               </motion.div>
             ))}
