@@ -47,6 +47,11 @@ const resolveRequestUrl = (path: string, proxy?: boolean): string => {
   return normalizeBackendPath(path);
 };
 
+const isAuthEndpoint = (path: string): boolean => {
+  const normalized = path.replace(/^\/+/, "");
+  return normalized === "auth/login" || normalized === "auth/forgot-password";
+};
+
 export async function apiFetch<TResponse>(
   path: string,
   config: AxiosRequestConfig = {},
@@ -112,7 +117,7 @@ export async function apiFetch<TResponse>(
       if (
         status === 401 &&
         typeof window !== "undefined" &&
-        !path.includes("/auth/login")
+        !isAuthEndpoint(path)
       ) {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
