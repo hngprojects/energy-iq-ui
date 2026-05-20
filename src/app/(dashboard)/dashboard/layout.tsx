@@ -7,11 +7,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-background flex min-h-screen max-w-full">
+    <div className="bg-background flex h-screen w-screen overflow-hidden">
       <DashboardSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col h-full overflow-hidden">
         <DashboardHeader />
-        <main className="bg-background flex-1 overflow-auto px-4 py-4 lg:px-6 lg:py-6 mx-auto max-w-7xl w-full">
+        {/* Removed mx-auto, max-w-7xl, and padding from here so the chat view can fill the screen edge-to-edge. 
+            We also changed overflow-auto to overflow-hidden so this container never sprouts a second scrollbar. */}
+        <main className="bg-background flex-1 overflow-hidden flex flex-col w-full">
           {children}
         </main>
       </div>
