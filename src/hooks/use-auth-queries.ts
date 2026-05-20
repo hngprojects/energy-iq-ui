@@ -18,8 +18,15 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
     message = (error as ErrorWithMessage).message ?? fallback;
   }
 
-  if (message === "The request conflicts with the current resource state") {
+  if (message.toLowerCase() === "the request conflicts with the current resource state") {
     return "This email is already registered";
+  }
+
+  if (
+    message.toLowerCase() === "authentication is required or has failed" ||
+    message.toLowerCase() === "unauthorized"
+  ) {
+    return "We couldn't find an account matching that email address.";
   }
 
   return message;

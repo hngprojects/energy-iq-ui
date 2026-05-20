@@ -112,7 +112,8 @@ export async function apiFetch<TResponse>(
       if (
         status === 401 &&
         typeof window !== "undefined" &&
-        !path.includes("/auth/login")
+        !path.includes("auth/login") &&
+        !path.includes("auth/forgot-password")
       ) {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
