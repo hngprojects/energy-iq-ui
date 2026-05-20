@@ -26,12 +26,16 @@ export const registerSchema = z.object({
   password: passwordValidation,
   firstName: z
     .string()
+    .trim()
     .min(2, "First name must be at least 2 characters")
-    .regex(/^[\p{L}]+(?:[ '-][\p{L}]+){0,2}$/u, "Please enter a valid name"),
+    .max(40, "First name must be at most 40 characters")
+    .regex(/^[\p{L}]+(?:[ '-][\p{L}]+){0,1}$/u, "Names can only contain letters, spaces, hyphens, or apostrophes"),
   lastName: z
     .string()
+    .trim()
     .min(2, "Last name must be at least 2 characters")
-    .regex(/^[\p{L}]+(?:[ '-][\p{L}]+){0,2}$/u, "Please enter a valid name"),
+    .max(40, "Last name must be at most 40 characters")
+    .regex(/^[\p{L}]+(?:[ '-][\p{L}]+){0,1}$/u, "Names can only contain letters, spaces, hyphens, or apostrophes"),
 });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
