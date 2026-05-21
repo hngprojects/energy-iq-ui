@@ -44,6 +44,7 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
     formState: { errors },
   } = useForm<ResetPasswordValues>({
     resolver: zodResolver(resetPasswordSchema),
+    mode: "onChange",
     defaultValues: {
       password: "",
       confirmPassword: "",
@@ -55,11 +56,35 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
   const resolvedEmail = savedEmail || emailInput.trim();
   const isFormFilled = !!(passwordValue && confirmPasswordValue && token && resolvedEmail);
 
-  useEffect(() => {
-    Object.values(errors).forEach((error) => {
-      if (error?.message) toast.error(error.message);
-    });
-  }, [errors]);
+  const passwordVal = passwordValue || "";
+  const hasMinLength = passwordVal.length >= 8;
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(passwordVal);
+  const isPasswordValid = hasMinLength && hasSpecialChar;
+
+  let passwordStatus: "yellow" | "red" | "green" | undefined = undefined;
+  let passwordHelperText: string | undefined = undefined;
+
+  if (errors.password?.message) {
+    passwordStatus = "red";
+    passwordHelperText =
+      "Password is short. Minimum of least 8 characters and a special key";
+  } else if (passwordVal.length > 0) {
+    if (isPasswordValid) {
+      passwordStatus = "green";
+      passwordHelperText = "Successful";
+    } else {
+      passwordStatus = "yellow";
+      passwordHelperText =
+        "Password must be at least 8 characters and a special key";
+    }
+  }
+
+  let confirmPasswordStatusColor: "red" | "green" | undefined = undefined;
+  if (errors.confirmPassword) {
+    confirmPasswordStatusColor = "red";
+  } else if (confirmPasswordValue && confirmPasswordValue === passwordValue) {
+    confirmPasswordStatusColor = "green";
+  }
 
   const onSubmit = (data: ResetPasswordValues) => {
     if (!token) {
@@ -105,7 +130,7 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="flex flex-col gap-2">
         <div className="space-y-3 md:space-y-4">
           {!savedEmail && (
@@ -125,6 +150,8 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
             type="password"
             placeholder="Enter a new password"
             disabled={isPending}
+            statusColor={passwordStatus}
+            helperText={passwordHelperText}
             {...register("password")}
           />
 
@@ -134,6 +161,8 @@ function ResetPasswordFormContent({ onSuccess }: { onSuccess?: () => void }) {
             type="password"
             placeholder="Confirm the new password"
             disabled={isPending}
+            error={errors.confirmPassword?.message}
+            statusColor={confirmPasswordStatusColor}
             {...register("confirmPassword")}
           />
         </div>
