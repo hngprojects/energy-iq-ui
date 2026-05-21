@@ -48,6 +48,14 @@ const resolveRequestUrl = (path: string, proxy?: boolean): string => {
   return normalizeBackendPath(path);
 };
 
+const isAuthEndpoint = (path: string): boolean => {
+  const normalized = path.replace(/^\/+/, "").replace(/^api\/proxy\//, "");
+  return AUTH_PUBLIC_PATHS.some((p) => {
+    const trimmedP = p.replace(/^\/+/, "");
+    return normalized === trimmedP || normalized.startsWith(trimmedP + "/");
+  });
+};
+
 export async function apiFetch<TResponse>(
   path: string,
   config: AxiosRequestConfig = {},
@@ -110,9 +118,11 @@ export async function apiFetch<TResponse>(
     if (err instanceof AxiosError) {
       const status = err.response?.status ?? 500;
 
-      const isPublicAuthPath = AUTH_PUBLIC_PATHS.some((p) => path.includes(p));
-
-      if (status === 401 && typeof window !== "undefined" && !isPublicAuthPath) {
+      if (
+        status === 401 &&
+        typeof window !== "undefined" &&
+        !isAuthEndpoint(path)
+      ) {
         // Clear auth tokens via Zustand on 401
         useAuthStore.getState().logout();
         window.location.replace("/login");
