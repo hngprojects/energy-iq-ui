@@ -28,6 +28,8 @@ export function InverterTypeStep({
     switch (brandName.toUpperCase()) {
       case "VICTRON":
         return "Vrm OAuth";
+      case "SANDBOX":
+        return "Mock Connection";
       default:
         return "API key";
     }
