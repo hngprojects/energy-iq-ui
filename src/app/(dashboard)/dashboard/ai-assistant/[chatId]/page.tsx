@@ -19,11 +19,101 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
-// import { chatService } from "@/services/chat-service"; //for when POST /api/v1/chats/{id}/messages is implemented
 import { ChatMessage } from "@/types/chat";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
+}
+
+interface StoredChatActions {
+  deletedIds: string[];
+  archivedIds: string[];
+  pinnedIds: string[];
+  renamedTitles: Record<string, string>;
+}
+
+const CHAT_ACTIONS_STORAGE_KEY = "energyiq-ai-chat-actions";
+
+const EMPTY_ACTIONS: StoredChatActions = {
+  deletedIds: [],
+  archivedIds: [],
+  pinnedIds: [],
+  renamedTitles: {},
+};
+
+function loadStoredActions(): StoredChatActions {
+  if (typeof window === "undefined") return EMPTY_ACTIONS;
+
+  try {
+    const raw = window.localStorage.getItem(CHAT_ACTIONS_STORAGE_KEY);
+    if (!raw) return EMPTY_ACTIONS;
+
+    const parsed = JSON.parse(raw) as Partial<StoredChatActions>;
+
+    return {
+      deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
+      archivedIds: Array.isArray(parsed.archivedIds) ? parsed.archivedIds : [],
+      pinnedIds: Array.isArray(parsed.pinnedIds) ? parsed.pinnedIds : [],
+      renamedTitles:
+        parsed.renamedTitles && typeof parsed.renamedTitles === "object"
+          ? parsed.renamedTitles
+          : {},
+    };
+  } catch {
+    return EMPTY_ACTIONS;
+  }
+}
+
+function saveStoredActions(actions: StoredChatActions) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    CHAT_ACTIONS_STORAGE_KEY,
+    JSON.stringify(actions),
+  );
+}
+
+function formatChatHeaderDateTime(chatInfoDate?: string) {
+  const rawDate = chatInfoDate ?? new Date().toISOString();
+
+  const date = new Date(rawDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return `${chatInfoDate ?? "Today"}, ${new Date()
+      .toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+      .replace(" ", "")
+      .toLowerCase()}`;
+  }
+
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const dateLabel = isSameDay(date, today)
+    ? "Today"
+    : isSameDay(date, yesterday)
+      ? "Yesterday"
+      : date.toLocaleDateString([], {
+          day: "numeric",
+          month: "short",
+        });
+
+  const timeLabel = date
+    .toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+    .replace(" ", "")
+    .toLowerCase();
+
+  return `${dateLabel}, ${timeLabel}`;
 }
 
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
@@ -31,17 +121,27 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const resolvedParams = use(params);
   const chatId = resolvedParams.chatId;
 
-  // const { chatInfo, messages, loading, error, refreshChat } =
-  //   useActiveChat(chatId); //for when POST /api/v1/chats/{id}/messages is implemented
-
   const { chatInfo, messages, setMessages, loading, error } =
     useActiveChat(chatId);
 
   const [input, setInput] = useState("");
   const [sending] = useState(false);
+  const [actions, setActions] = useState<StoredChatActions>(() =>
+    loadStoredActions(),
+  );
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const updateActions = (
+    updater: (prev: StoredChatActions) => StoredChatActions,
+  ) => {
+    setActions((prev) => {
+      const next = updater(prev);
+      saveStoredActions(next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -63,32 +163,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       wrapper.classList.add("items-center");
     }
   };
-
-  /* const handleSend = async () => {
-    const text = input.trim();
-    if (!text || sending) return;
-
-    setInput("");
-    resetComposer();
-    setSending(true);
-
-    try {
-      const response = await chatService.createChat({
-        startingMessage: text,
-      });
-
-      if (response?.id) {
-        router.push(`/dashboard/ai-assistant/${response.id}`);
-        return;
-      }
-
-      await refreshChat();
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    } finally {
-      setSending(false);
-    }
-  }; */
 
   const handleSend = async () => {
     const text = input.trim();
@@ -150,8 +224,14 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
-  const title = chatInfo?.title ?? (loading ? "Loading chat..." : "Chat");
-  const dateLabel = chatInfo?.dateLabel ?? "Today";
+  const title =
+    actions.renamedTitles[chatId] ??
+    chatInfo?.title ??
+    (loading ? "Loading chat..." : "Chat");
+
+  const dateLabel = formatChatHeaderDateTime(
+    chatInfo?.updatedAt ?? chatInfo?.createdAt ?? chatInfo?.dateLabel,
+  );
 
   return (
     <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
@@ -191,23 +271,47 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           >
             <Download className="h-4 w-4" />
           </Button>
+
           <ChatActionsMenu
             chatId={chatId}
             title={title}
             triggerClassName="h-9 w-9"
-            onRename={(_, nextTitle) => {
-              console.log("Rename chat:", nextTitle);
-            }}
-            onPin={() => {
-              console.log("Pin chat:", chatId);
-            }}
-            onArchive={() => {
+            onRename={(id, nextTitle) =>
+              updateActions((prev) => ({
+                ...prev,
+                renamedTitles: {
+                  ...prev.renamedTitles,
+                  [id]: nextTitle,
+                },
+              }))
+            }
+            onPin={(id) =>
+              updateActions((prev) => ({
+                ...prev,
+                pinnedIds: prev.pinnedIds.includes(id)
+                  ? prev.pinnedIds.filter((item) => item !== id)
+                  : [...prev.pinnedIds, id],
+              }))
+            }
+            onArchive={(id) => {
+              updateActions((prev) => ({
+                ...prev,
+                archivedIds: prev.archivedIds.includes(id)
+                  ? prev.archivedIds
+                  : [...prev.archivedIds, id],
+              }));
               router.push("/dashboard/ai-assistant");
             }}
-            onDelete={() => {
+            onDelete={(id) => {
+              updateActions((prev) => ({
+                ...prev,
+                deletedIds: prev.deletedIds.includes(id)
+                  ? prev.deletedIds
+                  : [...prev.deletedIds, id],
+              }));
               router.push("/dashboard/ai-assistant");
             }}
-          />{" "}
+          />
         </div>
       </div>
 
