@@ -1,6 +1,7 @@
+// src/app/(dashboard)/dashboard/ai-assistant/[chatId]/page.tsx
 "use client";
 
-import { useState, useRef, useEffect, use } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -12,16 +13,14 @@ import {
   Sun,
   Zap,
 } from "lucide-react";
+import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  MOCK_AI_CHATS,
-  getMockAIResponse,
-  Message,
-} from "@/lib/mocks/ai-chats";
-import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
+import { useActiveChat } from "@/hooks/use-chat-queries";
+import { cn } from "@/lib/utils";
+// import { chatService } from "@/services/chat-service"; //for when POST /api/v1/chats/{id}/messages is implemented
+import { ChatMessage } from "@/types/chat";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
@@ -30,28 +29,30 @@ interface ChatDetailPageProps {
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
   const resolvedParams = use(params);
+  const chatId = resolvedParams.chatId;
 
-  const chatSession = MOCK_AI_CHATS[resolvedParams.chatId] ?? {
-    title: "New chat",
-    dateLabel: "",
-    iconType: "default" as const,
-    messages: [] as Message[],
-  };
+  // const { chatInfo, messages, loading, error, refreshChat } =
+  //   useActiveChat(chatId); //for when POST /api/v1/chats/{id}/messages is implemented
 
-  const [messages, setMessages] = useState<Message[]>(chatSession.messages);
+  const { chatInfo, messages, setMessages, loading, error } =
+    useActiveChat(chatId);
+
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [sending] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, sending]);
 
   const resetComposer = () => {
     const el = textareaRef.current;
     if (!el) return;
+
     el.style.height = "auto";
+
     const wrapper = el.parentElement?.parentElement;
     if (wrapper) {
       wrapper.classList.remove("items-end");
@@ -59,12 +60,41 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
+  /* const handleSend = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+
+    setInput("");
+    resetComposer();
+    setSending(true);
+
+    try {
+      const response = await chatService.createChat({
+        startingMessage: text,
+      });
+
+      if (response?.id) {
+        router.push(`/dashboard/ai-assistant/${response.id}`);
+        return;
+      }
+
+      await refreshChat();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setSending(false);
+    }
+  }; */
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text || sending) return;
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
+    setInput("");
+    resetComposer();
+
+    const localMessage: ChatMessage = {
+      id: `local-${Date.now()}`,
       role: "user",
       content: text,
       timestamp: new Date().toLocaleTimeString([], {
@@ -74,28 +104,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       userInitials: "AA",
     };
 
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    resetComposer();
-    setLoading(true);
+    setMessages((prev) => [...prev, localMessage]);
 
-    try {
-      const simulatedAI = await getMockAIResponse(text);
-
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "ai",
-        content: simulatedAI.content || "Processing complete.",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-    } finally {
-      setLoading(false);
-    }
+    console.warn(
+      "No backend endpoint exists in Swagger for sending a follow-up message to an existing chat.",
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -105,8 +118,25 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+
+    const wrapper = el.parentElement?.parentElement;
+    if (!wrapper) return;
+
+    if (el.scrollHeight > 36) {
+      wrapper.classList.remove("items-center");
+      wrapper.classList.add("items-end");
+    } else {
+      wrapper.classList.remove("items-end");
+      wrapper.classList.add("items-center");
+    }
+  };
+
   const renderHeaderIcon = () => {
-    switch (chatSession.iconType) {
+    switch (chatInfo?.iconType) {
       case "solar":
         return <Sun className="h-4 w-4 text-amber-500" />;
       case "grid":
@@ -116,9 +146,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
+  const title = chatInfo?.title ?? (loading ? "Loading chat..." : "Chat");
+  const dateLabel = chatInfo?.dateLabel ?? "Today";
+
   return (
-    <div className="relative flex h-[calc(100vh-130px)] md:h-[calc(100vh-140px)] w-full flex-col overflow-hidden bg-background text-foreground">
-      {/* ── HEADER ── */}
+    <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
         <Button
           variant="ghost"
@@ -130,39 +162,36 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
+
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
           {renderHeaderIcon()}
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-foreground">
-            {chatSession.title}
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {title}
           </p>
           <p className="text-xs text-muted-foreground">
-            {chatSession.dateLabel} &nbsp;·&nbsp; {messages.length} messages
+            {dateLabel} &nbsp;·&nbsp; {messages.length} messages
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Download (coming soon)"
-              aria-label="Download"
-              disabled
-              className="h-9 w-9 text-muted-foreground hover:bg-muted"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
 
-            <ChatActionsMenu
-              chatId={resolvedParams.chatId}
-              triggerClassName="h-9 w-9"
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Download (coming soon)"
+            aria-label="Download"
+            disabled
+            className="h-9 w-9 text-muted-foreground hover:bg-muted"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+
+          <ChatActionsMenu chatId={chatId} triggerClassName="h-9 w-9" />
         </div>
       </div>
 
-      {/* ── SCROLLABLE CHAT BOX ── */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="mb-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
@@ -170,30 +199,43 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="flex flex-col gap-5">
-          {messages.map((msg) => (
-            <ChatMessageBubble key={msg.id} message={msg} />
-          ))}
+        {error ? (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error.message}
+          </div>
+        ) : null}
 
-          {loading && (
-            <div className="flex items-end gap-3">
-              <div className="rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm">
-                <div className="flex gap-1">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:0ms]" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:150ms]" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:300ms]" />
+        {loading ? (
+          <div className="text-sm text-muted-foreground">
+            Loading messages...
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {messages.map((msg) => (
+              <ChatMessageBubble key={msg.id} message={msg} />
+            ))}
+
+            {sending ? (
+              <div className="flex items-end gap-3">
+                <div className="rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm">
+                  <div className="flex gap-1">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:0ms]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:150ms]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:300ms]" />
+                  </div>
+                </div>
+
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                  AI
                 </div>
               </div>
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-                AI
-              </div>
-            </div>
-          )}
-        </div>
+            ) : null}
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
-      {/* ── INPUT CONTROL FOOTER ── */}
       <div className="shrink-0 border-t border-border bg-card px-6 py-4">
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
           <Button
@@ -202,62 +244,48 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             size="icon"
             title="Attach"
             aria-label="Attach"
-            className="h-7 w-7 shrink-0 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
+            className="h-7 w-7 shrink-0 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
           >
             <Plus className="h-4 w-4" />
           </Button>
 
-          <div className="flex-1 flex items-center min-h-8">
+          <div className="flex min-h-8 flex-1 items-center">
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onInput={handleTextareaInput}
               placeholder="Ask anything about your energy system"
               rows={1}
               className={cn(
-                "w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none py-1 h-auto",
-                "max-h-32 leading-5 shadow-none border-0 p-0 min-h-0 focus-visible:ring-0",
+                "h-auto max-h-32 min-h-0 w-full resize-none border-0 bg-transparent p-0 py-1 text-sm leading-5 text-foreground shadow-none outline-none placeholder:text-muted-foreground",
+                "focus-visible:ring-0",
               )}
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = `${el.scrollHeight}px`;
-
-                const parent = el.parentElement;
-                if (parent) {
-                  if (el.scrollHeight > 36) {
-                    parent.parentElement?.classList.remove("items-center");
-                    parent.parentElement?.classList.add("items-end");
-                  } else {
-                    parent.parentElement?.classList.remove("items-end");
-                    parent.parentElement?.classList.add("items-center");
-                  }
-                }
-              }}
             />
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 self-end mb-px md:self-auto md:mb-0">
+          <div className="mb-px flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               title="Voice input"
               aria-label="Toggle microphone"
-              className="h-8 w-8 rounded-full text-foreground hover:text-foreground hover:bg-transparent"
+              className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
             >
               <Mic className="h-4 w-4" />
             </Button>
+
             <Button
               type="button"
               title="Send message"
               aria-label="Send message"
               onClick={handleSend}
-              disabled={!input.trim() || loading}
+              disabled={!input.trim() || sending}
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors shadow-none border-0 p-0",
-                input.trim() && !loading
+                "flex h-8 w-8 items-center justify-center rounded-lg border-0 p-0 shadow-none transition-colors",
+                input.trim() && !sending
                   ? "bg-secondary text-secondary-foreground hover:opacity-90"
                   : "bg-muted text-muted-foreground hover:bg-muted",
               )}
