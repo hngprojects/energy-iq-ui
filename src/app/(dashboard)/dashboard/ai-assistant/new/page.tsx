@@ -1,7 +1,7 @@
 // src/app/(dashboard)/dashboard/ai-assistant/new/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronDown, ChevronUp, Mic, Plus, Send } from "lucide-react";
@@ -87,6 +87,12 @@ export default function NewChatPage() {
     }
   };
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
   return (
     <div className="flex h-[calc(100vh-130px)] w-full flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground md:h-[calc(100vh-140px)]">
       <div className="flex w-full max-w-7xl flex-col items-center text-center">
@@ -130,6 +136,7 @@ export default function NewChatPage() {
 
             <div className="flex min-h-9 flex-1 items-center">
               <Textarea
+                ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}

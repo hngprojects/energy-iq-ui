@@ -47,6 +47,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
 
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
   const resetComposer = () => {
     const el = textareaRef.current;
     if (!el) return;
@@ -187,8 +191,23 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           >
             <Download className="h-4 w-4" />
           </Button>
-
-          <ChatActionsMenu chatId={chatId} triggerClassName="h-9 w-9" />
+          <ChatActionsMenu
+            chatId={chatId}
+            title={title}
+            triggerClassName="h-9 w-9"
+            onRename={(_, nextTitle) => {
+              console.log("Rename chat:", nextTitle);
+            }}
+            onPin={() => {
+              console.log("Pin chat:", chatId);
+            }}
+            onArchive={() => {
+              router.push("/dashboard/ai-assistant");
+            }}
+            onDelete={() => {
+              router.push("/dashboard/ai-assistant");
+            }}
+          />{" "}
         </div>
       </div>
 
