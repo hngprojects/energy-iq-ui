@@ -146,8 +146,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             <Button
               variant="ghost"
               size="icon"
-              title="Download"
+              title="Download (coming soon)"
               aria-label="Download"
+              disabled
               className="h-9 w-9 text-muted-foreground hover:bg-muted"
             >
               <Download className="h-4 w-4" />

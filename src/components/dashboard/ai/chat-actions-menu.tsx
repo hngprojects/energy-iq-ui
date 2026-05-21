@@ -41,7 +41,10 @@ export function ChatActionsMenu({
   );
   const [copied, setCopied] = React.useState(false);
 
-  const shareUrl = `https://energiiqchat/share/ffuu4jt-${chatId}`;
+  const shareUrl =
+    typeof window === "undefined"
+      ? ""
+      : `${window.location.origin}/dashboard/ai-assistant/${chatId}`;
 
   const handleCopy = async () => {
     try {
