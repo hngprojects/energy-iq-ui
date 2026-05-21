@@ -29,6 +29,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Added clean Input import for the rename dialog fields
+import { Input } from "@/components/ui/input";
+
 interface ChatActionsMenuProps {
   chatId: string;
   title?: string;
@@ -50,6 +53,8 @@ export function ChatActionsMenu({
 }: ChatActionsMenuProps) {
   const [isShareOpen, setIsShareOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isRenameOpen, setIsRenameOpen] = React.useState(false);
+  const [renameTitle, setRenameTitle] = React.useState("");
   const [shareMode, setShareMode] = React.useState<"private" | "public">(
     "private",
   );
@@ -91,12 +96,17 @@ export function ChatActionsMenu({
     }
   };
 
-  const handleRename = () => {
-    const nextTitle = window.prompt("Rename chat", title ?? "");
-    const cleanTitle = nextTitle?.trim();
+  const handleRenameClick = () => {
+    setRenameTitle(title ?? "");
+    window.setTimeout(() => setIsRenameOpen(true), 0);
+  };
 
+  const handleConfirmRename = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTitle = renameTitle.trim();
     if (cleanTitle) {
       onRename?.(chatId, cleanTitle);
+      setIsRenameOpen(false);
     }
   };
 
@@ -143,7 +153,7 @@ export function ChatActionsMenu({
           <DropdownMenuItem
             onClick={(event) => {
               stopMenuEvent(event);
-              handleRename();
+              handleRenameClick();
             }}
             className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
           >
@@ -299,6 +309,61 @@ export function ChatActionsMenu({
         </DialogContent>
       </Dialog>
 
+      {/* NEW: Rename Dialog component implementation matching layout bounds perfectly */}
+      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+        <DialogContent
+          className="sm:max-w-110 max-w-[90vw] overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-lg gap-0"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <form onSubmit={handleConfirmRename}>
+            <DialogHeader className="flex flex-row items-start gap-3 space-y-0 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                <Pencil className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-0.5 w-full">
+                <DialogTitle className="text-base font-semibold text-foreground">
+                  Rename Chat
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground">
+                  Enter a new descriptive title for this conversation history.
+                </p>
+              </div>
+            </DialogHeader>
+
+            <div className="py-3">
+              <Input
+                type="text"
+                value={renameTitle}
+                onChange={(e) => setRenameTitle(e.target.value)}
+                placeholder="Chat title"
+                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 focus:border-border"
+                autoFocus
+              />
+            </div>
+
+            <div className="pt-4 border-t border-border mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsRenameOpen(false)}
+                className="rounded-lg px-4 py-1.5 text-xs font-medium shadow-none border-0 h-8"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!renameTitle.trim()}
+                className="rounded-lg bg-foreground text-background px-4 py-1.5 text-xs font-medium hover:opacity-90 shadow-none border-0 h-8 shrink-0 disabled:opacity-50"
+              >
+                Save changes
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent
           className="sm:max-w-110 max-w-[90vw] overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-lg gap-0"
@@ -331,8 +396,9 @@ export function ChatActionsMenu({
             <Button
               type="button"
               size="sm"
+              variant="secondary"
               onClick={handleConfirmDelete}
-              className="rounded-lg bg-red-500 text-white px-4 py-1.5 text-xs font-medium hover:opacity-90 shadow-none border-0 h-8 shrink-0"
+              className="rounded-lg bg-red-500 text-white px-4 py-1.5 text-xs font-medium shadow-none border-0 h-8 shrink-0"
             >
               Delete
             </Button>

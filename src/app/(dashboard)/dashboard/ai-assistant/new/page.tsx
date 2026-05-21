@@ -210,12 +210,12 @@ export default function NewChatPage() {
                   variant="outline"
                   onClick={() => handleStartConversation(card.title)}
                   disabled={sending}
-                  className="flex h-auto cursor-pointer flex-col items-start rounded-xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20"
+                  className="flex flex-col items-start h-auto text-left rounded-xl border border-border cursor-pointer bg-card p-6 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20 whitespace-normal"
                 >
-                  <span className="line-clamp-2 text-sm font-semibold text-foreground">
+                  <span className="text-sm font-semibold text-foreground line-clamp-2">
                     {card.title}
                   </span>
-                  <span className="mt-1.5 line-clamp-2 text-xs font-normal text-muted-foreground">
+                  <span className="mt-1.5 text-xs text-muted-foreground line-clamp-2 font-normal">
                     {card.description}
                   </span>
                 </Button>
