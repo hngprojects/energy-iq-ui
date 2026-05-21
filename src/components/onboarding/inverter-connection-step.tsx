@@ -94,6 +94,8 @@ export function InverterConnectionStep({
       if (byId[`${prefix}-plant`]) {
         payload.solarmanPlantId = byId[`${prefix}-plant`];
       }
+    } else if (brand === "sandbox") {
+      payload.sandboxAccessToken = byId["sandbox-token"];
     }
 
     connectInverterMutation.mutate(payload, {
