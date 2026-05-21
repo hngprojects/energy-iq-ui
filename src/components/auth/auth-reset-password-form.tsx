@@ -8,7 +8,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { useSearchParams } from "next/navigation";
 
