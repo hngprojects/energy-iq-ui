@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import QueryProvider from "./providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
 
 const figtree = Figtree({
   subsets: ["latin"],
@@ -118,6 +119,7 @@ export default function RootLayout({
           {children}
 
           <Toaster position="top-right" richColors />
+          <ServiceWorkerRegister />
         </QueryProvider>
       </body>
     </html>
