@@ -1,6 +1,5 @@
 const CACHE_NAME = "energy-iq-v1";
 const STATIC_ASSETS = [
-  "/",
   "/manifest.json",
   "/icons/android-chrome-192x192.png",
   "/icons/android-chrome-512x512.png",
@@ -34,26 +33,27 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and cross-origin requests
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // Network-first for API and Next.js internal routes
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
+  // Network-only for API routes — responses are user-specific, never cache them
+  if (url.pathname.startsWith("/api/")) return;
+
+  // Network-first for Next.js internal routes; cache only immutable static chunks
+  if (url.pathname.startsWith("/_next/")) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (
-            url.pathname.startsWith("/_next/static/") &&
-            response.ok
-          ) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
+      fetch(request).then((response) => {
+        if (url.pathname.startsWith("/_next/static/") && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      })
     );
     return;
   }
 
-  // Cache-first for everything else
+  // Skip navigation requests (HTML pages) to avoid caching user-specific content
+  if (request.mode === "navigate") return;
+
+  // Cache-first for static assets (images, fonts, icons, manifest, etc.)
   event.respondWith(
     caches.match(request).then(
       (cached) =>
