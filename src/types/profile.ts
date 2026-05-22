@@ -1,0 +1,119 @@
+export interface ProfileUpdateRequest {
+  fullName: string;
+  businessName: string;
+  businessType: string;
+  state: string;
+  city: string;
+}
+
+export interface ProfileUpdateResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isEmailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  profilePhoto?: string;
+  businessName?: string;
+  businessType?: string;
+  state?: string;
+  city?: string;
+}
+
+export interface AvatarUploadResponse {
+  profilePhoto: string;
+}
+
+export const BUSINESS_TYPES = [
+  "Retail & Supermarket",
+  "Manufacturing",
+  "Healthcare",
+  "Hospitality",
+  "Education",
+  "Agriculture",
+  "Technology",
+  "Construction",
+  "Transportation",
+  "Other",
+];
+
+export const NIGERIAN_STATES = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT (Abuja)",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
+
+export const CITIES_BY_STATE: Record<string, string[]> = {
+  Lagos: ["Ikeja", "Lekki", "Victoria Island", "Surulere", "Yaba", "Apapa", "Ikorodu", "Badagry", "Epe"],
+  "FCT (Abuja)": ["Garki", "Maitama", "Wuse", "Asokoro", "Gwarinpa", "Jabi", "Utako", "Kubwa"],
+  Kano: ["Kano Municipal", "Fagge", "Dala", "Nassarawa", "Gwale", "Tarauni", "Ungogo"],
+  Rivers: ["Port Harcourt", "Obio-Akpor", "Eleme", "Ikwerre", "Emohua", "Ahoada"],
+  Oyo: ["Ibadan North", "Ibadan South-West", "Ogbomosho", "Oyo", "Iseyin"],
+  Anambra: ["Awka", "Onitsha", "Nnewi", "Ekwulobia", "Ihiala"],
+  Delta: ["Warri", "Asaba", "Sapele", "Ughelli", "Agbor"],
+  Enugu: ["Enugu", "Nsukka", "Agbani", "Oji River", "Awgu"],
+  Kaduna: ["Kaduna", "Zaria", "Kafanchan", "Kagoro"],
+  Ogun: ["Abeokuta", "Sagamu", "Ijebu-Ode", "Ilaro", "Ota"],
+  Edo: ["Benin City", "Auchi", "Ekpoma", "Uromi", "Igueben"],
+  Imo: ["Owerri", "Orlu", "Okigwe", "Mbaise"],
+  Abia: ["Umuahia", "Aba", "Ohafia", "Arochukwu"],
+  Adamawa: ["Yola", "Mubi", "Numan", "Jimeta"],
+  "Akwa Ibom": ["Uyo", "Eket", "Oron", "Ikot Ekpene"],
+  Bauchi: ["Bauchi", "Azare", "Misau", "Ningi"],
+  Bayelsa: ["Yenagoa", "Sagbama", "Ekeremor"],
+  Benue: ["Makurdi", "Gboko", "Otukpo", "Katsina-Ala"],
+  Borno: ["Maiduguri", "Biu", "Konduga", "Gwoza"],
+  "Cross River": ["Calabar", "Ikom", "Ogoja", "Obudu"],
+  Ebonyi: ["Abakaliki", "Afikpo", "Onueke"],
+  Ekiti: ["Ado-Ekiti", "Ikere", "Ilawe", "Oye"],
+  Gombe: ["Gombe", "Kumo", "Kaltungo"],
+  Jigawa: ["Dutse", "Hadejia", "Birnin Kudu"],
+  Kebbi: ["Birnin Kebbi", "Argungu", "Zuru"],
+  Kogi: ["Lokoja", "Okene", "Idah", "Kabba"],
+  Kwara: ["Ilorin", "Offa", "Omu-Aran", "Patigi"],
+  Nasarawa: ["Lafia", "Keffi", "Akwanga", "Nasarawa"],
+  Niger: ["Minna", "Bida", "Kontagora", "Suleja"],
+  Ondo: ["Akure", "Ondo", "Owo", "Ile-Oluji"],
+  Osun: ["Osogbo", "Ile-Ife", "Ilesa", "Ede"],
+  Plateau: ["Jos", "Bukuru", "Shendam", "Pankshin"],
+  Sokoto: ["Sokoto", "Wurno", "Gwadabawa"],
+  Taraba: ["Jalingo", "Wukari", "Bali"],
+  Yobe: ["Damaturu", "Potiskum", "Gashua"],
+  Zamfara: ["Gusau", "Kaura Namoda", "Talata Mafara"],
+  Katsina: ["Katsina", "Daura", "Funtua", "Malumfashi"],
+};

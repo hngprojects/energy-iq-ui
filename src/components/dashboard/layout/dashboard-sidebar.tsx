@@ -9,7 +9,6 @@ import {
   FileText,
   Headphones,
   Settings,
-  ChevronDown,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -124,18 +123,19 @@ export function DashboardSidebar() {
             Account
           </span>
 
-          <button
-            type="button"
-            aria-label="Open settings menu"
-            className="bg-sidebar text-secondary hover:bg-muted flex h-10 w-52 items-center rounded px-3 py-2 font-sans text-[16px] leading-none font-medium transition-colors"
+          <Link
+            href="/dashboard/settings"
+            onClick={closeSidebar}
+            className={cn(
+              "flex h-10 w-52 items-center rounded px-3 py-2 font-sans text-[16px] leading-none font-medium transition-colors",
+              pathname.startsWith("/dashboard/settings")
+                ? "bg-nav-active-bg text-nav-active-text"
+                : "bg-sidebar text-secondary hover:bg-muted/50",
+            )}
           >
             <Settings className="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
-            <span className="flex-1 text-left">Settings</span>
-            <ChevronDown
-              className="text-secondary h-4 w-4"
-              aria-hidden="true"
-            />
-          </button>
+            Settings
+          </Link>
         </div>
       </aside>
     </>
