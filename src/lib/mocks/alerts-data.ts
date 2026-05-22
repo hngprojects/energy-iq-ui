@@ -14,17 +14,14 @@ export type AlertFilterType =
   | "critical"
   | "resolved"
   | "unresolved";
-
 export interface AlertMetric {
   label: string;
   value: string;
 }
-
 export interface AlertModalDetail {
   metrics: AlertMetric[];
   reason: string;
 }
-
 export interface Alert {
   id: string;
   title: string;
@@ -35,7 +32,6 @@ export interface Alert {
   iconType: AlertIconType;
   modalDetail?: AlertModalDetail;
 }
-
 export const alertsMock: Alert[] = [
   {
     id: "1",
@@ -101,14 +97,12 @@ export const alertsMock: Alert[] = [
     iconType: "solar",
   },
 ];
-
 export const alertStatsMock = {
   activeAlerts: { count: 14, label: "Last 7 days" },
   critical: { count: 1, label: "Need action now" },
   warning: { count: 3, label: "Awaiting your review" },
   unresolved: { count: 5, label: "Still open" },
 };
-
 export const FILTER_OPTIONS: { value: AlertFilterType; label: string }[] = [
   { value: "all", label: "All" },
   { value: "success", label: "Success" },
