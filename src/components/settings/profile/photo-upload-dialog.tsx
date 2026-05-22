@@ -24,6 +24,7 @@ export function PhotoUploadDialog({
 }: PhotoUploadDialogProps) {
   const [preview, setPreview] = React.useState<string | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [fileError, setFileError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { useUploadAvatar } = useProfileQueries();
@@ -35,6 +36,17 @@ export function PhotoUploadDialog({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFileError("Only image files are allowed.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setFileError("File must be under 2MB.");
+      return;
+    }
+
+    setFileError(null);
     setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreview(url);
@@ -44,6 +56,7 @@ export function PhotoUploadDialog({
     if (!isOpen) {
       setPreview(null);
       setSelectedFile(null);
+      setFileError(null);
     }
     onOpenChange(isOpen);
   };
@@ -147,6 +160,9 @@ export function PhotoUploadDialog({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-4">
+          {fileError && (
+            <p className="mr-auto text-xs text-red-500">{fileError}</p>
+          )}
           <button
             type="button"
             onClick={() => handleClose(false)}

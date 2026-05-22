@@ -11,7 +11,7 @@ export const ProfileService = {
     formData.append("avatar", file);
     return apiFetch<AvatarUploadResponse>(
       "/users/profile/avatar",
-      { method: "POST", data: formData, headers: { "Content-Type": "multipart/form-data" } },
+      { method: "POST", data: formData },
       true,
     );
   },

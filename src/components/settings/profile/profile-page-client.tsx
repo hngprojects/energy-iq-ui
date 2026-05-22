@@ -40,7 +40,7 @@ export function ProfilePageClient() {
 
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
 
-  const { control, register, handleSubmit, watch, reset, formState: { errors } } =
+  const { control, register, handleSubmit, watch, reset, setValue, formState: { errors } } =
     useForm<ProfileFormValues>({
       resolver: zodResolver(profileSchema),
       defaultValues: {
@@ -247,6 +247,7 @@ export function ProfilePageClient() {
                     value={field.value}
                     onChange={(val) => {
                       field.onChange(val);
+                      setValue("city", "", { shouldValidate: true });
                     }}
                     options={NIGERIAN_STATES}
                     placeholder="Select state"

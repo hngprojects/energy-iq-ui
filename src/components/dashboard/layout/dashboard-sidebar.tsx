@@ -123,19 +123,13 @@ export function DashboardSidebar() {
             Account
           </span>
 
-          <Link
+          <SidebarItem
+            label="Settings"
+            icon={Settings}
             href="/dashboard/settings"
+            isActive={pathname.startsWith("/dashboard/settings")}
             onClick={closeSidebar}
-            className={cn(
-              "flex h-10 w-52 items-center rounded px-3 py-2 font-sans text-[16px] leading-none font-medium transition-colors",
-              pathname.startsWith("/dashboard/settings")
-                ? "bg-nav-active-bg text-nav-active-text"
-                : "bg-sidebar text-secondary hover:bg-muted/50",
-            )}
-          >
-            <Settings className="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
-            Settings
-          </Link>
+          />
         </div>
       </aside>
     </>

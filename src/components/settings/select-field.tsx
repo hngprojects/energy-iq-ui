@@ -57,21 +57,24 @@ export function SelectField({
       </button>
 
       {open && !disabled && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
+        <div role="listbox" aria-label="Options" className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
           {options.map((option) => (
-            <div
+            <button
               key={option}
+              type="button"
+              role="option"
+              aria-selected={value === option ? "true" : "false"}
               onClick={() => {
                 onChange(option);
                 setOpen(false);
               }}
               className={cn(
-                "cursor-default px-3 py-2 text-sm hover:bg-muted",
+                "w-full cursor-default px-3 py-2 text-left text-sm hover:bg-muted",
                 value === option && "bg-muted font-medium",
               )}
             >
               {option}
-            </div>
+            </button>
           ))}
         </div>
       )}
