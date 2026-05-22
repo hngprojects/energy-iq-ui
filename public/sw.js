@@ -1,5 +1,6 @@
 const CACHE_NAME = "energy-iq-v1";
 const STATIC_ASSETS = [
+  "/offline.html",
   "/manifest.json",
   "/icons/android-chrome-192x192.png",
   "/icons/android-chrome-512x512.png",
@@ -50,21 +51,31 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Skip navigation requests (HTML pages) to avoid caching user-specific content
-  if (request.mode === "navigate") return;
+  // Navigation requests — network first, fall back to offline page
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(() => caches.match("/offline.html"))
+    );
+    return;
+  }
 
   // Cache-first for static assets (images, fonts, icons, manifest, etc.)
+  // with network fallback and cache fallback if both fail
   event.respondWith(
     caches.match(request).then(
       (cached) =>
         cached ||
-        fetch(request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
+        fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              const clone = response.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => caches.match(request))
     )
   );
 });
