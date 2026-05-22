@@ -23,12 +23,8 @@ export default function DashboardPage() {
             Your system has been running on solar for 6 hrs today
           </p>
         </div>
-        <div className="border-border bg-card flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs">
-          <span className="bg-chart-battery h-2 w-2 rounded-full" />
-          <span className="text-chart-battery font-medium">
-            {d.status.label}
-          </span>
-          <span className="text-muted-foreground">· {d.status.updated}</span>
+        <div className="flex items-center gap-1.5 self-start text-xs">
+          <span className="text-muted-foreground">{d.status.updated}</span>
           <RefreshCw className="text-muted-foreground h-3 w-3 cursor-pointer transition-transform duration-500 hover:rotate-180" />
         </div>
       </div>

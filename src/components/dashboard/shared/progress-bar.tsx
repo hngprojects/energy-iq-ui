@@ -5,7 +5,7 @@ interface ProgressBarProps {
 
 export function ProgressBar({
   value,
-  colorClass = "bg-chart-battery",
+  colorClass = "bg-[#17CC4E]",
 }: ProgressBarProps) {
   return (
     <div className="progress-container">
@@ -18,3 +18,4 @@ export function ProgressBar({
     </div>
   );
 }
+

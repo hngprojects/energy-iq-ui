@@ -39,7 +39,7 @@ export function MetricCard({
         <span
           className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium ${
             pillTone === "success"
-              ? "bg-chart-battery/10 text-chart-battery"
+              ? "bg-chart-battery text-[#17CC4E]"
               : "bg-muted text-muted-foreground"
           }`}
         >
@@ -49,3 +49,4 @@ export function MetricCard({
     </div>
   );
 }
+
