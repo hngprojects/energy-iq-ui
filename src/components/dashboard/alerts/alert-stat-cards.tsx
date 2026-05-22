@@ -1,4 +1,4 @@
-import { alertStatsMock } from "@/lib/mocks/alerts-data";
+import { AlertSummaryResponse } from "@/types/alerts";
 
 interface StatCardProps {
   dotColor: string;
@@ -6,6 +6,18 @@ interface StatCardProps {
   count: number;
   sub: string;
 }
+
+interface AlertStatCardsProps {
+  data?: AlertSummaryResponse;
+  isLoading?: boolean;
+}
+
+const emptyStats: AlertSummaryResponse = {
+  activeAlerts: { count: 0, label: "Currently active" },
+  critical: { count: 0, label: "Need action now" },
+  warning: { count: 0, label: "Awaiting your review" },
+  unresolved: { count: 0, label: "Still open" },
+};
 
 function StatCard({ dotColor, label, count, sub }: StatCardProps) {
   return (
@@ -22,8 +34,8 @@ function StatCard({ dotColor, label, count, sub }: StatCardProps) {
   );
 }
 
-export function AlertStatCards() {
-  const s = alertStatsMock;
+export function AlertStatCards({ data }: AlertStatCardsProps) {
+  const s = data ?? emptyStats;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
