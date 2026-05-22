@@ -11,7 +11,8 @@ if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
   });
 }
 
-const PII_KEY_PATTERN = /(email|password|name|phone|address)/i;
+const PII_KEY_PATTERN =
+  /^(email|password|phone|address|firstName|lastName|fullName|first_name|last_name|full_name)$/i;
 
 const sanitizeValue = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(sanitizeValue);

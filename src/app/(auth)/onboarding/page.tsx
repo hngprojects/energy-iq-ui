@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
@@ -150,7 +150,9 @@ export default function OnboardingPage() {
 
   return (
     <AuthWrapper>
-      <GoogleAuthSync />
+      <Suspense fallback={null}>
+        <GoogleAuthSync />
+      </Suspense>
       <div className="mt-28 lg:mt-44">
         {step === "select" ? (
           <>
