@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   AlertTriangle,
   Clock,
@@ -19,15 +19,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Alert,
-  AlertSeverity,
-  AlertFilterType,
-  alertsMock,
-  FILTER_OPTIONS,
-} from "@/lib/mocks/alerts-data";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
+import type { Alert, AlertFilterType } from "@/types/alerts";
+import { useResolveAlert, useAlertDetail } from "@/hooks/use-alerts-queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { ALERT_QUERY_KEYS } from "@/hooks/use-alerts-queries";
+
+const FILTER_OPTIONS: { value: AlertFilterType; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "success", label: "Success" },
+  { value: "warning", label: "Warning" },
+  { value: "critical", label: "Critical" },
+  { value: "resolved", label: "Resolved" },
+  { value: "unresolved", label: "Unresolved" },
+];
+
+const REFRESH_INTERVAL_MS = 30_000;
 const ICON_MAP = {
   battery_low: AlertTriangle,
   power_high: Unplug,
@@ -37,11 +46,7 @@ const ICON_MAP = {
   solar: Sun,
 } as const;
 
-// Severity badge
-const SEVERITY_STYLES: Record<
-  AlertSeverity,
-  { bg: string; dot: string; text: string; label: string }
-> = {
+const SEVERITY_STYLES = {
   critical: {
     bg: "bg-red-50",
     dot: "bg-destructive",
@@ -62,8 +67,12 @@ const SEVERITY_STYLES: Record<
   },
 };
 
-function SeverityBadge({ severity }: { severity: AlertSeverity }) {
-  const s = SEVERITY_STYLES[severity];
+function SeverityBadge({
+  severity,
+}: {
+  severity: keyof typeof SEVERITY_STYLES;
+}) {
+  const s = SEVERITY_STYLES[severity] || SEVERITY_STYLES.warning;
   return (
     <span
       className={cn(
@@ -88,7 +97,6 @@ function StatusText({ status }: { status: Alert["status"] }) {
   return <span className="text-foreground text-sm">{label}</span>;
 }
 
-// Row skeleton
 function SkeletonRow() {
   return (
     <tr className="border-border border-b last:border-0">
@@ -117,23 +125,36 @@ function SkeletonRow() {
   );
 }
 
-// Inspect modal
 function InspectModal({
-  alert,
+  alertId,
   onClose,
-  onResolve,
 }: {
-  alert: Alert | null;
+  alertId: string | null;
   onClose: () => void;
-  onResolve: (id: string) => void;
 }) {
-  const Icon = alert ? ICON_MAP[alert.iconType] : null;
-  const sev = alert ? SEVERITY_STYLES[alert.severity] : null;
-
+  const { data: alert, isLoading } = useAlertDetail(alertId);
+  const { mutateAsync: resolveAlert, isPending: isResolving } =
+    useResolveAlert();
+  const Icon = alert?.iconType ? ICON_MAP[alert.iconType] : AlertTriangle;
+  const sev = alert?.severity
+    ? SEVERITY_STYLES[alert.severity]
+    : SEVERITY_STYLES.warning;
   return (
-    <Dialog open={!!alert} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!alertId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md gap-5">
-        {alert && Icon && sev && (
+        {isLoading ? (
+          <div className="space-y-4 py-6">
+            <DialogTitle className="sr-only">Loading alert details</DialogTitle>
+            <div className="flex items-center gap-3">
+              <div className="bg-muted h-10 w-10 animate-pulse rounded-full" />
+              <div className="space-y-2 flex-1">
+                <div className="bg-muted h-4 w-1/2 animate-pulse rounded" />
+                <div className="bg-muted h-3 w-3/4 animate-pulse rounded" />
+              </div>
+            </div>
+            <div className="bg-muted h-20 animate-pulse rounded-xl" />
+          </div>
+        ) : alert ? (
           <>
             <DialogHeader className="gap-3">
               <div className="flex items-start gap-3">
@@ -155,7 +176,6 @@ function InspectModal({
                 </div>
               </div>
             </DialogHeader>
-
             {alert.modalDetail && (
               <>
                 <div className="grid grid-cols-3 gap-3">
@@ -168,7 +188,6 @@ function InspectModal({
                     </div>
                   ))}
                 </div>
-
                 <div className="bg-muted rounded-xl p-4">
                   <p className="text-foreground mb-1.5 text-sm font-semibold">
                     Why this alert?
@@ -179,26 +198,42 @@ function InspectModal({
                 </div>
               </>
             )}
-
             <div className="flex justify-end">
-              <Button
-                onClick={() => {
-                  onResolve(alert.id);
-                  onClose();
-                }}
-                className="bg-secondary text-primary-foreground hover:bg-secondary/80 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
-              >
-                Resolve Now
-              </Button>
+              {alert.status === "unresolved" ? (
+                <Button
+                  onClick={async () => {
+                    try {
+                      await resolveAlert(alert.id);
+                      onClose();
+                    } catch (error) {
+                      const message =
+                        error instanceof Error
+                          ? error.message
+                          : "Unable to resolve alert. Please try again.";
+                      toast.error(message);
+                    }
+                  }}
+                  disabled={isResolving}
+                  className="bg-secondary text-primary-foreground hover:bg-secondary/80 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+                >
+                  {isResolving ? "Resolving..." : "Resolve Now"}
+                </Button>
+              ) : (
+                <Button
+                  disabled
+                  className="bg-muted text-muted-foreground rounded-xl px-5 py-2.5 text-sm font-medium"
+                >
+                  Resolved
+                </Button>
+              )}
             </div>
           </>
-        )}
+        ) : null}
       </DialogContent>
     </Dialog>
   );
 }
 
-// Filter dropdown
 function FilterDropdown({
   value,
   onChange,
@@ -208,7 +243,6 @@ function FilterDropdown({
 }) {
   const currentLabel =
     FILTER_OPTIONS.find((o) => o.value === value)?.label ?? "All";
-
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -218,7 +252,6 @@ function FilterDropdown({
           <ChevronDown className="text-muted-foreground h-4 w-4" />
         </button>
       </DropdownMenu.Trigger>
-
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           sideOffset={4}
@@ -245,7 +278,6 @@ function FilterDropdown({
   );
 }
 
-// Main component
 function filterAlerts(alerts: Alert[], filter: AlertFilterType): Alert[] {
   if (filter === "all") return alerts;
   if (filter === "resolved")
@@ -254,41 +286,67 @@ function filterAlerts(alerts: Alert[], filter: AlertFilterType): Alert[] {
     return alerts.filter((a) => a.status === "unresolved");
   return alerts.filter((a) => a.severity === filter);
 }
-
-export function AlertsTable() {
-  const [alerts, setAlerts] = useState<Alert[]>(alertsMock);
+// ─── Main component ───────────────────────────────────────────────────────────
+interface AlertsTableProps {
+  initialData?: Alert[];
+  isLoading: boolean;
+}
+export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<AlertFilterType>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [secondsAgo, setSecondsAgo] = useState(30);
-  const [activeAlert, setActiveAlert] = useState<Alert | null>(null);
+  const [secondsAgo, setSecondsAgo] = useState(0);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
-  const handleRefresh = useCallback(() => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setSecondsAgo(0);
-    }, 1500);
-  }, [isRefreshing]);
+  const [refreshError, setRefreshError] = useState(false);
 
-  const handleResolve = useCallback((id: string) => {
-    setAlerts((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: "resolved" as const } : a,
-      ),
-    );
+  const isPendingRef = useRef(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsAgo((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const displayed = filterAlerts(alerts, filter);
-  const unreadCount = alerts.filter((a) => a.status === "unresolved").length;
+  const handleRefresh = useCallback(async () => {
+    if (isPendingRef.current) return;
+    isPendingRef.current = true;
 
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ALERT_QUERY_KEYS.all });
+
+      setSecondsAgo(0);
+      setRefreshError(false);
+    } catch {
+      setRefreshError(true);
+    } finally {
+      setIsRefreshing(false);
+      isPendingRef.current = false;
+    }
+  }, [queryClient]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleRefresh();
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [handleRefresh]);
+
+  const displayed = filterAlerts(initialData, filter);
+  const unreadCount = initialData.filter(
+    (a) => a.status === "unresolved",
+  ).length;
+
+  const showLoadingSkeleton = isLoading;
+
+  const showRefreshSpinner = isRefreshing;
   return (
     <>
       <div className="bg-card border-border overflow-hidden rounded-xl border">
-        {/* Toolbar */}
         <div className="border-border flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <FilterDropdown value={filter} onChange={setFilter} />
-
           <div className="flex items-center gap-2 border border-[#EDEDED] py-1 px-1.5">
             <span className="flex items-center gap-1.5 text-sm">
               <span className="bg-secondary inline-block h-1.5 w-1.5 rounded-full" />
@@ -297,54 +355,67 @@ export function AlertsTable() {
                 {unreadCount !== 1 ? "s" : ""}
               </span>
             </span>
-            <span className="text-muted-foreground hidden text-sm sm:inline">
-              last updated {secondsAgo} secs ago
-            </span>
-            <button
+
+            {refreshError ? (
+              <span className="text-destructive hidden text-sm sm:inline">
+                unable to refresh alerts
+              </span>
+            ) : (
+              <span className="text-muted-foreground hidden text-sm sm:inline">
+                last updated {secondsAgo} secs ago
+              </span>
+            )}
+            <Button
+              variant="ghost"
               onClick={handleRefresh}
-              disabled={isRefreshing}
-              aria-label="Refresh alerts"
+              disabled={showRefreshSpinner}
               className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors disabled:pointer-events-none"
             >
               <RefreshCw
                 className={cn(
                   "size-4 transition-transform duration-500",
-                  isRefreshing && "animate-spin",
+
+                  showRefreshSpinner && "animate-spin",
                 )}
               />
-            </button>
+            </Button>
           </div>
         </div>
-
-        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-160">
+          <table className="w-full min-w-160 table-fixed">
+            <colgroup>
+              <col className="w-[46%]" />
+              <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[16%]" />
+              <col className="w-[10%]" />
+            </colgroup>
             <thead>
               <tr className="border-border border-b">
                 <th className="text-muted-foreground py-3 pr-4 pl-4 text-left text-sm font-medium">
                   Name
                 </th>
-                <th className="text-muted-foreground py-3 pr-4 text-left text-sm font-medium">
+                <th className="text-muted-foreground px-4 py-3 text-left text-sm font-medium">
                   Severity
                 </th>
-                <th className="text-muted-foreground py-3 pr-4 text-left text-sm font-medium">
+                <th className="text-muted-foreground px-4 py-3 text-left text-sm font-medium">
                   Status
                 </th>
-                <th className="text-muted-foreground py-3 pr-4 text-left text-sm font-medium">
+                <th className="text-muted-foreground px-4 py-3 text-left text-sm font-medium">
                   Time
                 </th>
-                <th className="text-muted-foreground py-3 pr-4 text-right text-sm font-medium">
+                <th className="text-muted-foreground py-3 pr-4 pl-4 text-sm font-medium">
                   Action
                 </th>
               </tr>
             </thead>
             <tbody>
-              {isRefreshing
+              {showLoadingSkeleton
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <SkeletonRow key={i} />
                   ))
                 : displayed.map((alert) => {
-                    const Icon = ICON_MAP[alert.iconType];
+                    const Icon = ICON_MAP[alert.iconType] || AlertTriangle;
                     const isActionable = alert.status === "unresolved";
                     return (
                       <tr
@@ -356,11 +427,11 @@ export function AlertsTable() {
                             <div className="bg-[#E8E8E8] flex size-10 shrink-0 items-center justify-center rounded-full">
                               <Icon className="text-[#121212] size-4" />
                             </div>
-                            <div>
-                              <p className="text-foreground text-base font-semibold">
+                            <div className="min-w-0">
+                              <p className="text-foreground wrap-break-word text-base font-semibold">
                                 {alert.title}
                               </p>
-                              <p className="text-muted-foreground mt-0.5 text-sm">
+                              <p className="text-muted-foreground mt-0.5 whitespace-normal wrap-break-word text-sm leading-relaxed">
                                 {alert.subtitle}
                               </p>
                             </div>
@@ -372,33 +443,34 @@ export function AlertsTable() {
                         <td className="py-4 pr-4">
                           <StatusText status={alert.status} />
                         </td>
-                        <td className="text-muted-foreground py-4 pr-4 text-sm">
+                        <td className="text-muted-foreground py-4 pr-4 text-sm whitespace-nowrap">
                           {alert.time}
                         </td>
-                        <td className="py-4 pr-4 text-right">
-                          {isActionable ? (
-                            <Button
-                              onClick={() => setActiveAlert(alert)}
-                              className="bg-secondary text-primary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                            >
-                              Inspect
-                            </Button>
-                          ) : (
-                            <Button
-                              disabled
-                              className="bg-muted text-muted-foreground cursor-default rounded-lg px-4 py-2 text-sm font-medium"
-                            >
-                              {alert.status === "resolved"
+                        <td className="py-4 pr-4">
+                          <Button
+                            onClick={() => {
+                              if (!isActionable) return;
+                              setSelectedAlertId(alert.id);
+                            }}
+                            disabled={!isActionable}
+                            className={cn(
+                              isActionable
+                                ? "bg-secondary text-primary-foreground hover:bg-secondary/80"
+                                : "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted",
+                              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                            )}
+                          >
+                            {isActionable
+                              ? "Inspect"
+                              : alert.status === "resolved"
                                 ? "Resolved"
                                 : "No action needed"}
-                            </Button>
-                          )}
+                          </Button>
                         </td>
                       </tr>
                     );
                   })}
-
-              {!isRefreshing && displayed.length === 0 && (
+              {!showLoadingSkeleton && displayed.length === 0 && (
                 <tr>
                   <td
                     colSpan={5}
@@ -412,13 +484,10 @@ export function AlertsTable() {
           </table>
         </div>
       </div>
-
       <InspectModal
-        alert={activeAlert}
-        onClose={() => setActiveAlert(null)}
-        onResolve={handleResolve}
+        alertId={selectedAlertId}
+        onClose={() => setSelectedAlertId(null)}
       />
     </>
   );
 }
-
