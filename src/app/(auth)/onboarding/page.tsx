@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
@@ -15,6 +15,7 @@ import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
 import { trackEvent, identifyUser } from "@/lib/analytics";
+import { onboardingStorage } from "@/lib/onboarding-storage";
 
 type Step = "select" | "connect";
 
@@ -50,7 +51,7 @@ function GoogleAuthSync() {
 
     const refreshToken =
       searchParams.get("refreshToken") ||
-      hashParams.get("refreshToken") ||
+      searchParams.get("refreshToken") ||
       "";
 
     if (token && !isAuthenticated) {
@@ -84,21 +85,45 @@ export default function OnboardingPage() {
   const { user } = useAuthStore();
   const isCompleted = useRef(false);
 
+  // Client‑only auth & redirect handling
   useEffect(() => {
     if (user?.id) {
       identifyUser(user.id);
+      if (onboardingStorage.isCompleted(user.id)) {
+        router.replace("/dashboard");
+      }
+    } else {
+      // Check incoming Google OAuth token
+      const searchParamsObj = new URLSearchParams(window.location.search);
+      const hashString = window.location.hash.replace(/^#/, "");
+      const hashParamsObj = new URLSearchParams(hashString);
+      const incomingToken =
+        searchParamsObj.get("accessToken") ||
+        searchParamsObj.get("token") ||
+        hashParamsObj.get("accessToken") ||
+        hashParamsObj.get("token");
+
+      if (!incomingToken) {
+        const storeToken = useAuthStore.getState().token;
+        if (!storeToken) {
+          router.replace("/login");
+        }
+      }
     }
-  }, [user]);
+  }, [user, router]);
+
 
   useEffect(() => {
     isCompleted.current = successOpen;
   }, [successOpen]);
 
+  // Track page unload / tab close
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (!isCompleted.current) {
         trackEvent("Onboarding Abandoned", {
-          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details"
+          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details",
+          exit_type: "tab_close",
         });
       }
     };
@@ -106,11 +131,20 @@ export default function OnboardingPage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [step]);
 
+  useEffect(() => {
+    return () => {
+      if (!isCompleted.current) {
+        trackEvent("Onboarding Abandoned", {
+          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details",
+          exit_type: "client_navigation",
+        });
+      }
+    };
+  }, [step]);
+
   return (
     <AuthWrapper>
-      <Suspense fallback={null}>
-        <GoogleAuthSync />
-      </Suspense>
+      <GoogleAuthSync />
       <div className="mt-28 lg:mt-44">
         {step === "select" ? (
           <>
