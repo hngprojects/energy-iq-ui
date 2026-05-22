@@ -12,11 +12,15 @@ export const passwordValidation = z
   );
 
 export const loginSchema = z.object({
-  email: z.string().trim().min(1, "The provided email or password is incorrect"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
   password: z
     .string()
-    .min(1, "The provided email or password is incorrect")
-    .max(72, "The provided email or password is incorrect"),
+    .min(1, "Password is required")
+    .max(72, "Password must be at most 72 characters"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
