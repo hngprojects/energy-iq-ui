@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   AlertTriangle,
@@ -20,14 +21,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-import type { Alert } from "@/types/alerts";
-import { AlertFilterType, FILTER_OPTIONS } from "@/lib/mocks/alerts-data";
+import type { Alert, AlertFilterType } from "@/types/alerts";
 import { useResolveAlert, useAlertDetail } from "@/hooks/use-alerts-queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { ALERT_QUERY_KEYS } from "@/hooks/use-alerts-queries";
-// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FILTER_OPTIONS: { value: AlertFilterType; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "success", label: "Success" },
+  { value: "warning", label: "Warning" },
+  { value: "critical", label: "Critical" },
+  { value: "resolved", label: "Resolved" },
+  { value: "unresolved", label: "Unresolved" },
+];
+
 const REFRESH_INTERVAL_MS = 30_000;
-// ─── Icon / style maps (unchanged) ───────────────────────────────────────────
 const ICON_MAP = {
   battery_low: AlertTriangle,
   power_high: Unplug,
@@ -36,6 +44,7 @@ const ICON_MAP = {
   check: CheckCircle,
   solar: Sun,
 } as const;
+
 const SEVERITY_STYLES = {
   critical: {
     bg: "bg-red-50",
@@ -56,7 +65,7 @@ const SEVERITY_STYLES = {
     label: "Success",
   },
 };
-// ─── Sub-components (unchanged) ───────────────────────────────────────────────
+
 function SeverityBadge({
   severity,
 }: {
@@ -76,6 +85,7 @@ function SeverityBadge({
     </span>
   );
 }
+
 function StatusText({ status }: { status: Alert["status"] }) {
   const label =
     status === "unresolved"
@@ -85,6 +95,7 @@ function StatusText({ status }: { status: Alert["status"] }) {
         : "No action needed";
   return <span className="text-foreground text-sm">{label}</span>;
 }
+
 function SkeletonRow() {
   return (
     <tr className="border-border border-b last:border-0">
@@ -112,6 +123,7 @@ function SkeletonRow() {
     </tr>
   );
 }
+
 function InspectModal({
   alertId,
   onClose,
@@ -210,6 +222,7 @@ function InspectModal({
     </Dialog>
   );
 }
+
 function FilterDropdown({
   value,
   onChange,
@@ -253,6 +266,7 @@ function FilterDropdown({
     </DropdownMenu.Root>
   );
 }
+
 function filterAlerts(alerts: Alert[], filter: AlertFilterType): Alert[] {
   if (filter === "all") return alerts;
   if (filter === "resolved")
@@ -272,60 +286,55 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [secondsAgo, setSecondsAgo] = useState(0);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
-  // ── REQ 3: track whether the last refresh attempt failed ──────────────────
+
   const [refreshError, setRefreshError] = useState(false);
-  // ── REQ 5: guard against duplicate in-flight requests ────────────────────
+
   const isPendingRef = useRef(false);
-  // Tick the "last updated N secs ago" counter every second
+
   useEffect(() => {
     const interval = setInterval(() => {
       setSecondsAgo((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  // ── REQ 1-5: refresh logic ────────────────────────────────────────────────
+
   const handleRefresh = useCallback(async () => {
-    // REQ 5: bail out if a request is already in flight
     if (isPendingRef.current) return;
     isPendingRef.current = true;
-    // REQ 2: signal background activity without hiding existing data
+
     setIsRefreshing(true);
     try {
       await queryClient.invalidateQueries({ queryKey: ALERT_QUERY_KEYS.all });
-      // REQ 1 / REQ 2: success — reset timer and clear any prior error
+
       setSecondsAgo(0);
       setRefreshError(false);
     } catch {
-      // REQ 3: keep previous successful values; surface the error message;
-      //         the next polling cycle will retry automatically.
       setRefreshError(true);
     } finally {
       setIsRefreshing(false);
       isPendingRef.current = false;
     }
   }, [queryClient]);
-  // ── REQ 1: auto-refresh every 30 seconds ─────────────────────────────────
+
   useEffect(() => {
     const interval = setInterval(() => {
       handleRefresh();
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [handleRefresh]);
-  // ── REQ 4: when API returns nothing, counts fall back to 0 naturally
-  //           because initialData defaults to [] and Array#filter returns [].
+
   const displayed = filterAlerts(initialData, filter);
   const unreadCount = initialData.filter(
     (a) => a.status === "unresolved",
   ).length;
-  // REQ 2: only show skeleton on the initial page load, not on background refreshes
+
   const showLoadingSkeleton = isLoading;
-  // REQ 2: subtle spinner on the refresh button during background polls
+
   const showRefreshSpinner = isRefreshing;
   return (
     <>
       <div className="bg-card border-border overflow-hidden rounded-xl border">
         <div className="border-border flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* REQ 6: FilterDropdown remains fully interactive at all times */}
           <FilterDropdown value={filter} onChange={setFilter} />
           <div
             className="flex items-center gap-2 border border-[
@@ -338,10 +347,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                 {unreadCount !== 1 ? "s" : ""}
               </span>
             </span>
-            {/*
-              REQ 3: show error message in place of the timer when refresh fails.
-              REQ 2: no layout shift — both branches occupy the same slot.
-            */}
+
             {refreshError ? (
               <span className="text-destructive hidden text-sm sm:inline">
                 unable to refresh alerts
@@ -354,15 +360,13 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
             <Button
               variant="ghost"
               onClick={handleRefresh}
-              // REQ 5 / REQ 6: disable the button only while a request is in
-              //   flight; the table rows and filter remain fully interactive.
               disabled={showRefreshSpinner}
               className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors disabled:pointer-events-none"
             >
               <RefreshCw
                 className={cn(
                   "size-4 transition-transform duration-500",
-                  // REQ 2: subtle spinner; does not shift any surrounding layout
+
                   showRefreshSpinner && "animate-spin",
                 )}
               />
@@ -412,14 +416,8 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                       >
                         <td className="py-4 pr-4 pl-4">
                           <div className="flex items-center gap-3">
-                            <div
-                              className="bg-[
-#E8E8E8] flex size-10 shrink-0 items-center justify-center rounded-full"
-                            >
-                              <Icon
-                                className="text-[
-#121212] size-4"
-                              />
+                            <div className="bg-[#E8E8E8] flex size-10 shrink-0 items-center justify-center rounded-full">
+                              <Icon className="text-[#121212] size-4" />
                             </div>
                             <div className="min-w-0">
                               <p className="text-foreground wrap-break-words text-base font-semibold">

@@ -1,16 +1,32 @@
-import {
-  AlertSeverity,
-  AlertStatus,
-  AlertIconType,
-} from "@/lib/mocks/alerts-data";
+export type AlertSeverity = "critical" | "warning" | "success";
+export type AlertStatus = "unresolved" | "resolved" | "no_action_needed";
+
+export type AlertIconType =
+  | "battery_low"
+  | "power_high"
+  | "clock"
+  | "battery_full"
+  | "check"
+  | "solar";
+
+export type AlertFilterType =
+  | "all"
+  | "success"
+  | "warning"
+  | "critical"
+  | "resolved"
+  | "unresolved";
+
 export interface AlertMetric {
   label: string;
   value: string;
 }
+
 export interface AlertModalDetail {
   metrics: AlertMetric[];
   reason: string;
 }
+
 export interface Alert {
   id: string;
   title: string;
@@ -21,10 +37,12 @@ export interface Alert {
   iconType: AlertIconType;
   modalDetail?: AlertModalDetail;
 }
+
 export interface StatItem {
   count: number;
   label: string;
 }
+
 export interface AlertSummaryResponse {
   activeAlerts: StatItem;
   critical: StatItem;

@@ -1,5 +1,6 @@
 export type AlertSeverity = "critical" | "warning" | "success";
 export type AlertStatus = "unresolved" | "resolved" | "no_action_needed";
+
 export type AlertIconType =
   | "battery_low"
   | "power_high"
@@ -7,6 +8,7 @@ export type AlertIconType =
   | "battery_full"
   | "check"
   | "solar";
+
 export type AlertFilterType =
   | "all"
   | "success"
@@ -32,6 +34,7 @@ export interface Alert {
   iconType: AlertIconType;
   modalDetail?: AlertModalDetail;
 }
+
 export const alertsMock: Alert[] = [
   {
     id: "1",
@@ -97,12 +100,14 @@ export const alertsMock: Alert[] = [
     iconType: "solar",
   },
 ];
+
 export const alertStatsMock = {
   activeAlerts: { count: 14, label: "Last 7 days" },
   critical: { count: 1, label: "Need action now" },
   warning: { count: 3, label: "Awaiting your review" },
   unresolved: { count: 5, label: "Still open" },
 };
+
 export const FILTER_OPTIONS: { value: AlertFilterType; label: string }[] = [
   { value: "all", label: "All" },
   { value: "success", label: "Success" },

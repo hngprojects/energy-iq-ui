@@ -5,25 +5,6 @@ import {
   ApiAlert,
   ApiAlertSummaryResponse,
 } from "@/types/alerts";
-import { alertsMock, alertStatsMock } from "@/lib/mocks/alerts-data";
-import { ApiError } from "@/lib/api/error";
-import axios from "axios";
-
-// TODO: Remove this fallback once the backend implements these endpoints.
-// Until then, any 404 from the API gracefully falls back to mock data so
-// the alerts page remains functional during development.
-const isMissingEndpoint = (err: unknown) => {
-  if (err instanceof ApiError && (err.status === 404 || err.status === 400)) {
-    return true;
-  }
-
-  if (axios.isAxiosError(err)) {
-    const status = err.response?.status;
-    if (status === 404 || status === 400) return true;
-  }
-
-  return false;
-};
 
 const toTitleCase = (value: string) =>
   value
@@ -73,65 +54,40 @@ const mapApiSummary = (
 
 export const alertsService = {
   getAllAlerts: async (): Promise<Alert[]> => {
-    try {
-      const alerts = await apiFetch<ApiAlert[]>(
-        "/alerts",
-        {
-          params: {
-            alert_type: "BATTERY_PERCENTAGE",
-          },
+    const alerts = await apiFetch<ApiAlert[]>(
+      "/alerts",
+      {
+        params: {
+          alert_type: "BATTERY_PERCENTAGE",
         },
-        true,
-      );
+      },
+      true,
+    );
 
-      return alerts.map(mapApiAlert);
-    } catch (err) {
-      if (isMissingEndpoint(err)) return alertsMock as Alert[];
-      throw err;
-    }
+    return alerts.map(mapApiAlert);
   },
 
   getAlertSummary: async (): Promise<AlertSummaryResponse> => {
-    try {
-      const summary = await apiFetch<ApiAlertSummaryResponse>(
-        "/alerts/summary",
-        {},
-        true,
-      );
+    const summary = await apiFetch<ApiAlertSummaryResponse>(
+      "/alerts/summary",
+      {},
+      true,
+    );
 
-      return mapApiSummary(summary);
-    } catch (err) {
-      if (isMissingEndpoint(err)) return alertStatsMock as AlertSummaryResponse;
-      throw err;
-    }
+    return mapApiSummary(summary);
   },
 
   getAlertById: async (id: string): Promise<Alert> => {
-    try {
-      const alert = await apiFetch<ApiAlert>(`/alerts/${id}`, {}, true);
+    const alert = await apiFetch<ApiAlert>(`/alerts/${id}`, {}, true);
 
-      return mapApiAlert(alert);
-    } catch (err) {
-      if (isMissingEndpoint(err)) {
-        const found = alertsMock.find((a) => a.id === id);
-        if (found) return found as Alert;
-      }
-
-      throw err;
-    }
+    return mapApiAlert(alert);
   },
 
   resolveAlert: async (id: string): Promise<void> => {
-    try {
-      return await apiFetch<void>(
-        `/alerts/${id}/resolve`,
-        { method: "PATCH" },
-        true,
-      );
-    } catch (err) {
-      // Silently swallow 404 resolves because mock data has no persist layer.
-      if (isMissingEndpoint(err)) return;
-      throw err;
-    }
+    return await apiFetch<void>(
+      `/alerts/${id}/resolve`,
+      { method: "PATCH" },
+      true,
+    );
   },
 };
