@@ -29,9 +29,14 @@ export function AuthForgotPasswordForm({
 
   const { mutate: forgotPassword, isPending } = useForgotPassword();
 
-  const { register, handleSubmit, control } = useForm<ForgotPasswordValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
-
+    mode: "onChange",
     defaultValues: {
       email: "",
     },
@@ -57,7 +62,7 @@ export function AuthForgotPasswordForm({
   };
 
   return (
-    <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="flex flex-col gap-2">
         <div className="space-y-3 md:space-y-4">
           <AuthInput
@@ -66,6 +71,8 @@ export function AuthForgotPasswordForm({
             placeholder="Enter your email address"
             type="email"
             disabled={isPending}
+            error={errors.email?.message}
+            statusColor={errors.email ? "red" : undefined}
             {...register("email")}
           />
         </div>

@@ -22,6 +22,7 @@ export function AuthLoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -46,7 +47,7 @@ export function AuthLoginForm() {
   }
 
   let passwordStatusColor: "red" | "green" | undefined = undefined;
-  if (loginMutation.isError || (errors.password && errors.password.type === "too_big")) {
+  if (loginMutation.isError || errors.password) {
     passwordStatusColor = "red";
   }
 
@@ -64,6 +65,7 @@ export function AuthLoginForm() {
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-4 md:space-y-6"
+      noValidate
     >
       <div className="flex flex-col gap-2">
         <div className="space-y-3 md:space-y-4">
@@ -74,7 +76,6 @@ export function AuthLoginForm() {
             type="email"
             error={errors.email?.message}
             statusColor={emailStatusColor}
-            hideErrorMessage={true}
             {...register("email")}
           />
           <AuthInput
@@ -82,9 +83,8 @@ export function AuthLoginForm() {
             id="password"
             placeholder="************"
             type="password"
-            error={errors.password?.type === "too_big" ? errors.password.message : undefined}
+            error={errors.password?.message}
             statusColor={passwordStatusColor}
-            hideErrorMessage={errors.password?.type !== "too_big"}
             {...register("password")}
           />
         </div>
