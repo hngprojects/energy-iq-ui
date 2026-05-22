@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 import type { Alert, AlertFilterType } from "@/types/alerts";
 import { useResolveAlert, useAlertDetail } from "@/hooks/use-alerts-queries";
@@ -132,7 +133,8 @@ function InspectModal({
   onClose: () => void;
 }) {
   const { data: alert, isLoading } = useAlertDetail(alertId);
-  const { mutate: resolveAlert } = useResolveAlert();
+  const { mutateAsync: resolveAlert, isPending: isResolving } =
+    useResolveAlert();
   const Icon = alert?.iconType ? ICON_MAP[alert.iconType] : AlertTriangle;
   const sev = alert?.severity
     ? SEVERITY_STYLES[alert.severity]
@@ -199,13 +201,22 @@ function InspectModal({
             <div className="flex justify-end">
               {alert.status === "unresolved" ? (
                 <Button
-                  onClick={() => {
-                    resolveAlert(alert.id);
-                    onClose();
+                  onClick={async () => {
+                    try {
+                      await resolveAlert(alert.id);
+                      onClose();
+                    } catch (error) {
+                      const message =
+                        error instanceof Error
+                          ? error.message
+                          : "Unable to resolve alert. Please try again.";
+                      toast.error(message);
+                    }
                   }}
+                  disabled={isResolving}
                   className="bg-secondary text-primary-foreground hover:bg-secondary/80 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
                 >
-                  Resolve Now
+                  {isResolving ? "Resolving..." : "Resolve Now"}
                 </Button>
               ) : (
                 <Button
@@ -336,10 +347,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
       <div className="bg-card border-border overflow-hidden rounded-xl border">
         <div className="border-border flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <FilterDropdown value={filter} onChange={setFilter} />
-          <div
-            className="flex items-center gap-2 border border-[
-#EDEDED] py-1 px-1.5"
-          >
+          <div className="flex items-center gap-2 border border-[`#EDEDED`] py-1 px-1.5">
             <span className="flex items-center gap-1.5 text-sm">
               <span className="bg-secondary inline-block h-1.5 w-1.5 rounded-full" />
               <span className="text-foreground font-medium">
@@ -420,10 +428,10 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                               <Icon className="text-[#121212] size-4" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-foreground wrap-break-words text-base font-semibold">
+                              <p className="text-foreground wrap-break-word text-base font-semibold">
                                 {alert.title}
                               </p>
-                              <p className="text-muted-foreground mt-0.5 whitespace-normal wrap-break-words text-sm leading-relaxed">
+                              <p className="text-muted-foreground mt-0.5 whitespace-normal wrap-break-word text-sm leading-relaxed">
                                 {alert.subtitle}
                               </p>
                             </div>
