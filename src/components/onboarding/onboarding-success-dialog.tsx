@@ -34,15 +34,8 @@ export function OnboardingSuccessDialog({
     }
   }, [open, user]);
 
-  const handleClose = (isOpen: boolean) => {
-    onOpenChange(isOpen);
-    if (!isOpen) {
-      router.push("/dashboard");
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full sm:h-95 sm:max-w-122.25!">
         <div className="flex flex-col items-center py-4 text-center">
           <div className="mb-6 rounded-full">

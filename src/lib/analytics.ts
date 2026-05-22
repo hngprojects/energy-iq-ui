@@ -11,6 +11,20 @@ if (typeof window !== "undefined" && MIXPANEL_TOKEN) {
   });
 }
 
+const PII_KEY_PATTERN = /(email|password|name|phone|address)/i;
+
+const sanitizeValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(sanitizeValue);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (PII_KEY_PATTERN.test(k)) continue;
+      out[k] = sanitizeValue(v);
+    }
+    return out;
+  }
+  return value;
+};
 
 export const identifyUser = (userId: string) => {
   if (typeof window === "undefined" || !MIXPANEL_TOKEN) return;
@@ -23,10 +37,7 @@ export const trackEvent = (
 ) => {
   if (typeof window === "undefined" || !MIXPANEL_TOKEN) return;
 
-  const sanitizedProperties = { ...properties };
-  delete sanitizedProperties.email;
-  delete sanitizedProperties.password;
-  delete sanitizedProperties.name;
+  const sanitizedProperties = sanitizeValue(properties ?? {}) as Record<string, unknown>;
 
   mixpanel.track(eventName, {
     ...sanitizedProperties,

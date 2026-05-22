@@ -51,7 +51,7 @@ function GoogleAuthSync() {
 
     const refreshToken =
       searchParams.get("refreshToken") ||
-      searchParams.get("refreshToken") ||
+      hashParams.get("refreshToken") ||
       "";
 
     if (token && !isAuthenticated) {
@@ -84,13 +84,20 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const isCompleted = useRef(false);
+  const stepRef = useRef<Step>(step);
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
 
   // Client‑only auth & redirect handling
   useEffect(() => {
     if (user?.id) {
       identifyUser(user.id);
       if (onboardingStorage.isCompleted(user.id)) {
+        isCompleted.current = true;
         router.replace("/dashboard");
+        return;
       }
     } else {
       // Check incoming Google OAuth token
@@ -113,10 +120,6 @@ export default function OnboardingPage() {
   }, [user, router]);
 
 
-  useEffect(() => {
-    isCompleted.current = successOpen;
-  }, [successOpen]);
-
   // Track page unload / tab close
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -135,12 +138,15 @@ export default function OnboardingPage() {
     return () => {
       if (!isCompleted.current) {
         trackEvent("Onboarding Abandoned", {
-          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details",
+          screen_name:
+            stepRef.current === "select"
+              ? "Inverter Type Selection"
+              : "Inverter Connection Details",
           exit_type: "client_navigation",
         });
       }
     };
-  }, [step]);
+  }, []);
 
   return (
     <AuthWrapper>
@@ -170,7 +176,10 @@ export default function OnboardingPage() {
                 key={inverter}
                 inverter={inverter}
                 onBack={() => setStep("select")}
-                onConnected={() => setSuccessOpen(true)}
+                onConnected={() => {
+                  isCompleted.current = true;
+                  setSuccessOpen(true);
+                }}
               />
             </>
           )
