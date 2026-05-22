@@ -34,6 +34,7 @@ export interface Alert {
   severity: AlertSeverity;
   status: AlertStatus;
   time: string;
+  sortTime: string;
   iconType: AlertIconType;
   modalDetail?: AlertModalDetail;
 }

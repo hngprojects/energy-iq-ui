@@ -21,31 +21,42 @@ const formatAlertTime = (value: string) =>
     minute: "2-digit",
   }).format(new Date(value));
 
-const mapApiAlert = (alert: ApiAlert): Alert => ({
-  id: alert.id,
-  title: toTitleCase(alert.type),
-  subtitle: alert.message,
-  severity: alert.severity
-    ? alert.severity.toLowerCase() === "critical"
-      ? "critical"
-      : (alert.severity.toLowerCase() as Alert["severity"])
-    : "warning",
-  status: alert.resolutionStatus
-    ? alert.resolutionStatus.toLowerCase() === "resolved"
-      ? "resolved"
-      : (alert.resolutionStatus.toLowerCase() as Alert["status"])
-    : "unresolved",
-  time: formatAlertTime(alert.triggeredAt || alert.createdAt),
-  iconType: alert.type === "BATTERY_PERCENTAGE" ? "battery_low" : "clock",
-  modalDetail: {
-    metrics: [
-      { label: "Severity", value: toTitleCase(alert.severity) },
-      { label: "Status", value: toTitleCase(alert.resolutionStatus) },
-      { label: "Channel", value: toTitleCase(alert.deliveryChannel) },
-    ],
-    reason: alert.message,
-  },
-});
+const mapApiAlert = (alert: ApiAlert): Alert => {
+  const alertTime = alert.triggeredAt || alert.createdAt;
+
+  return {
+    id: alert.id,
+    title: toTitleCase(alert.type),
+    subtitle: alert.message,
+    severity: alert.severity
+      ? alert.severity.toLowerCase() === "critical"
+        ? "critical"
+        : (alert.severity.toLowerCase() as Alert["severity"])
+      : "warning",
+    status: alert.resolutionStatus
+      ? alert.resolutionStatus.toLowerCase() === "resolved"
+        ? "resolved"
+        : (alert.resolutionStatus.toLowerCase() as Alert["status"])
+      : "unresolved",
+    time: formatAlertTime(alertTime),
+    sortTime: alertTime,
+    iconType: alert.type === "BATTERY_PERCENTAGE" ? "battery_low" : "clock",
+    modalDetail: {
+      metrics: [
+        { label: "Severity", value: toTitleCase(alert.severity ?? "warning") },
+        {
+          label: "Status",
+          value: toTitleCase(alert.resolutionStatus ?? "unresolved"),
+        },
+        {
+          label: "Channel",
+          value: toTitleCase(alert.deliveryChannel ?? "unknown"),
+        },
+      ],
+      reason: alert.message,
+    },
+  };
+};
 
 const mapApiSummary = (
   summary: ApiAlertSummaryResponse,
