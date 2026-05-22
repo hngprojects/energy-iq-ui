@@ -347,7 +347,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
       <div className="bg-card border-border overflow-hidden rounded-xl border">
         <div className="border-border flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <FilterDropdown value={filter} onChange={setFilter} />
-          <div className="flex items-center gap-2 border border-[`#EDEDED`] py-1 px-1.5">
+          <div className="flex items-center gap-2 border border-[#EDEDED] py-1 px-1.5">
             <span className="flex items-center gap-1.5 text-sm">
               <span className="bg-secondary inline-block h-1.5 w-1.5 rounded-full" />
               <span className="text-foreground font-medium">
