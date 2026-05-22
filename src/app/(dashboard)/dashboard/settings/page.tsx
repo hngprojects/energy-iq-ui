@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, UserRound, Wrench, Users, Bell } from "lucide-react";
+import { Eye, UserRound, Wrench, Bell } from "lucide-react";
 
 const SETTING_CARDS = [
   {
@@ -68,7 +68,9 @@ export default function SettingsPage() {
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#F3F4F6]">
                 <Icon className="h-5 w-5 text-[#6B7280]" aria-hidden="true" />
               </div>
-              <h3 className="text-base font-bold text-dark-text">{card.title}</h3>
+              <h3 className="text-base font-bold text-dark-text">
+                {card.title}
+              </h3>
               <p className="mt-2 text-sm text-[#5D5C5D]">{card.description}</p>
             </div>
           );
@@ -85,3 +87,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
