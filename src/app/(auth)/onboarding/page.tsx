@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
@@ -14,6 +14,7 @@ import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-succ
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
+import { trackEvent, identifyUser } from "@/lib/analytics";
 
 type Step = "select" | "connect";
 
@@ -80,6 +81,30 @@ export default function OnboardingPage() {
   const [inverter, setInverter] = useState<InverterType | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
+  const { user } = useAuthStore();
+  const isCompleted = useRef(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      identifyUser(user.id);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    isCompleted.current = successOpen;
+  }, [successOpen]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isCompleted.current) {
+        trackEvent("Onboarding Abandoned", {
+          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details"
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [step]);
 
   return (
     <AuthWrapper>

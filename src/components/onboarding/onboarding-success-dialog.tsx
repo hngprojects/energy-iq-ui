@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,14 @@ export function OnboardingSuccessDialog({
   onOpenChange,
 }: OnboardingSuccessDialogProps) {
   const router = useRouter();
+
+  useEffect(() => {
+    if (open) {
+      trackEvent("Screen View", { screen_name: "Onboarding Success" });
+      trackEvent("Onboarding Complete", { screen_name: "Onboarding Success" });
+    }
+  }, [open]);
+
   const handleClose = (isOpen: boolean) => {
     onOpenChange(isOpen);
     if (!isOpen) {
