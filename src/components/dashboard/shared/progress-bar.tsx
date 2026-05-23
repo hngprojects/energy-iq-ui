@@ -5,7 +5,7 @@ interface ProgressBarProps {
 
 export function ProgressBar({
   value,
-  colorClass = "bg-[#17CC4E]",
+  colorClass = "bg-success-alt",
 }: ProgressBarProps) {
   return (
     <div className="progress-container">

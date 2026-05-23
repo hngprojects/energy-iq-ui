@@ -35,7 +35,7 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-positive: var(--positive);
   --color-success-bg: var(--success-bg);
-  --color-success-bg-alt: var(--success-bg-alt);
+  --color-success-alt: var(--success-alt);
   --color-sidebar: var(--sidebar);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -111,14 +111,14 @@
   /* Design system — Chart colors */
   --color-chart-solar: #fbbf24;
   --color-chart-diesel: #fb923c;
-  --color-chart-battery: #17cc4e;
+  --color-chart-battery: #dfffeb;
   --color-chart-grid: #64748b;
 
   /* Design system — Semantic */
   --color-positive: #4ade80;
   --color-charge-green: #4ade80;
   --color-success-bg: #def7ec;
-  --color-success-bg-alt: #17cc4e;
+  --color-success-alt: #17cc4e;
   --color-battery-full: #057a55;
   --color-warning: #c27803;
   --color-warning-bg: #fdf6b2;

@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Sun,
-  Snowflake,
-  Lightbulb,
-  MoveUpRight,
-  Flame,
-  Expand,
-} from "lucide-react";
+import { Sun, Snowflake, Lightbulb, Flame, Expand } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -123,8 +116,8 @@ export function PowerUsageCard({ zones }: { zones: Zone[] }) {
       <div className="border-border bg-card flex flex-col gap-4 rounded-2xl border p-5">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Where your power&apos;s going</p>
-          <span className="bg-chart-battery/10 text-chart-battery inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium">
-            <span className="bg-chart-battery h-1.5 w-1.5 animate-pulse rounded-full" />{" "}
+          <span className="bg-chart-battery text-success-alt inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium">
+            <span className="bg-success-alt h-1.5 w-1.5 animate-pulse rounded-full" />{" "}
             Live
           </span>
         </div>

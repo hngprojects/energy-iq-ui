@@ -8,21 +8,29 @@ export function SavedTodayCard({
   deltaPct,
 }: {
   amount: number;
-  diesel: number;
-  deltaPct: number;
+  diesel?: number;
+  deltaPct?: number;
 }) {
   return (
     <div className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-5">
       <p className="text-muted-foreground text-sm">You saved today</p>
       <p className="text-3xl font-bold tracking-tight">{fmt(amount)}</p>
-      <p className="text-muted-foreground text-xs leading-relaxed">
-        That&apos;s{" "}
-        <span className="text-foreground font-medium">{fmt(diesel)}</span> in
-        diesel you didn&apos;t need to burn today
-      </p>
-      <span className="bg-chart-battery/10 text-chart-battery inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
-        <ArrowUp className="h-3 w-3" /> {deltaPct}% more than yesterday
-      </span>
+      {diesel != null ? (
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          That&apos;s{" "}
+          <span className="text-foreground font-medium">{fmt(diesel)}</span>
+          &nbsp;in diesel you didn&apos;t need to burn today
+        </p>
+      ) : (
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          Savings accumulate as your system generates power
+        </p>
+      )}
+      {deltaPct != null && (
+        <span className="bg-chart-battery text-success-alt inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
+          <ArrowUp className="h-3 w-3" /> {deltaPct}% more than yesterday
+        </span>
+      )}
     </div>
   );
 }
@@ -34,7 +42,7 @@ export function SavedMonthCard({
   active,
 }: {
   amount: number;
-  deltaPct: number;
+  deltaPct?: number;
   months: string[];
   active: string;
 }) {
@@ -45,9 +53,15 @@ export function SavedMonthCard({
         <ArrowUpRight className="text-muted-foreground h-4 w-4" />
       </div>
       <p className="text-3xl font-bold tracking-tight">{fmt(amount)}</p>
-      <span className="bg-danger/10 text-danger inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
-        <ArrowDown className="h-3 w-3" /> {Math.abs(deltaPct)}% vs last month
-      </span>
+      {deltaPct != null ? (
+        <span className="bg-danger/10 text-danger inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
+          <ArrowDown className="h-3 w-3" /> {Math.abs(deltaPct)}% vs last month
+        </span>
+      ) : (
+        <p className="text-muted-foreground text-xs">
+          Monthly comparison coming soon
+        </p>
+      )}
       <div className="text-muted-foreground flex justify-between pt-2 text-xs">
         {months.map((m) => (
           <span

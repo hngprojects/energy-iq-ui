@@ -34,3 +34,57 @@ export interface ConnectInverterResponse {
     timestamp: string;
   };
 }
+
+export type UserInvertersResponse = Inverter[];
+
+// GET /inverter-metrics/{inverterId}/dashboard
+export interface DashboardMetrics {
+  currentReadings: {
+    solarKw: number;
+    batterySocPercent: number;
+    loadKw: number;
+    gridVoltageV: number;
+    batteryVoltageV: number;
+    recordedAt: string;
+  };
+  dataAgeSeconds: number;
+  systemOffline: boolean;
+  emptyData: boolean;
+  nairaSavedToday: number;
+  nairaSavedThisMonth: number;
+  health: {
+    status: string;
+    reason: string;
+  };
+  sevenDayHistory: {
+    date: string;
+    solarKwh: number;
+    avgBatterySocPercent: number;
+    avgLoadKw: number;
+  }[];
+}
+
+// GET /inverter-metrics/{inverterId}/energy-usage?period=daily
+export interface EnergyUsagePoint {
+  date: string;
+  solarKwh: number;
+  avgBatterySoc: number;
+  avgLoadKw: number;
+}
+
+export interface EnergyUsageResponse {
+  period: string;
+  data: EnergyUsagePoint[];
+}
+
+// GET /inverter-metrics/{inverterId}/power-consumption (no zone data yet)
+export interface PowerZone {
+  name: string;
+  watts: number;
+  percentage: number;
+}
+
+export interface PowerConsumptionResponse {
+  zones?: PowerZone[];
+  totalWatts?: number;
+}
