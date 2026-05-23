@@ -1,5 +1,6 @@
 import { DashboardSidebar } from "@/components/dashboard/layout/dashboard-sidebar";
 import { DashboardHeader } from "@/components/dashboard/layout/dashboard-header";
+import { OnboardingGuard } from "@/components/dashboard/onboarding-guard";
 
 export default function DashboardLayout({
   children,
@@ -12,7 +13,9 @@ export default function DashboardLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader />
         <main className="bg-background flex-1 overflow-auto px-4 py-4 lg:px-6 lg:py-6 mx-auto max-w-7xl w-full">
-          {children}
+          <OnboardingGuard>
+            {children}
+          </OnboardingGuard>
         </main>
       </div>
     </div>
