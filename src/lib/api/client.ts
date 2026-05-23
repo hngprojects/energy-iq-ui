@@ -3,10 +3,13 @@ import { ApiError } from "./error";
 // import { env as serverEnv } from "@/env/server";
 import { useAuthStore } from "@/stores/auth-store";
 import { AUTH_PUBLIC_PATHS } from "@/constants/auth";
+import { RefreshTokenResponse } from "@/types/auth";
 
 const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
 const isInternalApiPath = (path: string): boolean => path.startsWith("/api/");
 const isServer = typeof window === "undefined";
+
+let refreshingPromise: Promise<RefreshTokenResponse | null> | null = null;
 
 function getBaseUrl(): string | undefined {
   return isServer
@@ -111,9 +114,61 @@ export async function apiFetch<TResponse>(
       const status = err.response?.status ?? 500;
 
       const isPublicAuthPath = AUTH_PUBLIC_PATHS.some((p) => path.includes(p));
+      const isRefreshPath = path.includes("/auth/refresh");
 
-      if (status === 401 && typeof window !== "undefined" && !isPublicAuthPath) {
-        // Clear auth tokens via Zustand on 401
+      if (status === 401 && typeof window !== "undefined" && !isPublicAuthPath && !isRefreshPath) {
+        const refreshToken = useAuthStore.getState().refreshToken;
+
+        if (refreshToken) {
+          try {
+            if (!refreshingPromise) {
+              const refreshUrl = resolveRequestUrl("/auth/refresh", proxy);
+              refreshingPromise = axios.request<RefreshTokenResponse | { data: RefreshTokenResponse }>({
+                url: refreshUrl,
+                method: "POST",
+                data: { refreshToken },
+                headers: {
+                  "Content-Type": "application/json"
+                }
+              }).then(res => {
+                const data = "data" in res.data ? res.data.data : res.data;
+                const { accessToken: newToken, refreshToken: newRefreshToken } = data;
+                
+                const user = useAuthStore.getState().user;
+                if (user && newToken && newRefreshToken) {
+                  useAuthStore.getState().setAuth(
+                    user,
+                    newToken,
+                    newRefreshToken,
+                    localStorage.getItem("remember_me") === "1"
+                  );
+                }
+                return data;
+              }).catch(error => {
+                console.error("Error during token refresh request", error);
+                throw error;
+              }).finally(() => {
+                refreshingPromise = null;
+              });
+            }
+
+            const refreshData = await refreshingPromise;
+            if (refreshData?.accessToken) {
+              // Retry the original request with new token
+              const newHeaders = {
+                ...headers,
+                "Authorization": `Bearer ${refreshData.accessToken}`
+              };
+              return apiFetch<TResponse>(path, { ...config, headers: newHeaders }, proxy);
+            }
+          } catch (refreshErr) {
+            // Refresh failed, fall through to logout
+            console.error("Token refresh failed final catch", refreshErr);
+          }
+        }
+
+        console.warn("Refresh failed or no token available, logging out...");
+        // Clear auth tokens via Zustand on 401 if refresh failed or no refresh token
         useAuthStore.getState().logout();
         window.location.replace("/login");
       }

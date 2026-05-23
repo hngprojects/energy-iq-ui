@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, type Variants } from "motion/react";
+import Link from "next/link";
 
 type BillingPeriod = "monthly" | "yearly";
 
@@ -240,18 +241,20 @@ export function PricingSection() {
               </div>
 
               <div className="mt-auto">
-                <button
-                  type="button"
-                  className={`w-full cursor-pointer rounded-lg p-3 text-base font-medium transition-all ${
-                    tier.ctaVariant === "primary"
-                      ? "bg-primary text-[#F6F6F6] hover:bg-[#D07A0E]"
-                      : tier.ctaVariant === "outline" && tier.highlighted
-                        ? "border border-white text-white hover:border-gray-200 hover:bg-white hover:text-gray-900"
-                        : "border border-[#080C13] text-[#080C13] hover:bg-gray-900 hover:text-white"
-                  }`}
-                >
-                  {tier.cta}
-                </button>
+                <Link href="/coming-soon">
+                  <button
+                    type="button"
+                    className={`w-full cursor-pointer rounded-lg p-3 text-base font-medium transition-all ${
+                      tier.ctaVariant === "primary"
+                        ? "bg-primary text-[#F6F6F6] hover:bg-[#D07A0E]"
+                        : tier.ctaVariant === "outline" && tier.highlighted
+                          ? "border border-white text-white hover:border-gray-200 hover:bg-white hover:text-gray-900"
+                          : "border border-[#080C13] text-[#080C13] hover:bg-gray-900 hover:text-white"
+                    }`}
+                  >
+                    {tier.cta}
+                  </button>
+                </Link>
               </div>
             </motion.div>
           ))}
