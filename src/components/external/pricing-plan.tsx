@@ -4,6 +4,7 @@ import { useState } from "react"
 import { motion, useScroll, useSpring, AnimatePresence } from "motion/react"
 import Image from "next/image"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 type BillingPeriod = "monthly" | "yearly"
 
@@ -361,20 +362,25 @@ export function PricingSection() {
               </div>
 
               <div className="mt-auto">
-                <Link href="/coming-soon">
-                  <button
-                    type="button"
-                    className={`w-full cursor-pointer rounded-lg p-3 text-base font-medium transition-all ${
-                      tier.ctaVariant === "primary"
-                        ? "bg-primary text-slate-10 hover:bg-amber-60"
-                        : tier.ctaVariant === "outline" && tier.highlighted
-                          ? "hover:border-slate-30 hover:bg-background hover:text-secondary border border-white text-white"
-                          : "border-secondary text-secondary hover:bg-secondary border hover:text-white"
-                    }`}
-                  >
-                    {tier.cta}
-                  </button>
-                </Link>
+                <Button
+                  asChild
+                  variant={
+                    tier.ctaVariant === "primary"
+                      ? "default"
+                      : tier.ctaVariant === "outline"
+                        ? "outline"
+                        : "secondary"
+                  }
+                  className={`w-full cursor-pointer p-3 text-base font-medium transition-all ${
+                    tier.ctaVariant === "primary"
+                      ? "bg-primary text-slate-10 hover:bg-amber-60"
+                      : tier.ctaVariant === "outline" && tier.highlighted
+                        ? "hover:border-slate-30 hover:bg-background hover:text-secondary border border-white text-white"
+                        : "border-secondary text-secondary hover:bg-secondary border hover:text-white"
+                  }`}
+                >
+                  <Link href="/coming-soon">{tier.cta}</Link>
+                </Button>
               </div>
             </div>
           ))}

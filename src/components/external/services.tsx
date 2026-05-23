@@ -33,11 +33,12 @@ const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
           <p className="text-muted-foreground leading-relaxed">{description}</p>
         </div>
 
-        <Link href="/coming-soon">
-          <Button
-            className="bg-primary text-secondary flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-            aria-label={`Learn more about ${title}`}
-          >
+        <Button
+          asChild
+          className="bg-primary text-secondary flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+          aria-label={`Learn more about ${title}`}
+        >
+          <Link href="/coming-soon">
             <svg
               width="24"
               height="24"
@@ -50,8 +51,8 @@ const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
             >
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     </div>
   );
@@ -90,14 +91,13 @@ export const Services = () => {
             Everything your <br />
             <span className="text-primary">Energy</span> System Needs
           </h2>
-          <Link href="/coming-soon">
-            <Button
-              size="lg"
-              className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold"
-            >
-              Services
-            </Button>
-          </Link>
+          <Button
+            asChild
+            size="lg"
+            className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold"
+          >
+            <Link href="/coming-soon">Services</Link>
+          </Button>
         </motion.div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {services.map((service, index) => (
