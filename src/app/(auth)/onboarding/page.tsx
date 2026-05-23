@@ -14,7 +14,6 @@ import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-succ
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
-import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 import { onboardingStorage } from "@/lib/onboarding-storage";
 
@@ -36,10 +35,13 @@ function GoogleAuthSync() {
 
     if (error) {
       window.history.replaceState(null, "", window.location.pathname);
+       const isDuplicateAccount = error === "account_exists" || error === "duplicate";
       toast.error(
-        "An account with this email already exists. Please sign in with your email and password.",
-        { duration: 6000 },
-      );
+        isDuplicateAccount
+          ? "An account with this email already exists. Please sign in with your email and password."
+          : "Sign in failed. Please try again.",
+          { duration: 6000 },
+        );
       router.replace("/login");
       return;
     }
@@ -83,70 +85,62 @@ export default function OnboardingPage() {
   const [inverter, setInverter] = useState<InverterType | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
   const isCompleted = useRef(false);
   const stepRef = useRef<Step>(step);
-  const { useOnboardingStatus } = useInverterQueries();
-  const { data: onboardingStatus, isLoading: isStatusLoading, isError: isStatusError } = useOnboardingStatus();
 
-  const hasIncomingOAuthToken = (() => {
-  if (typeof window === "undefined") return false;
-  const sp = new URLSearchParams(window.location.search);
-  const hp = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  return !!(sp.get("accessToken") || sp.get("token") || hp.get("accessToken") || hp.get("token"));
-})();
-
-const isLoading = (!user?.id && !hasIncomingOAuthToken) || 
-                  (!!user?.id && onboardingStorage.isCompleted(user.id));
+  const isLoading = !user?.id;
 
   useEffect(() => {
     stepRef.current = step;
   }, [step]);
 
-  // Client‑only auth & redirect handling
-  useEffect(() => {
-    if (user?.id) {
-      identifyUser(user.id);
-      if (onboardingStorage.isCompleted(user.id)) {
-        isCompleted.current = true;
-        router.replace("/dashboard");
+useEffect(() => {
+  if (user?.id) {
+    identifyUser(user.id);
+    if (onboardingStorage.isCompleted(user.id)) {
+      isCompleted.current = true;
+      router.replace("/dashboard");
+      return;
+    }
+  } else {
+    const searchParamsObj = new URLSearchParams(window.location.search);
+    const hashString = window.location.hash.replace(/^#/, "");
+    const hashParamsObj = new URLSearchParams(hashString);
+    const incomingToken =
+      searchParamsObj.get("accessToken") ||
+      searchParamsObj.get("token") ||
+      hashParamsObj.get("accessToken") ||
+      hashParamsObj.get("token");
+
+    if (!incomingToken) {
+      const storeToken = useAuthStore.getState().token;
+      if (!storeToken) {
+        router.replace("/login");
+        return;
+      } else {
+        // Stored token exists but no user — attempt to restore session
+        const { setAuth, logout } = useAuthStore.getState();
+        const refreshToken = useAuthStore.getState().refreshToken || "";
+        AuthService.me()
+          .then((realUser) => {
+            if (realUser?.id) {
+              setAuth(realUser, storeToken, refreshToken);
+            } else {
+              logout();
+              router.replace("/login");
+            }
+          })
+          .catch(() => {
+            logout();
+            router.replace("/login");
+          });
         return;
       }
-    } else {
-      // Check incoming Google OAuth token
-      const searchParamsObj = new URLSearchParams(window.location.search);
-      const hashString = window.location.hash.replace(/^#/, "");
-      const hashParamsObj = new URLSearchParams(hashString);
-      const incomingToken =
-        searchParamsObj.get("accessToken") ||
-        searchParamsObj.get("token") ||
-        hashParamsObj.get("accessToken") ||
-        hashParamsObj.get("token");
-
-      if (!incomingToken) {
-        const storeToken = useAuthStore.getState().token;
-        if (!storeToken) {
-          router.replace("/login");
-          return;
-        }
-      }
-      // If we have an incoming token or stored token, GoogleAuthSync will handle it.
-      // We don't want to show the UI yet.
     }
-  }, [user, router]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    if (onboardingStatus?.onboardingComplete) {
-      onboardingStorage.setCompleted(user.id);
-      isCompleted.current = true;
-      router.replace("/dashboard");
-    } else if (isStatusError) {
-      isCompleted.current = true;
-      router.replace("/dashboard");
-    }
-  }, [onboardingStatus, isStatusError, user, router]);
-
+    // If we have an incoming token, GoogleAuthSync will handle it.
+  }
+}, [user, router]);
 
   // Track page unload / tab close
   useEffect(() => {
@@ -176,9 +170,16 @@ const isLoading = (!user?.id && !hasIncomingOAuthToken) ||
     };
   }, []);
 
+  const googleAuthSync = (
+    <Suspense fallback={null}>
+      <GoogleAuthSync />
+    </Suspense>
+  );
+
   if (isLoading) {
     return (
       <AuthWrapper>
+        {googleAuthSync}
         <div className="mt-28 flex items-center justify-center lg:mt-44">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
@@ -186,21 +187,9 @@ const isLoading = (!user?.id && !hasIncomingOAuthToken) ||
     );
   }
 
-return (
-  <AuthWrapper>
-    <Suspense fallback={null}>
-      <GoogleAuthSync />
-    </Suspense>
-
-    {isLoading ? (
-      <div className="mt-28 flex items-center justify-center lg:mt-44">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    ) : isAuthenticated && isStatusLoading ? (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-      </div>
-    ) : (
+  return (
+    <AuthWrapper>
+      {googleAuthSync}
       <div className="mt-28 lg:mt-44">
         {step === "select" ? (
           <>
@@ -235,12 +224,10 @@ return (
           )
         )}
       </div>
-    )}
-
-    <OnboardingSuccessDialog
-      open={successOpen}
-      onOpenChange={setSuccessOpen}
-    />
-  </AuthWrapper>
-);
+      <OnboardingSuccessDialog
+        open={successOpen}
+        onOpenChange={setSuccessOpen}
+      />
+    </AuthWrapper>
+  );
 }
