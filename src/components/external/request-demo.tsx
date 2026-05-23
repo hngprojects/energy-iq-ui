@@ -73,7 +73,7 @@ const DemoBadge = ({ title, description, image, isActive, isPlaying, onClick }: 
         </div>
       </div>
       <div>
-        <h4 className="mb-1 text-[18px] font-semibold text-[#525252]">{title}</h4>
+        <h3 className="mb-1 text-[18px] font-semibold text-[#525252]">{title}</h3>
         <p className="text-[16px] leading-tight text-[#525252]">{description}</p>
       </div>
     </div>
