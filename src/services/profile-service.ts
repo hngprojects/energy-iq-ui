@@ -3,14 +3,14 @@ import { ProfileUpdateRequest, ProfileUpdateResponse, AvatarUploadResponse } fro
 
 export const ProfileService = {
   updateProfile: async (data: ProfileUpdateRequest) => {
-    return apiFetch<ProfileUpdateResponse>("/users/profile", { method: "PATCH", data }, true);
+    return apiFetch<ProfileUpdateResponse>("/users/settings/personal", { method: "PATCH", data }, true);
   },
 
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append("avatar", file);
     return apiFetch<AvatarUploadResponse>(
-      "/users/profile/avatar",
+      "/users/settings/avatar",
       { method: "POST", data: formData },
       true,
     );
