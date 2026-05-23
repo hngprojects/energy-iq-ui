@@ -53,7 +53,7 @@ export interface DashboardMetrics {
   nairaSavedToday: number;
   nairaSavedThisMonth: number;
   health: {
-    status: string;
+    status: "GREEN" | "AMBER" | "RED";
     reason: string;
   };
   sevenDayHistory: {
@@ -72,8 +72,10 @@ export interface EnergyUsagePoint {
   avgLoadKw: number;
 }
 
+export type EnergyPeriod = "hourly" | "daily" | "weekly" | "monthly";
+
 export interface EnergyUsageResponse {
-  period: string;
+  period: EnergyPeriod;
   data: EnergyUsagePoint[];
 }
 

@@ -43,7 +43,7 @@ function PowerBreakdownModal({
             <p className="text-foreground text-4xl font-bold tracking-tight">
               {totalKw}
               <span className="text-muted-foreground ml-2 text-sm font-normal">
-                kWh running now
+                kW running now
               </span>
             </p>
             <span className="text-muted-foreground text-sm">
@@ -144,7 +144,7 @@ export function PowerUsageCard({ zones }: { zones: Zone[] }) {
           >
             <Expand className="h-3 w-3" /> View breakdown
           </button>
-          <span className="text-muted-foreground">All 5 zones</span>
+          <span className="text-muted-foreground">All {zones.length} zones</span>
         </div>
       </div>
 

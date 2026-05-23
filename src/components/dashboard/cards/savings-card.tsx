@@ -1,4 +1,5 @@
 import { ArrowUpRight, ArrowDown, ArrowUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const fmt = (n: number) => `₦${n.toLocaleString()}`;
 
@@ -27,8 +28,20 @@ export function SavedTodayCard({
         </p>
       )}
       {deltaPct != null && (
-        <span className="bg-chart-battery text-success-alt inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
-          <ArrowUp className="h-3 w-3" /> {deltaPct}% more than yesterday
+        <span
+          className={cn(
+            "inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+            deltaPct >= 0
+              ? "bg-chart-battery text-success-alt"
+              : "bg-danger/10 text-danger",
+          )}
+        >
+          {deltaPct >= 0 ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )}
+          {Math.abs(deltaPct)}% {deltaPct >= 0 ? "more" : "less"} than yesterday
         </span>
       )}
     </div>
@@ -54,8 +67,20 @@ export function SavedMonthCard({
       </div>
       <p className="text-3xl font-bold tracking-tight">{fmt(amount)}</p>
       {deltaPct != null ? (
-        <span className="bg-danger/10 text-danger inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
-          <ArrowDown className="h-3 w-3" /> {Math.abs(deltaPct)}% vs last month
+        <span
+          className={cn(
+            "inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+            deltaPct >= 0
+              ? "bg-chart-battery text-success-alt"
+              : "bg-danger/10 text-danger",
+          )}
+        >
+          {deltaPct >= 0 ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )}
+          {Math.abs(deltaPct)}% vs last month
         </span>
       ) : (
         <p className="text-muted-foreground text-xs">

@@ -44,7 +44,7 @@ export const useInverterQueries = () => {
     useQuery({
       queryKey: ["dashboard-metrics", inverterId],
       queryFn: () => InverterService.getDashboardMetrics(inverterId!),
-      enabled: !!inverterId,
+      enabled: isAuthenticated && !!inverterId,
       refetchInterval: 30_000,
     });
 
@@ -52,7 +52,7 @@ export const useInverterQueries = () => {
     useQuery({
       queryKey: ["energy-usage", inverterId, period],
       queryFn: () => InverterService.getEnergyUsage(inverterId!, period),
-      enabled: !!inverterId,
+      enabled: isAuthenticated && !!inverterId,
       refetchInterval: 60_000,
       placeholderData: keepPreviousData,
     });
@@ -61,7 +61,7 @@ export const useInverterQueries = () => {
     useQuery({
       queryKey: ["power-consumption", inverterId],
       queryFn: () => InverterService.getPowerConsumption(inverterId!),
-      enabled: !!inverterId,
+      enabled: isAuthenticated && !!inverterId,
       refetchInterval: 30_000,
     });
 

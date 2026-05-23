@@ -49,7 +49,7 @@ export const InverterService = {
 
   getEnergyUsage: async (inverterId: string, period: string) => {
     return apiFetch<EnergyUsageResponse>(
-      `/inverter-metrics/${inverterId}/energy-usage?period=${period}`,
+      `/inverter-metrics/${encodeURIComponent(inverterId)}/energy-usage?period=${encodeURIComponent(period)}`,
       { method: "GET" },
       true,
     );

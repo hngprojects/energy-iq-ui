@@ -43,10 +43,10 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <div className="mt-1 flex items-center justify-between gap-6">
         <span className="flex items-center gap-1.5">
           <span className="bg-muted-foreground h-2 w-2 rounded-full" />
-          Energy Used
+          Avg Load
         </span>
         <span className="font-semibold">
-          {Number(payload[1]?.value ?? 0).toFixed(2)} kWh
+          {Number(payload[1]?.value ?? 0).toFixed(2)} kW
         </span>
       </div>
     </div>
@@ -78,7 +78,7 @@ export function EnergyUsageChart({
         <div>
           <h3 className="text-base font-semibold">Energy usage</h3>
           <p className="text-muted-foreground mt-0.5 text-sm">
-            How much your panels generated vs how much power you used
+            Solar energy generated vs average load power
           </p>
         </div>
 
