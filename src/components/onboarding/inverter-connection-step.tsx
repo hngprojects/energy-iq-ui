@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./password-input";
+import { cn } from "@/lib/utils";
 import {
   TestConnectionStatus,
   LOADING_TOTAL_MS,
@@ -16,6 +17,7 @@ import { INVERTER_CONFIG } from "./inverter-config";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ConnectInverterRequest } from "@/types/inverter";
+import { trackEvent } from "@/lib/analytics";
 
 interface InverterConnectionStepProps {
   inverter: InverterType;
@@ -38,6 +40,9 @@ export function InverterConnectionStep({
   const [helperOpen, setHelperOpen] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
 
+  useEffect(() => {
+    trackEvent("Screen View", { screen_name: "Inverter Connection Details", inverter_type: inverter });
+  }, [inverter]);
 
   const connectInverterMutation = useConnectInverter(onConnected);
 
@@ -59,7 +64,7 @@ export function InverterConnectionStep({
   );
   const canConnect =
     requiredFilled &&
-    testStatus === "success" &&
+    (inverter.toLowerCase() === "sandbox" || testStatus === "success") &&
     !connectInverterMutation.isPending;
 
   const setValue = (i: number, v: string) => {
@@ -73,6 +78,8 @@ export function InverterConnectionStep({
 
   const handleConnect = () => {
     if (!canConnect || !user) return;
+
+    trackEvent("Next Button Clicked", { screen_name: "Inverter Connection Details", inverter_type: inverter });
 
     const payload: ConnectInverterRequest = {
       brand: inverter.toUpperCase(),
@@ -94,6 +101,8 @@ export function InverterConnectionStep({
       if (byId[`${prefix}-plant`]) {
         payload.solarmanPlantId = byId[`${prefix}-plant`];
       }
+    } else if (brand === "sandbox") {
+      payload.sandboxAccessToken = byId["sandbox-token"];
     }
 
     connectInverterMutation.mutate(payload, {
@@ -160,7 +169,10 @@ export function InverterConnectionStep({
         <Button
           type="button"
           variant="outline"
-          onClick={onBack}
+          onClick={() => {
+            trackEvent("Back Button Clicked", { screen_name: "Inverter Connection Details" });
+            onBack();
+          }}
           className="h-14 cursor-pointer rounded-lg border-[#E5E7EB] bg-white text-base font-medium text-dark-text hover:bg-[#F9FAFB]"
         >
           Back
@@ -169,9 +181,16 @@ export function InverterConnectionStep({
           type="button"
           onClick={handleConnect}
           disabled={!canConnect}
-          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-dark-text hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
+          className={cn(
+            "h-14 rounded-lg text-base font-medium lg:text-lg transition-all",
+            canConnect
+              ? "bg-secondary text-white hover:bg-secondary/90"
+              : "bg-[#E5E7EB] text-dark-text hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100",
+          )}
         >
-          {connectInverterMutation.isPending ? "Connecting..." : config.connectLabel}
+          {connectInverterMutation.isPending
+            ? "Connecting..."
+            : config.connectLabel}
         </Button>
       </div>
 
@@ -179,7 +198,7 @@ export function InverterConnectionStep({
         <button
           type="button"
           onClick={() => setHelperOpen((o) => !o)}
-          className="cursor-pointer text-base font-medium text-[#2A2F3C] lg:text-lg"
+          className="cursor-pointer text-base font-medium text-[#2A2F3C] underline hover:text-[#1a1f2c] lg:text-lg"
         >
           Where do I find these?
         </button>

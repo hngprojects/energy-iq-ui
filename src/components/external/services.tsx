@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface ServiceCardProps {
   title: string;
@@ -33,21 +34,24 @@ const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
         </div>
 
         <Button
+          asChild
           className="bg-primary text-secondary flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
           aria-label={`Learn more about ${title}`}
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+          <Link href="/coming-soon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
         </Button>
       </div>
     </div>
@@ -88,10 +92,11 @@ export const Services = () => {
             <span className="text-primary">Energy</span> System Needs
           </h2>
           <Button
+            asChild
             size="lg"
             className="bg-primary text-secondary hover:bg-primary/90 w-fit rounded-xl px-8 font-bold"
           >
-            Services
+            <Link href="/coming-soon">Services</Link>
           </Button>
         </motion.div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

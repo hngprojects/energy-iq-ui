@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Menu, Bell, Search, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  Menu,
+  Bell,
+  Search,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useUIStore } from "@/stores/ui-stores";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAuthActions } from "@/hooks/use-auth-actions";
 import { useMounted } from "@/hooks/use-mounted";
 import { UserAvatar } from "@/components/external/nav-user-menu";
+import { NotificationsDropdown } from "@/components/dashboard/notifications/notifications-dropdown";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -18,8 +26,11 @@ export function DashboardHeader() {
   const mounted = useMounted();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileNotificationsRef = useRef<HTMLDivElement>(null);
+  const desktopNotificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -34,6 +45,15 @@ export function DashboardHeader() {
         !mobileDropdownRef.current.contains(event.target as Node)
       ) {
         setMobileDropdownOpen(false);
+      }
+      const inMobile = mobileNotificationsRef.current?.contains(
+        event.target as Node,
+      );
+      const inDesktop = desktopNotificationsRef.current?.contains(
+        event.target as Node,
+      );
+      if (!inMobile && !inDesktop) {
+        setNotificationsOpen(false);
       }
     };
 
@@ -67,17 +87,24 @@ export function DashboardHeader() {
 
       {/* Mobile Profile & Notification */}
       <div className="flex items-center lg:hidden" ref={mobileDropdownRef}>
-        <button
-          type="button"
-          aria-label="View notifications"
-          title="View notifications"
-          className="mt-5.75 mr-[9.51px] mb-[25.51px] flex items-center justify-center"
-        >
-          <Bell className="text-secondary h-5 w-5" strokeWidth={1.2} />
-        </button>
+        <div className="relative" ref={mobileNotificationsRef}>
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            aria-label="View notifications"
+            title="View notifications"
+            className="mt-5.75 mr-[9.51px] mb-[25.51px] flex items-center justify-center"
+          >
+            <Bell className="text-secondary h-5 w-5" strokeWidth={1.2} />
+          </button>
+          <div className={notificationsOpen ? "fixed inset-x-3 top-16 z-50" : "hidden"}>
+            <NotificationsDropdown />
+          </div>
+        </div>
 
         <div className="relative mt-4 mr-6 mb-4">
           <button
+            type="button"
             onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
             className="h-8 w-8 shrink-0 overflow-hidden rounded-[16px] focus:outline-none"
           >
@@ -97,6 +124,7 @@ export function DashboardHeader() {
                 Dashboard
               </Link>
               <button
+                type="button"
                 onClick={handleLogout}
                 className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors cursor-pointer"
               >
@@ -127,14 +155,20 @@ export function DashboardHeader() {
 
       {/* Desktop Profile, Notification & Dropdown */}
       <div className="hidden items-center gap-3 pr-6 lg:flex">
-        <button
-          type="button"
-          aria-label="View notifications"
-          title="View notifications"
-          className="flex items-center justify-center"
-        >
-          <Bell className="text-secondary h-5 w-5" strokeWidth={1.2} />
-        </button>
+        <div className="relative" ref={desktopNotificationsRef}>
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            aria-label="View notifications"
+            title="View notifications"
+            className="flex items-center justify-center cursor-pointer"
+          >
+            <Bell className="text-secondary h-5 w-5" strokeWidth={1.2} />
+          </button>
+          <div className={notificationsOpen ? "absolute right-0 top-full z-50 mt-3 w-95" : "hidden"}>
+            <NotificationsDropdown />
+          </div>
+        </div>
 
         <div className="relative flex items-center gap-3" ref={dropdownRef}>
           <button
@@ -148,17 +182,18 @@ export function DashboardHeader() {
               )}
             </div>
 
-            <ChevronDown 
+            <ChevronDown
               className={cn(
                 "text-secondary h-4 w-4 transition-transform duration-200",
-                dropdownOpen && "rotate-180"
-              )} 
+                dropdownOpen && "rotate-180",
+              )}
             />
           </button>
 
           {dropdownOpen && (
             <div className="border-border bg-background absolute right-0 top-full mt-2 w-48 rounded-lg border py-2 shadow-lg">
               <button
+                type="button"
                 onClick={handleLogout}
                 className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors cursor-pointer"
               >
@@ -172,3 +207,4 @@ export function DashboardHeader() {
     </header>
   );
 }
+

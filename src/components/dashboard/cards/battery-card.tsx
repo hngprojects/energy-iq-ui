@@ -7,17 +7,23 @@ export function BatteryCard({
   hoursLeft,
 }: {
   percent: number;
-  hoursLeft: number;
+  hoursLeft?: number;
 }) {
+  const isLow = percent < 20;
+
   return (
     <MetricCard
       icon={BatteryMedium}
-      iconClass="text-foreground"
+      iconClass={isLow ? "text-danger" : "text-foreground"}
       label="Battery"
       value={`${percent}%`}
-      pill={`${hoursLeft}hrs of usage left`}
+      valueClass={isLow ? "text-danger" : undefined}
+      pill={hoursLeft != null ? `${hoursLeft}hrs of usage left` : undefined}
     >
-      <ProgressBar value={Math.round(percent / 10) * 10} />
+      <ProgressBar
+        value={Math.round(percent / 10) * 10}
+        colorClass={isLow ? "bg-danger" : "bg-success-alt"}
+      />
     </MetricCard>
   );
 }

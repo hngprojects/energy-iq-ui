@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
+import { onboardingStorage } from "@/lib/onboarding-storage";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   Dialog,
   DialogContent,
@@ -20,15 +24,18 @@ export function OnboardingSuccessDialog({
   onOpenChange,
 }: OnboardingSuccessDialogProps) {
   const router = useRouter();
-  const handleClose = (isOpen: boolean) => {
-    onOpenChange(isOpen);
-    if (!isOpen) {
-      router.push("/dashboard");
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (open) {
+      onboardingStorage.setCompleted(user?.id);
+      trackEvent("Screen View", { screen_name: "Onboarding Success" });
+      trackEvent("Onboarding Complete", { screen_name: "Onboarding Success" });
     }
-  };
+  }, [open, user]);
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full sm:h-95 sm:max-w-122.25!">
         <div className="flex flex-col items-center py-4 text-center">
           <div className="mb-6 rounded-full">

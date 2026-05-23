@@ -1,5 +1,6 @@
 export type AlertSeverity = "critical" | "warning" | "success";
 export type AlertStatus = "unresolved" | "resolved" | "no_action_needed";
+
 export type AlertIconType =
   | "battery_low"
   | "power_high"
@@ -7,6 +8,7 @@ export type AlertIconType =
   | "battery_full"
   | "check"
   | "solar";
+
 export type AlertFilterType =
   | "all"
   | "success"
@@ -14,17 +16,14 @@ export type AlertFilterType =
   | "critical"
   | "resolved"
   | "unresolved";
-
 export interface AlertMetric {
   label: string;
   value: string;
 }
-
 export interface AlertModalDetail {
   metrics: AlertMetric[];
   reason: string;
 }
-
 export interface Alert {
   id: string;
   title: string;

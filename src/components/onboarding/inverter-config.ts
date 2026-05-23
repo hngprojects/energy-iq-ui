@@ -106,4 +106,21 @@ export const INVERTER_CONFIG: Record<InverterType, InverterConfig> = {
       "For your Deye Plant ID, we'll auto-detect your system if left blank",
     ],
   },
+  sandbox: {
+    name: "Sandbox",
+    fields: [
+      {
+        id: "sandbox-token",
+        label: "Enter Sandbox Access Token",
+        placeholder: "mock-token-a",
+        kind: "text",
+      },
+    ],
+    connectLabel: "Connect Sandbox",
+    helper: [
+      "Use mock-token-a for Healthy Inverter",
+      "Use mock-token-b for Moderate Inverter",
+      "Use mock-token-c for Low Battery Inverter",
+    ],
+  },
 };

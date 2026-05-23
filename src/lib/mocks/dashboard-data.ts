@@ -19,9 +19,10 @@ export const dashboardMock = {
     active: "May",
   },
   zones: [
-    { name: "Cold room", pct: 44 },
-    { name: "Back room AC", pct: 29 },
-    { name: "Lighting", pct: 15 },
+    { name: "Cold room", pct: 0, watts: 0 },
+    { name: "Back room AC", pct: 0, watts: 0 },
+    { name: "Lighting", pct: 0, watts: 0 },
+    { name: "Heater", pct: 0, watts: 0 },
   ],
   weekly: [
     { day: "Mon", generated: 22, used: 19 },
