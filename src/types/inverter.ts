@@ -34,3 +34,13 @@ export interface ConnectInverterResponse {
     timestamp: string;
   };
 }
+
+export interface OnboardingStatusResponse {
+  currentStep: number;
+  onboardingComplete: boolean;
+  steps: {
+    accountCreated: boolean;
+    emailVerified: boolean;
+    inverterConnected: boolean;
+  };
+}

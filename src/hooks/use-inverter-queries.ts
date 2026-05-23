@@ -31,8 +31,18 @@ export const useInverterQueries = () => {
       },
     });
 
+  const useOnboardingStatus = () =>
+    useQuery({
+      queryKey: ["onboarding-status"],
+      queryFn: InverterService.getOnboardingStatus,
+      enabled: isAuthenticated,
+      retry: false,
+      staleTime: 0,
+    });
+
   return {
     useSupportedBrands,
     useConnectInverter,
+    useOnboardingStatus,
   };
 };
