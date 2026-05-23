@@ -74,12 +74,9 @@ export function ProfilePageClient() {
   });
 
   const onSubmit = (values: ProfileFormValues) => {
-    // Filter out empty strings to avoid backend validation errors for "should not exist" fields
-    // and to handle the "skip empty columns" requirement.
-    const cleanedValues = Object.fromEntries(
-      Object.entries(values).filter(([_, value]) => value !== "" && value !== undefined)
-    );
-    updateProfile.mutate(cleanedValues as ProfileUpdateRequest);
+    // We send all values (including empty strings) to the backend
+    // so that users can explicitly clear optional fields like business name.
+    updateProfile.mutate(values as ProfileUpdateRequest);
   };
 
   const handleEdit = () => setIsEditing(true);
@@ -126,7 +123,7 @@ export function ProfilePageClient() {
             ) : (
               <span className="text-xl font-semibold text-[#374151]">
                 {user
-                  ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+                  ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() || "AA"
                   : "AA"}
               </span>
             )}
