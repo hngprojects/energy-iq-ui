@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./password-input";
 import {
   TestConnectionStatus,
-  LOADING_TOTAL_MS,
   type TestStatus,
 } from "./test-connection-status";
 import type { InverterType } from "./inverter-type-step";
@@ -77,18 +76,19 @@ export function InverterConnectionStep({
 
   const handleConnect = () => {
     if (!canConnect || !user) return;
-
     trackEvent("Next Button Clicked", { screen_name: "Inverter Connection Details", inverter_type: inverter });
+    // Connection already completed during Test Connection — just proceed
+    onConnected();
+  };
 
+  const buildPayload = (): ConnectInverterRequest => {
     const payload: ConnectInverterRequest = {
       brand: inverter.toUpperCase(),
     };
-
     const brand = inverter.toLowerCase();
     const byId = Object.fromEntries(
       config.fields.map((f, i) => [f.id, (values[i] ?? "").trim()]),
     );
-
     if (brand === "victron") {
       payload.victronAccessToken = byId["vrm-token"];
     } else if (brand === "growatt") {
@@ -103,25 +103,16 @@ export function InverterConnectionStep({
     } else if (brand === "sandbox") {
       payload.sandboxAccessToken = byId["sandbox-token"];
     }
-
-    connectInverterMutation.mutate(payload, {
-      onError: () => setTestStatus("error"),
-    });
+    return payload;
   };
 
   const runTest = () => {
     if (!requiredFilled) return;
     setTestStatus("loading");
-    window.setTimeout(() => {
-      const ok = config.fields.every((f, i) => {
-        if (f.optional) return true;
-        const val = values[i] || "";
-        if (f.kind === "email") return val.includes("@");
-        if (f.id.includes("token")) return val.length >= 10;
-        return val.length >= 4;
-      });
-      setTestStatus(ok ? "success" : "error");
-    }, LOADING_TOTAL_MS);
+    connectInverterMutation.mutate(buildPayload(), {
+      onSuccess: () => setTestStatus("success"),
+      onError: () => setTestStatus("error"),
+    });
   };
 
   return (
