@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
 import { Logo } from "../ui/logo";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,18 +25,18 @@ const footerLinks = [
     links: [
       { name: "About", href: "/about" },
       { name: "Blog", href: "/coming-soon" },
-      { name: "Career", href: "/coming-soon" },
-      { name: "News", href: "/coming-soon" },
+      // { name: "Career", href: "/coming-soon" },
+      // { name: "News", href: "/coming-soon" },
     ],
   },
-  {
-    title: "Download",
-    links: [
-      { name: "iOS", href: "/coming-soon" },
-      { name: "Android", href: "/coming-soon" },
-      { name: "Windows", href: "/coming-soon" },
-    ],
-  },
+  // {
+  //   title: "Download",
+  //   links: [
+  //     { name: "iOS", href: "/coming-soon" },
+  //     { name: "Android", href: "/coming-soon" },
+  //     { name: "Windows", href: "/coming-soon" },
+  //   ],
+  // },
 ];
 
 export const Footer = () => {
@@ -142,7 +142,7 @@ export const Footer = () => {
             Copyright © {new Date().getFullYear()} EnergyIQ | All Rights
             Reserved
           </p>
-          <div className="flex gap-5">
+          {/* <div className="flex gap-5">
             {[
               { id: "facebook", url: "https://facebook.com" },
               { id: "twitter", url: "https://x.com" },
@@ -166,7 +166,7 @@ export const Footer = () => {
                 />
               </a>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
