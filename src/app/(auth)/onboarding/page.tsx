@@ -20,40 +20,41 @@ import { onboardingStorage } from "@/lib/onboarding-storage";
 
 type Step = "select" | "connect";
 
-function GoogleAuthSync() {
-  const searchParams = useSearchParams();
+function OnboardingContent() {
+  const [step, setStep] = useState<Step>("select");
+  const [inverter, setInverter] = useState<InverterType | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
+  
+  // Loading states
+  const [isSyncing, setIsSyncing] = useState(true);
+  
   const router = useRouter();
-  const { setAuth, logout, isAuthenticated } = useAuthStore();
+  const searchParams = useSearchParams();
+  const { user, isAuthenticated, setAuth, logout } = useAuthStore();
+  const isCompleted = useRef(false);
+  const stepRef = useRef<Step>(step);
+  
+  const { useOnboardingStatus } = useInverterQueries();
+  const { data: onboardingStatus, isLoading: isStatusLoading, isError: isStatusError } = useOnboardingStatus();
 
+  // 1. Google Auth Sync & Initial Token Check
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const hashString = window.location.hash.replace(/^#/, "");
     const hashParams = new URLSearchParams(hashString);
+    const sp = searchParams;
 
-    const error =
-      searchParams.get("error") || hashParams.get("error");
-
+    const error = sp.get("error") || hashParams.get("error");
     if (error) {
       window.history.replaceState(null, "", window.location.pathname);
-      toast.error(
-        "An account with this email already exists. Please sign in with your email and password.",
-        { duration: 6000 },
-      );
+      toast.error("An account with this email already exists. Please sign in with your email and password.");
       router.replace("/login");
       return;
     }
 
-    const token =
-      searchParams.get("accessToken") ||
-      searchParams.get("token") ||
-      hashParams.get("accessToken") ||
-      hashParams.get("token");
-
-    const refreshToken =
-      searchParams.get("refreshToken") ||
-      hashParams.get("refreshToken") ||
-      "";
+    const token = sp.get("accessToken") || sp.get("token") || hashParams.get("accessToken") || hashParams.get("token");
+    const refreshToken = sp.get("refreshToken") || hashParams.get("refreshToken") || "";
 
     if (token && !isAuthenticated) {
       window.history.replaceState(null, "", window.location.pathname);
@@ -63,90 +64,55 @@ function GoogleAuthSync() {
         .then((realUser) => {
           if (realUser?.id) {
             setAuth(realUser, token, refreshToken);
-            // No need for router.replace("/onboarding") here, we are already on it.
           } else {
             logout();
+            router.replace("/login");
           }
         })
         .catch((err) => {
           console.error("Failed to fetch user profile", err);
           logout();
+          router.replace("/login");
         });
+    } else if (!token && !isAuthenticated && !useAuthStore.getState().token) {
+      // No token in URL, no session in store -> Go to login
+      router.replace("/login");
+    } else {
+      // We either have a user or are waiting for one
+      setIsSyncing(false);
     }
   }, [searchParams, setAuth, logout, isAuthenticated, router]);
 
-  return null;
-}
-
-export default function OnboardingPage() {
-  const [step, setStep] = useState<Step>("select");
-  const [inverter, setInverter] = useState<InverterType | null>(null);
-  const [successOpen, setSuccessOpen] = useState(false);
-  const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
-  const isCompleted = useRef(false);
-  const stepRef = useRef<Step>(step);
-  const { useOnboardingStatus } = useInverterQueries();
-  const { data: onboardingStatus, isLoading: isStatusLoading, isError: isStatusError } = useOnboardingStatus();
-
-  const hasIncomingOAuthToken = (() => {
-  if (typeof window === "undefined") return false;
-  const sp = new URLSearchParams(window.location.search);
-  const hp = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  return !!(sp.get("accessToken") || sp.get("token") || hp.get("accessToken") || hp.get("token"));
-})();
-
-const isLoading = (!user?.id && !hasIncomingOAuthToken) || 
-                  (!!user?.id && onboardingStorage.isCompleted(user.id));
-
-  useEffect(() => {
-    stepRef.current = step;
-  }, [step]);
-
-  // Client‑only auth & redirect handling
-  useEffect(() => {
-    if (user?.id) {
-      identifyUser(user.id);
-      if (onboardingStorage.isCompleted(user.id)) {
-        isCompleted.current = true;
-        router.replace("/dashboard");
-        return;
-      }
-    } else {
-      // Check incoming Google OAuth token
-      const searchParamsObj = new URLSearchParams(window.location.search);
-      const hashString = window.location.hash.replace(/^#/, "");
-      const hashParamsObj = new URLSearchParams(hashString);
-      const incomingToken =
-        searchParamsObj.get("accessToken") ||
-        searchParamsObj.get("token") ||
-        hashParamsObj.get("accessToken") ||
-        hashParamsObj.get("token");
-
-      if (!incomingToken) {
-        const storeToken = useAuthStore.getState().token;
-        if (!storeToken) {
-          router.replace("/login");
-          return;
-        }
-      }
-      // If we have an incoming token or stored token, GoogleAuthSync will handle it.
-      // We don't want to show the UI yet.
-    }
-  }, [user, router]);
-
+  // 2. Handle Redirection and Onboarding Status
   useEffect(() => {
     if (!user?.id) return;
+
+    identifyUser(user.id);
+
+    // If local storage says we are done, redirect immediately
+    if (onboardingStorage.isCompleted(user.id)) {
+      isCompleted.current = true;
+      router.replace("/dashboard");
+      return;
+    }
+
+    // If API says we are done, redirect
     if (onboardingStatus?.onboardingComplete) {
       onboardingStorage.setCompleted(user.id);
       isCompleted.current = true;
       router.replace("/dashboard");
-    } else if (isStatusError) {
-      isCompleted.current = true;
-      router.replace("/dashboard");
+      return;
     }
-  }, [onboardingStatus, isStatusError, user, router]);
 
+    // If API errors out, we assume they need to onboard (stop loading)
+    if (isStatusError) {
+       // We can stay on the page
+    }
+  }, [user, onboardingStatus, isStatusError, router]);
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
 
   // Track page unload / tab close
   useEffect(() => {
@@ -176,71 +142,69 @@ const isLoading = (!user?.id && !hasIncomingOAuthToken) ||
     };
   }, []);
 
-  if (isLoading) {
+  // Show loading while syncing auth or fetching status
+  const showLoading = isSyncing || (isAuthenticated && isStatusLoading);
+
+  if (showLoading) {
     return (
-      <AuthWrapper>
-        <div className="mt-28 flex items-center justify-center lg:mt-44">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </AuthWrapper>
-    );
-  }
-
-return (
-  <AuthWrapper>
-    <Suspense fallback={null}>
-      <GoogleAuthSync />
-    </Suspense>
-
-    {isLoading ? (
       <div className="mt-28 flex items-center justify-center lg:mt-44">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
-    ) : isAuthenticated && isStatusLoading ? (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-      </div>
-    ) : (
-      <div className="mt-28 lg:mt-44">
-        {step === "select" ? (
+    );
+  }
+
+  return (
+    <div className="mt-28 lg:mt-44">
+      {step === "select" ? (
+        <>
+          <AuthHeader
+            title="What Inverter Type do you Use?"
+            subtitle="Select your Inverter type so we can tailor your experience"
+          />
+          <InverterTypeStep
+            selected={inverter}
+            onSelect={setInverter}
+            onNext={() => inverter && setStep("connect")}
+            onCancel={() => router.push("/")}
+          />
+        </>
+      ) : (
+        inverter && (
           <>
             <AuthHeader
-              title="What Inverter Type do you Use?"
-              subtitle="Select your Inverter type so we can tailor your experience"
+              title={`${INVERTER_CONFIG[inverter.toLowerCase()]?.name || inverter} Inverter Connection`}
+              subtitle="Enter specific details of your inverter type"
             />
-            <InverterTypeStep
-              selected={inverter}
-              onSelect={setInverter}
-              onNext={() => inverter && setStep("connect")}
-              onCancel={() => router.push("/")}
+            <InverterConnectionStep
+              key={inverter}
+              inverter={inverter}
+              onBack={() => setStep("select")}
+              onConnected={() => {
+                isCompleted.current = true;
+                setSuccessOpen(true);
+              }}
             />
           </>
-        ) : (
-          inverter && (
-            <>
-              <AuthHeader
-                title={`${INVERTER_CONFIG[inverter.toLowerCase()]?.name || inverter} Inverter Connection`}
-                subtitle="Enter specific details of your inverter type"
-              />
-              <InverterConnectionStep
-                key={inverter}
-                inverter={inverter}
-                onBack={() => setStep("select")}
-                onConnected={() => {
-                  isCompleted.current = true;
-                  setSuccessOpen(true);
-                }}
-              />
-            </>
-          )
-        )}
-      </div>
-    )}
+        )
+      )}
+      <OnboardingSuccessDialog
+        open={successOpen}
+        onOpenChange={setSuccessOpen}
+      />
+    </div>
+  );
+}
 
-    <OnboardingSuccessDialog
-      open={successOpen}
-      onOpenChange={setSuccessOpen}
-    />
-  </AuthWrapper>
-);
+export default function OnboardingPage() {
+  return (
+    <AuthWrapper>
+      <Suspense fallback={
+        <div className="mt-28 flex items-center justify-center lg:mt-44">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      }>
+        <OnboardingContent />
+      </Suspense>
+    </AuthWrapper>
+  );
 }
