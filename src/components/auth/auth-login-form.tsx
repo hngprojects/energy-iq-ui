@@ -22,6 +22,7 @@ export function AuthLoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -40,23 +41,14 @@ export function AuthLoginForm() {
   });
   const isFormFilled = email.length > 0 && password.length > 0;
 
-  const isLoginError = loginMutation.isError || !!errors.password;
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const isPasswordValid = password.length >= 8;
-  const isBothValid = isEmailValid && isPasswordValid && !isLoginError;
-
   let emailStatusColor: "green" | "red" | undefined = undefined;
   if (errors.email) {
     emailStatusColor = "red";
-  } else if (isBothValid) {
-    emailStatusColor = "green";
   }
 
   let passwordStatusColor: "red" | "green" | undefined = undefined;
-  if (isLoginError) {
+  if (loginMutation.isError || errors.password) {
     passwordStatusColor = "red";
-  } else if (isBothValid) {
-    passwordStatusColor = "green";
   }
 
   useEffect(() => {
@@ -70,7 +62,11 @@ export function AuthLoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-4 md:space-y-6"
+      noValidate
+    >
       <div className="flex flex-col gap-2">
         <div className="space-y-3 md:space-y-4">
           <AuthInput
@@ -80,7 +76,6 @@ export function AuthLoginForm() {
             type="email"
             error={errors.email?.message}
             statusColor={emailStatusColor}
-            hideErrorMessage={true}
             {...register("email")}
           />
           <AuthInput
@@ -90,7 +85,6 @@ export function AuthLoginForm() {
             type="password"
             error={errors.password?.message}
             statusColor={passwordStatusColor}
-            hideErrorMessage={true}
             {...register("password")}
           />
         </div>

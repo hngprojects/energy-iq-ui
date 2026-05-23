@@ -14,6 +14,7 @@ export interface ConnectInverterRequest {
   solarmanEmail?: string;
   solarmanPassword?: string;
   solarmanPlantId?: string;
+  sandboxAccessToken?: string;
 }
 
 export interface Inverter {

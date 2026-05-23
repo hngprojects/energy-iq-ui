@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
@@ -14,6 +14,8 @@ import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-succ
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
+import { trackEvent, identifyUser } from "@/lib/analytics";
+import { onboardingStorage } from "@/lib/onboarding-storage";
 
 type Step = "select" | "connect";
 
@@ -80,6 +82,71 @@ export default function OnboardingPage() {
   const [inverter, setInverter] = useState<InverterType | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
+  const { user } = useAuthStore();
+  const isCompleted = useRef(false);
+  const stepRef = useRef<Step>(step);
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  // Client‑only auth & redirect handling
+  useEffect(() => {
+    if (user?.id) {
+      identifyUser(user.id);
+      if (onboardingStorage.isCompleted(user.id)) {
+        isCompleted.current = true;
+        router.replace("/dashboard");
+        return;
+      }
+    } else {
+      // Check incoming Google OAuth token
+      const searchParamsObj = new URLSearchParams(window.location.search);
+      const hashString = window.location.hash.replace(/^#/, "");
+      const hashParamsObj = new URLSearchParams(hashString);
+      const incomingToken =
+        searchParamsObj.get("accessToken") ||
+        searchParamsObj.get("token") ||
+        hashParamsObj.get("accessToken") ||
+        hashParamsObj.get("token");
+
+      if (!incomingToken) {
+        const storeToken = useAuthStore.getState().token;
+        if (!storeToken) {
+          router.replace("/login");
+        }
+      }
+    }
+  }, [user, router]);
+
+
+  // Track page unload / tab close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isCompleted.current) {
+        trackEvent("Onboarding Abandoned", {
+          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details",
+          exit_type: "tab_close",
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [step]);
+
+  useEffect(() => {
+    return () => {
+      if (!isCompleted.current) {
+        trackEvent("Onboarding Abandoned", {
+          screen_name:
+            stepRef.current === "select"
+              ? "Inverter Type Selection"
+              : "Inverter Connection Details",
+          exit_type: "client_navigation",
+        });
+      }
+    };
+  }, []);
 
   return (
     <AuthWrapper>
@@ -111,7 +178,10 @@ export default function OnboardingPage() {
                 key={inverter}
                 inverter={inverter}
                 onBack={() => setStep("select")}
-                onConnected={() => setSuccessOpen(true)}
+                onConnected={() => {
+                  isCompleted.current = true;
+                  setSuccessOpen(true);
+                }}
               />
             </>
           )
