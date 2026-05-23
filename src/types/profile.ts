@@ -1,9 +1,10 @@
 export interface ProfileUpdateRequest {
-  fullName: string;
-  businessName: string;
-  businessType: string;
-  state: string;
-  city: string;
+  firstName?: string;
+  lastName?: string;
+  businessName?: string;
+  businessType?: string;
+  state?: string;
+  city?: string;
 }
 
 export interface ProfileUpdateResponse {

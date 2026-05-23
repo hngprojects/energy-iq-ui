@@ -63,7 +63,7 @@ function GoogleAuthSync() {
         .then((realUser) => {
           if (realUser?.id) {
             setAuth(realUser, token, refreshToken);
-            router.replace("/onboarding");
+            // No need for router.replace("/onboarding") here, we are already on it.
           } else {
             logout();
           }
@@ -88,6 +88,8 @@ export default function OnboardingPage() {
   const stepRef = useRef<Step>(step);
   const { useOnboardingStatus } = useInverterQueries();
   const { data: onboardingStatus, isLoading: isStatusLoading, isError: isStatusError } = useOnboardingStatus();
+
+  const isLoading = !user?.id || onboardingStorage.isCompleted(user.id);
 
   useEffect(() => {
     stepRef.current = step;
@@ -117,8 +119,11 @@ export default function OnboardingPage() {
         const storeToken = useAuthStore.getState().token;
         if (!storeToken) {
           router.replace("/login");
+          return;
         }
       }
+      // If we have an incoming token or stored token, GoogleAuthSync will handle it.
+      // We don't want to show the UI yet.
     }
   }, [user, router]);
 
@@ -162,6 +167,16 @@ export default function OnboardingPage() {
       }
     };
   }, []);
+
+  if (isLoading) {
+    return (
+      <AuthWrapper>
+        <div className="mt-28 flex items-center justify-center lg:mt-44">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </AuthWrapper>
+    );
+  }
 
   return (
     <AuthWrapper>

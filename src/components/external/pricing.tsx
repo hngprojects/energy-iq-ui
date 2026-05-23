@@ -252,14 +252,14 @@ export function PricingSection() {
                         : "secondary"
                   }
                   className={`w-full cursor-pointer p-3 text-base font-medium transition-all ${
-                    tier.ctaVariant === "primary"
+                    tier.ctaVariant === "primary" 
                       ? "bg-primary text-[#F6F6F6] hover:bg-[#D07A0E]"
                       : tier.ctaVariant === "outline" && tier.highlighted
                         ? "border border-white text-white hover:border-gray-200 hover:bg-white hover:text-gray-900"
                         : "border border-[#080C13] text-[#080C13] hover:bg-gray-900 hover:text-white"
                   }`}
                 >
-                  <Link href="/coming-soon">{tier.cta}</Link>
+                  <Link href="/pricing">{tier.cta}</Link>
                 </Button>
               </div>
             </motion.div>
