@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye, UserRound, Wrench, Bell } from "lucide-react";
+import { Eye, UserRound, Wrench, Bell, Users } from "lucide-react";
 
 const SETTING_CARDS = [
   {
@@ -13,11 +13,11 @@ const SETTING_CARDS = [
     icon: Wrench,
     title: "System & Device",
     description:
-      "Manage your enterprise identity, update localisation preference, and configure multi-factor authentication protocols.",
+      "Configure device settings, manage system integrations, and control hardware connections and monitoring preferences.",
     href: null,
   },
   {
-    icon: UserRound,
+    icon: Users,
     title: "Team & Access",
     description:
       "Control organisational hierarchies by assigning specific user roles, permissions, and administrative access levels.",
@@ -27,7 +27,7 @@ const SETTING_CARDS = [
     icon: Bell,
     title: "Notifications",
     description:
-      "Control organisational hierarchies by assigning specific user roles, permissions, and administrative access levels.",
+      "Configure notification preferences, manage alert channels, and control email and push notification settings.",
     href: null,
   },
 ];
