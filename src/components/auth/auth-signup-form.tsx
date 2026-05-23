@@ -20,6 +20,7 @@ export function AuthSignupForm() {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -71,7 +72,7 @@ export function AuthSignupForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6" noValidate>
       <div className="space-y-3 md:space-y-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
           <AuthInput

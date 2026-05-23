@@ -14,6 +14,7 @@ export interface ConnectInverterRequest {
   solarmanEmail?: string;
   solarmanPassword?: string;
   solarmanPlantId?: string;
+  sandboxAccessToken?: string;
 }
 
 export interface Inverter {
@@ -32,4 +33,60 @@ export interface ConnectInverterResponse {
   meta: {
     timestamp: string;
   };
+}
+
+export type UserInvertersResponse = Inverter[];
+
+// GET /inverter-metrics/{inverterId}/dashboard
+export interface DashboardMetrics {
+  currentReadings: {
+    solarKw: number;
+    batterySocPercent: number;
+    loadKw: number;
+    gridVoltageV: number;
+    batteryVoltageV: number;
+    recordedAt: string;
+  };
+  dataAgeSeconds: number;
+  systemOffline: boolean;
+  emptyData: boolean;
+  nairaSavedToday: number;
+  nairaSavedThisMonth: number;
+  health: {
+    status: "GREEN" | "AMBER" | "RED";
+    reason: string;
+  };
+  sevenDayHistory: {
+    date: string;
+    solarKwh: number;
+    avgBatterySocPercent: number;
+    avgLoadKw: number;
+  }[];
+}
+
+// GET /inverter-metrics/{inverterId}/energy-usage?period=daily
+export interface EnergyUsagePoint {
+  date: string;
+  solarKwh: number;
+  avgBatterySoc: number;
+  avgLoadKw: number;
+}
+
+export type EnergyPeriod = "hourly" | "daily" | "weekly" | "monthly";
+
+export interface EnergyUsageResponse {
+  period: EnergyPeriod;
+  data: EnergyUsagePoint[];
+}
+
+// GET /inverter-metrics/{inverterId}/power-consumption (no zone data yet)
+export interface PowerZone {
+  name: string;
+  watts: number;
+  percentage: number;
+}
+
+export interface PowerConsumptionResponse {
+  zones?: PowerZone[];
+  totalWatts?: number;
 }

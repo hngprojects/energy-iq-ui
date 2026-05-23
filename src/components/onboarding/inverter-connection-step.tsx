@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import { INVERTER_CONFIG } from "./inverter-config";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ConnectInverterRequest } from "@/types/inverter";
+import { trackEvent } from "@/lib/analytics";
 
 interface InverterConnectionStepProps {
   inverter: InverterType;
@@ -38,6 +39,9 @@ export function InverterConnectionStep({
   const [helperOpen, setHelperOpen] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
 
+  useEffect(() => {
+    trackEvent("Screen View", { screen_name: "Inverter Connection Details", inverter_type: inverter });
+  }, [inverter]);
 
   const connectInverterMutation = useConnectInverter(onConnected);
 
@@ -74,6 +78,8 @@ export function InverterConnectionStep({
   const handleConnect = () => {
     if (!canConnect || !user) return;
 
+    trackEvent("Next Button Clicked", { screen_name: "Inverter Connection Details", inverter_type: inverter });
+
     const payload: ConnectInverterRequest = {
       brand: inverter.toUpperCase(),
     };
@@ -94,6 +100,8 @@ export function InverterConnectionStep({
       if (byId[`${prefix}-plant`]) {
         payload.solarmanPlantId = byId[`${prefix}-plant`];
       }
+    } else if (brand === "sandbox") {
+      payload.sandboxAccessToken = byId["sandbox-token"];
     }
 
     connectInverterMutation.mutate(payload, {
@@ -160,7 +168,10 @@ export function InverterConnectionStep({
         <Button
           type="button"
           variant="outline"
-          onClick={onBack}
+          onClick={() => {
+            trackEvent("Back Button Clicked", { screen_name: "Inverter Connection Details" });
+            onBack();
+          }}
           className="h-14 cursor-pointer rounded-lg border-[#E5E7EB] bg-white text-base font-medium text-dark-text hover:bg-[#F9FAFB]"
         >
           Back

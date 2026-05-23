@@ -6,6 +6,11 @@ export interface User {
   isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  profilePhoto?: string;
+  businessName?: string;
+  businessType?: string;
+  state?: string;
+  city?: string;
 }
 
 export interface AuthResponse {
