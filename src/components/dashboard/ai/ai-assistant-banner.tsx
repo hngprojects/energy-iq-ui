@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 const suggestions = [
@@ -18,9 +19,12 @@ export function AIAssistantBanner() {
             Ask EnergyIQ in English or Pidgin
           </p>
         </div>
-        <button className="bg-background text-foreground hover:bg-primary/90 inline-flex cursor-pointer items-center gap-1 self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors">
+        <Link
+          href="/dashboard/ai-assistant/new"
+          className="bg-background text-foreground hover:bg-primary/90 inline-flex cursor-pointer items-center gap-1 self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+        >
           Ask Energy AI <ArrowUpRight className="h-4 w-4" />
-        </button>
+        </Link>
       </div>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <span className="text-secondary-foreground/60 shrink-0 text-sm">
@@ -28,12 +32,13 @@ export function AIAssistantBanner() {
         </span>
         <div className="flex flex-wrap gap-2">
           {suggestions.map((s) => (
-            <button
+            <Link
               key={s}
+              href="/dashboard/ai-assistant/new"
               className="border-secondary-foreground/20 bg-secondary-foreground/5 hover:bg-secondary-foreground/10 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors"
             >
               {s} <ArrowUpRight className="h-3 w-3" />
-            </button>
+            </Link>
           ))}
         </div>
       </div>

@@ -33,8 +33,6 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-positive: var(--positive);
-  --color-success-bg: var(--success-bg);
   --color-sidebar: var(--sidebar);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -110,19 +108,20 @@
   /* Design system — Chart colors */
   --color-chart-solar: #fbbf24;
   --color-chart-diesel: #fb923c;
-  --color-chart-battery: #057a55;
+  --color-chart-battery: #dfffeb;
   --color-chart-grid: #64748b;
 
   /* Design system — Semantic */
   --color-positive: #4ade80;
   --color-charge-green: #4ade80;
   --color-success-bg: #def7ec;
+  --color-success-alt: #17cc4e;
   --color-battery-full: #057a55;
   --color-warning: #c27803;
   --color-warning-bg: #fdf6b2;
   --color-battery-mid: #c27803;
   --color-danger: #c81e1e;
-  --color-danger-bg: #fde8e8;
+  --color-danger-bg: #ffebeb;
   --color-danger-transparent: #c81e1e99;
   --color-surface-white: #fdfdfd;
   --color-border-disabled: #e8e8e8;
@@ -242,3 +241,4 @@
     @apply h-full rounded-full transition-all duration-500 ease-in-out;
   }
 }
+

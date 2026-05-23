@@ -7,7 +7,7 @@ export function BatteryCard({
   hoursLeft,
 }: {
   percent: number;
-  hoursLeft: number;
+  hoursLeft?: number;
 }) {
   return (
     <MetricCard
@@ -15,7 +15,7 @@ export function BatteryCard({
       iconClass="text-foreground"
       label="Battery"
       value={`${percent}%`}
-      pill={`${hoursLeft}hrs of usage left`}
+      pill={hoursLeft != null ? `${hoursLeft}hrs of usage left` : undefined}
     >
       <ProgressBar value={Math.round(percent / 10) * 10} />
     </MetricCard>
