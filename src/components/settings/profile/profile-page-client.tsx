@@ -12,12 +12,12 @@ import { useProfileQueries } from "@/hooks/use-profile-queries";
 import { SelectField } from "@/components/settings/select-field";
 import { PhotoUploadDialog } from "./photo-upload-dialog";
 import { PhotoSuccessDialog } from "./photo-success-dialog";
+import { ProfileUpdateRequest } from "@/types/profile";
 import {
   BUSINESS_TYPES,
   NIGERIAN_STATES,
   CITIES_BY_STATE,
-  ProfileUpdateRequest,
-} from "@/types/profile";
+} from "@/constants/profile";
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(2, "Full name must be at least 2 characters"),
@@ -54,6 +54,18 @@ export function ProfilePageClient() {
 
   const selectedState = watch("state");
   const cityOptions = selectedState ? (CITIES_BY_STATE[selectedState] ?? []) : [];
+
+  React.useEffect(() => {
+    if (!isEditing) {
+      reset({
+        fullName: user ? `${user.firstName} ${user.lastName}`.trim() : "",
+        businessName: user?.businessName ?? "",
+        businessType: user?.businessType ?? "",
+        state: user?.state ?? "",
+        city: user?.city ?? "",
+      });
+    }
+  }, [user, isEditing, reset]);
 
   const updateProfile = useUpdateProfile(() => {
     setIsEditing(false);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Eye, UserRound, Wrench, Bell, Users } from "lucide-react";
 
+
 const SETTING_CARDS = [
   {
     icon: UserRound,
@@ -14,21 +15,21 @@ const SETTING_CARDS = [
     title: "System & Device",
     description:
       "Configure device settings, manage system integrations, and control hardware connections and monitoring preferences.",
-    href: null,
+    href: "/dashboard/settings/system",
   },
   {
     icon: Users,
     title: "Team & Access",
     description:
       "Control organisational hierarchies by assigning specific user roles, permissions, and administrative access levels.",
-    href: null,
+    href: "/dashboard/settings/team",
   },
   {
     icon: Bell,
     title: "Notifications",
     description:
       "Configure notification preferences, manage alert channels, and control email and push notification settings.",
-    href: null,
+    href: "/dashboard/settings/notifications",
   },
 ];
 
@@ -50,13 +51,13 @@ export default function SettingsPage() {
             Last audit completed 2 hours ago. No anomalies detected.
           </p>
         </div>
-        <button
-          type="button"
+        <Link
+          href="/dashboard/settings/review-logs"
           className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary/90 transition-colors"
         >
           <Eye className="h-4 w-4" aria-hidden="true" />
           Review Logs
-        </button>
+        </Link>
       </div>
 
       {/* Settings Cards Grid */}

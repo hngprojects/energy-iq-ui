@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, Upload } from "lucide-react";
+import { X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -102,33 +102,32 @@ export function PhotoUploadDialog({
         >
           {preview ? (
             <>
-              {/* Full image */}
+              {/* Full image fills the area with no gaps */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={preview}
                 alt="Profile preview"
-                className="h-full w-full object-cover"
-                style={{ maxHeight: "340px" }}
+                className="absolute inset-0 h-full w-full object-cover"
               />
-              {/* Circular crop overlay */}
+              {/* Circular preview overlay */}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div
-                  className="rounded-full border-4 border-white/80 shadow-lg"
+                  className="rounded-full border-4 border-white/80"
                   style={{
-                    width: "min(220px, 60%)",
-                    height: "min(220px, 60%)",
-                    boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)",
+                    width: "min(320px, 70%)",
+                    height: "min(320px, 70%)",
+                    boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
                   }}
                 />
               </div>
-              {/* Click to change */}
+              {/* Change button overlaid on image */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                className="absolute bottom-4 right-4 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-dark-text shadow hover:bg-white"
+                className="absolute bottom-4 right-4 z-10 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-dark-text shadow hover:bg-white"
               >
                 Change
               </button>
