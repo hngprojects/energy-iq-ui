@@ -35,6 +35,16 @@ export interface ConnectInverterResponse {
   };
 }
 
+export interface OnboardingStatusResponse {
+  currentStep: number;
+  onboardingComplete: boolean;
+  steps: {
+    accountCreated: boolean;
+    emailVerified: boolean;
+    inverterConnected: boolean;
+  };
+}
+
 export type UserInvertersResponse = Inverter[];
 
 // GET /inverter-metrics/{inverterId}/dashboard
