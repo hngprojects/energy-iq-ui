@@ -1,6 +1,8 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { DropdownMenu } from "radix-ui";
+import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer,
   LineChart,
@@ -11,13 +13,15 @@ import {
   Tooltip,
 } from "recharts";
 
-type Row = { day: string; generated: number; used: number };
+export type Period = "Hourly" | "Daily" | "Weekly" | "Monthly";
+
+export const PERIODS: Period[] = ["Hourly", "Daily", "Weekly", "Monthly"];
+
+export type ChartRow = { day: string; generated: number; used: number };
 
 type CustomTooltipProps = {
   active?: boolean;
-  payload?: {
-    value: number;
-  }[];
+  payload?: { value: number }[];
   label?: string;
 };
 
@@ -32,79 +36,136 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
           <span className="bg-primary h-2 w-2 rounded-full" />
           Energy Generated
         </span>
-        <span className="font-semibold">{payload[0]?.value} kWh</span>
+        <span className="font-semibold">
+          {Number(payload[0]?.value ?? 0).toFixed(2)} kWh
+        </span>
       </div>
       <div className="mt-1 flex items-center justify-between gap-6">
         <span className="flex items-center gap-1.5">
           <span className="bg-muted-foreground h-2 w-2 rounded-full" />
-          Energy Used
+          Avg Load
         </span>
-        <span className="font-semibold">{payload[1]?.value} kWh</span>
+        <span className="font-semibold">
+          {Number(payload[1]?.value ?? 0).toFixed(2)} kW
+        </span>
       </div>
     </div>
   );
 }
 
-export function EnergyUsageChart({ data }: { data: Row[] }) {
+function ChartSkeleton() {
+  return (
+    <div className="h-72 w-full animate-pulse">
+      <div className="bg-muted h-full rounded-xl" />
+    </div>
+  );
+}
+
+export function EnergyUsageChart({
+  data,
+  period,
+  onPeriodChange,
+  isLoading = false,
+}: {
+  data: ChartRow[];
+  period: Period;
+  onPeriodChange: (p: Period) => void;
+  isLoading?: boolean;
+}) {
   return (
     <div className="border-border bg-card rounded-2xl border p-5 lg:p-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-semibold">Energy usage</h3>
           <p className="text-muted-foreground mt-0.5 text-sm">
-            How much your panels generated vs how much power you used
+            Solar energy generated vs average load power
           </p>
         </div>
-        <button className="border-border hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors">
-          Weekly <ChevronDown className="h-4 w-4" />
-        </button>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="border-border hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors"
+            >
+              {period} <ChevronDown className="h-4 w-4" />
+            </button>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              sideOffset={4}
+              align="end"
+              className="bg-card border-border z-50 min-w-32 overflow-hidden rounded-xl border py-1 shadow-lg"
+            >
+              {PERIODS.map((p) => (
+                <DropdownMenu.Item
+                  key={p}
+                  onSelect={() => onPeriodChange(p)}
+                  className={cn(
+                    "cursor-pointer px-4 py-2.5 text-sm outline-none transition-colors",
+                    period === p
+                      ? "bg-muted text-foreground font-semibold"
+                      : "text-foreground hover:bg-muted",
+                  )}
+                >
+                  {p}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={data}
-            margin={{ left: -20, right: 10, top: 10, bottom: 0 }}
-          >
-            <CartesianGrid stroke="var(--border)" vertical={false} />
-            <XAxis
-              dataKey="day"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-              ticks={[0, 7, 14, 21, 28, 35]}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{
-                stroke: "var(--muted-foreground)",
-                strokeDasharray: "4 4",
-                opacity: 0.4,
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="generated"
-              stroke="var(--primary)"
-              strokeWidth={2.5}
-              dot={false}
-              activeDot={{ r: 5, fill: "var(--primary)" }}
-            />
-            <Line
-              type="monotone"
-              dataKey="used"
-              stroke="var(--muted-foreground)"
-              strokeWidth={2}
-              strokeDasharray="6 4"
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+
+      {isLoading ? (
+        <ChartSkeleton />
+      ) : (
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={data}
+              margin={{ left: -20, right: 10, top: 10, bottom: 0 }}
+            >
+              <CartesianGrid stroke="var(--border)" vertical={false} />
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{
+                  stroke: "var(--muted-foreground)",
+                  strokeDasharray: "4 4",
+                  opacity: 0.4,
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="generated"
+                stroke="var(--primary)"
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 5, fill: "var(--primary)" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="used"
+                stroke="var(--muted-foreground)"
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

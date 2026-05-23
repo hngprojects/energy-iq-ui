@@ -190,7 +190,7 @@ export function InverterConnectionStep({
         <button
           type="button"
           onClick={() => setHelperOpen((o) => !o)}
-          className="cursor-pointer text-base font-medium text-[#2A2F3C] lg:text-lg"
+          className="cursor-pointer text-base font-medium text-[#2A2F3C] underline hover:text-[#1a1f2c] lg:text-lg"
         >
           Where do I find these?
         </button>
