@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { ChatHistoryList } from "@/components/dashboard/ai/chat-history-list";
 import { Button } from "@/components/ui/button";
+import { ComingSoonDashboard } from "@/components/dashboard/coming-soon";
 
 // Replace with a real data fetch when backend is ready
 async function getChatHistory() {
@@ -12,6 +13,17 @@ async function getChatHistory() {
 }
 
 export default async function AIAssistantPage() {
+  const isReady = false; // Toggle this when ready to launch
+
+  if (!isReady) {
+    return (
+      <ComingSoonDashboard
+        feature="AI Assistant"
+        description="Ask EnergyIQ in English or Pidgin. Get smart insights and answers about your energy usage. Coming soon!"
+      />
+    );
+  }
+
   const history = await getChatHistory();
   const hasHistory = history.length > 0;
 

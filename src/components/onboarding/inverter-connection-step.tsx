@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./password-input";
+import { cn } from "@/lib/utils";
 import {
   TestConnectionStatus,
   type TestStatus,
@@ -62,7 +63,7 @@ export function InverterConnectionStep({
   );
   const canConnect =
     requiredFilled &&
-    testStatus === "success" &&
+    (inverter.toLowerCase() === "sandbox" || testStatus === "success") &&
     !connectInverterMutation.isPending;
 
   const setValue = (i: number, v: string) => {
@@ -171,9 +172,16 @@ export function InverterConnectionStep({
           type="button"
           onClick={handleConnect}
           disabled={!canConnect}
-          className="h-14 rounded-lg bg-[#E5E7EB] text-base font-medium text-dark-text hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100 lg:text-lg"
+          className={cn(
+            "h-14 rounded-lg text-base font-medium lg:text-lg transition-all",
+            canConnect
+              ? "bg-secondary text-white hover:bg-secondary/90"
+              : "bg-[#E5E7EB] text-dark-text hover:bg-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#E8E8E8] disabled:text-[#2A2F3C] disabled:opacity-100",
+          )}
         >
-          {connectInverterMutation.isPending ? "Connecting..." : config.connectLabel}
+          {connectInverterMutation.isPending
+            ? "Connecting..."
+            : config.connectLabel}
         </Button>
       </div>
 

@@ -252,7 +252,7 @@ export function PricingSection() {
                         : "secondary"
                   }
                   className={`w-full cursor-pointer p-3 text-base font-medium transition-all ${
-                    tier.ctaVariant === "primary"
+                    tier.ctaVariant === "primary" 
                       ? "bg-primary text-[#F6F6F6] hover:bg-[#D07A0E]"
                       : tier.ctaVariant === "outline" && tier.highlighted
                         ? "border border-white text-white hover:border-gray-200 hover:bg-white hover:text-gray-900"

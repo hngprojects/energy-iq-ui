@@ -20,11 +20,12 @@ import {
 } from "@/constants/profile";
 
 const profileSchema = z.object({
-  fullName: z.string().trim().min(2, "Full name must be at least 2 characters"),
-  businessName: z.string().trim().min(1, "Business name is required"),
-  businessType: z.string().min(1, "Business type is required"),
-  state: z.string().min(1, "State is required"),
-  city: z.string().min(1, "City is required"),
+  firstName: z.string().trim().optional(),
+  lastName: z.string().trim().optional(),
+  businessName: z.string().trim().optional(),
+  businessType: z.string().optional(),
+  state: z.string().optional(),
+  city: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -38,13 +39,12 @@ export function ProfilePageClient() {
   const [photoDialogOpen, setPhotoDialogOpen] = React.useState(false);
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
 
-  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
-
   const { control, register, handleSubmit, watch, reset, setValue, formState: { errors } } =
     useForm<ProfileFormValues>({
       resolver: zodResolver(profileSchema),
       defaultValues: {
-        fullName,
+        firstName: user?.firstName ?? "",
+        lastName: user?.lastName ?? "",
         businessName: user?.businessName ?? "",
         businessType: user?.businessType ?? "",
         state: user?.state ?? "",
@@ -58,7 +58,8 @@ export function ProfilePageClient() {
   React.useEffect(() => {
     if (!isEditing) {
       reset({
-        fullName: user ? `${user.firstName} ${user.lastName}`.trim() : "",
+        firstName: user?.firstName ?? "",
+        lastName: user?.lastName ?? "",
         businessName: user?.businessName ?? "",
         businessType: user?.businessType ?? "",
         state: user?.state ?? "",
@@ -73,6 +74,8 @@ export function ProfilePageClient() {
   });
 
   const onSubmit = (values: ProfileFormValues) => {
+    // We send all values (including empty strings) to the backend
+    // so that users can explicitly clear optional fields like business name.
     updateProfile.mutate(values as ProfileUpdateRequest);
   };
 
@@ -81,7 +84,8 @@ export function ProfilePageClient() {
   const handleCancel = () => {
     setIsEditing(false);
     reset({
-      fullName,
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
       businessName: user?.businessName ?? "",
       businessType: user?.businessType ?? "",
       state: user?.state ?? "",
@@ -119,7 +123,7 @@ export function ProfilePageClient() {
             ) : (
               <span className="text-xl font-semibold text-[#374151]">
                 {user
-                  ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+                  ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() || "AA"
                   : "AA"}
               </span>
             )}
@@ -187,17 +191,31 @@ export function ProfilePageClient() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Full name */}
+            {/* First name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Full name</label>
+              <label className="text-sm font-medium text-dark-text">First name</label>
               <input
-                {...register("fullName")}
+                {...register("firstName")}
                 disabled={!isEditing}
-                placeholder="Full name"
+                placeholder="First name"
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
-              {errors.fullName && (
-                <p className="text-xs text-red-500">{errors.fullName.message}</p>
+              {errors.firstName && (
+                <p className="text-xs text-red-500">{errors.firstName.message}</p>
+              )}
+            </div>
+
+            {/* Last name */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-dark-text">Last name</label>
+              <input
+                {...register("lastName")}
+                disabled={!isEditing}
+                placeholder="Last name"
+                className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
+              />
+              {errors.lastName && (
+                <p className="text-xs text-red-500">{errors.lastName.message}</p>
               )}
             </div>
 
@@ -235,7 +253,7 @@ export function ProfilePageClient() {
                 control={control}
                 render={({ field }) => (
                   <SelectField
-                    value={field.value}
+                    value={field.value ?? ""}
                     onChange={field.onChange}
                     options={BUSINESS_TYPES}
                     placeholder="Select business type"
@@ -256,7 +274,7 @@ export function ProfilePageClient() {
                 control={control}
                 render={({ field }) => (
                   <SelectField
-                    value={field.value}
+                    value={field.value ?? ""}
                     onChange={(val) => {
                       field.onChange(val);
                       setValue("city", "", { shouldValidate: true });
@@ -280,7 +298,7 @@ export function ProfilePageClient() {
                 control={control}
                 render={({ field }) => (
                   <SelectField
-                    value={field.value}
+                    value={field.value ?? ""}
                     onChange={field.onChange}
                     options={cityOptions}
                     placeholder={selectedState ? "Select city" : "Select state first"}
