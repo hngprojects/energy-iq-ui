@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { toast } from "sonner";
 
 export const useInverterQueries = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   const useSupportedBrands = () =>
     useQuery({
@@ -33,9 +33,9 @@ export const useInverterQueries = () => {
 
   const useOnboardingStatus = () =>
     useQuery({
-      queryKey: ["onboarding-status"],
+      queryKey: ["onboarding-status", user?.id],
       queryFn: InverterService.getOnboardingStatus,
-      enabled: isAuthenticated,
+      enabled: isAuthenticated && !!user?.id,
       retry: false,
       staleTime: 0,
     });

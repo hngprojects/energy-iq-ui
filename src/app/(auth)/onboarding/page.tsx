@@ -97,7 +97,6 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (user?.id) {
       identifyUser(user.id);
-      // Fast check: localStorage first
       if (onboardingStorage.isCompleted(user.id)) {
         isCompleted.current = true;
         router.replace("/dashboard");
