@@ -3,6 +3,7 @@ import {
   SupportedBrandsResponse,
   ConnectInverterRequest,
   ConnectInverterResponse,
+  OnboardingStatusResponse,
   UserInvertersResponse,
   DashboardMetrics,
   EnergyUsageResponse,
@@ -26,6 +27,16 @@ export const InverterService = {
       {
         method: "POST",
         data,
+      },
+      true,
+    );
+  },
+
+  getOnboardingStatus: async () => {
+    return apiFetch<OnboardingStatusResponse>(
+      "/users/onboard/status",
+      {
+        method: "GET",
       },
       true,
     );

@@ -71,7 +71,7 @@ export const Footer = () => {
         description: "Please try again later.",
       });
       } finally {
-+    setIsLoading(false);
+    setIsLoading(false);
     }
   }
 

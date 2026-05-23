@@ -32,6 +32,15 @@ export const useInverterQueries = () => {
       },
     });
 
+  const useOnboardingStatus = () =>
+    useQuery({
+      queryKey: ["onboarding-status", user?.id],
+      queryFn: InverterService.getOnboardingStatus,
+      enabled: isAuthenticated && !!user?.id,
+      retry: false,
+      staleTime: 0,
+    });
+
   const useUserInverters = () =>
     useQuery({
       queryKey: ["user-inverters", user?.id],
@@ -68,6 +77,7 @@ export const useInverterQueries = () => {
   return {
     useSupportedBrands,
     useConnectInverter,
+    useOnboardingStatus,
     useUserInverters,
     useDashboardMetrics,
     useEnergyUsage,
