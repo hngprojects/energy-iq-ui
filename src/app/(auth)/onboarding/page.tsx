@@ -14,6 +14,7 @@ import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-succ
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
+import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 import { onboardingStorage } from "@/lib/onboarding-storage";
 
@@ -62,7 +63,7 @@ function GoogleAuthSync() {
         .then((realUser) => {
           if (realUser?.id) {
             setAuth(realUser, token, refreshToken);
-            router.replace("/onboarding");
+            // No need for router.replace("/onboarding") here, we are already on it.
           } else {
             logout();
           }
@@ -82,9 +83,13 @@ export default function OnboardingPage() {
   const [inverter, setInverter] = useState<InverterType | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const isCompleted = useRef(false);
   const stepRef = useRef<Step>(step);
+  const { useOnboardingStatus } = useInverterQueries();
+  const { data: onboardingStatus, isLoading: isStatusLoading, isError: isStatusError } = useOnboardingStatus();
+
+  const isLoading = !user?.id || onboardingStorage.isCompleted(user.id);
 
   useEffect(() => {
     stepRef.current = step;
@@ -114,10 +119,25 @@ export default function OnboardingPage() {
         const storeToken = useAuthStore.getState().token;
         if (!storeToken) {
           router.replace("/login");
+          return;
         }
       }
+      // If we have an incoming token or stored token, GoogleAuthSync will handle it.
+      // We don't want to show the UI yet.
     }
   }, [user, router]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (onboardingStatus?.onboardingComplete) {
+      onboardingStorage.setCompleted(user.id);
+      isCompleted.current = true;
+      router.replace("/dashboard");
+    } else if (isStatusError) {
+      isCompleted.current = true;
+      router.replace("/dashboard");
+    }
+  }, [onboardingStatus, isStatusError, user, router]);
 
 
   // Track page unload / tab close
@@ -148,45 +168,61 @@ export default function OnboardingPage() {
     };
   }, []);
 
+  if (isLoading) {
+    return (
+      <AuthWrapper>
+        <div className="mt-28 flex items-center justify-center lg:mt-44">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </AuthWrapper>
+    );
+  }
+
   return (
     <AuthWrapper>
       <Suspense fallback={null}>
         <GoogleAuthSync />
       </Suspense>
-      <div className="mt-28 lg:mt-44">
-        {step === "select" ? (
-          <>
-            <AuthHeader
-              title="What Inverter Type do you Use?"
-              subtitle="Select your Inverter type so we can tailor your experience"
-            />
-            <InverterTypeStep
-              selected={inverter}
-              onSelect={setInverter}
-              onNext={() => inverter && setStep("connect")}
-              onCancel={() => router.push("/")}
-            />
-          </>
-        ) : (
-          inverter && (
+      {isAuthenticated && isStatusLoading ? (
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+        </div>
+      ) : (
+        <div className="mt-28 lg:mt-44">
+          {step === "select" ? (
             <>
               <AuthHeader
-                title={`${INVERTER_CONFIG[inverter.toLowerCase()]?.name || inverter} Inverter Connection`}
-                subtitle="Enter specific details of your inverter type"
+                title="What Inverter Type do you Use?"
+                subtitle="Select your Inverter type so we can tailor your experience"
               />
-              <InverterConnectionStep
-                key={inverter}
-                inverter={inverter}
-                onBack={() => setStep("select")}
-                onConnected={() => {
-                  isCompleted.current = true;
-                  setSuccessOpen(true);
-                }}
+              <InverterTypeStep
+                selected={inverter}
+                onSelect={setInverter}
+                onNext={() => inverter && setStep("connect")}
+                onCancel={() => router.push("/")}
               />
             </>
-          )
-        )}
-      </div>
+          ) : (
+            inverter && (
+              <>
+                <AuthHeader
+                  title={`${INVERTER_CONFIG[inverter.toLowerCase()]?.name || inverter} Inverter Connection`}
+                  subtitle="Enter specific details of your inverter type"
+                />
+                <InverterConnectionStep
+                  key={inverter}
+                  inverter={inverter}
+                  onBack={() => setStep("select")}
+                  onConnected={() => {
+                    isCompleted.current = true;
+                    setSuccessOpen(true);
+                  }}
+                />
+              </>
+            )
+          )}
+        </div>
+      )}
       <OnboardingSuccessDialog
         open={successOpen}
         onOpenChange={setSuccessOpen}

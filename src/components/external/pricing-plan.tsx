@@ -379,7 +379,7 @@ export function PricingSection() {
                         : "border-secondary text-secondary hover:bg-secondary border hover:text-white"
                   }`}
                 >
-                  <Link href="/coming-soon">{tier.cta}</Link>
+                  <Link href="/signup">{tier.cta}</Link>
                 </Button>
               </div>
             </div>

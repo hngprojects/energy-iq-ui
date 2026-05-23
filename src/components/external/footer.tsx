@@ -15,8 +15,6 @@ const footerLinks = [
     links: [
       { name: "Features", href: "/#features" },
       { name: "Pricing", href: "/pricing" },
-      { name: "Terms & Conditions", href: "/terms-and-conditions" },
-      { name: "Privacy Policy", href: "/privacy-policy" },
       { name: "Contact", href: "/contact" },
     ],
   },
@@ -25,18 +23,15 @@ const footerLinks = [
     links: [
       { name: "About", href: "/about" },
       { name: "Blog", href: "/coming-soon" },
-      // { name: "Career", href: "/coming-soon" },
-      // { name: "News", href: "/coming-soon" },
     ],
   },
-  // {
-  //   title: "Download",
-  //   links: [
-  //     { name: "iOS", href: "/coming-soon" },
-  //     { name: "Android", href: "/coming-soon" },
-  //     { name: "Windows", href: "/coming-soon" },
-  //   ],
-  // },
+  {
+    title: "Legal",
+    links: [
+      { name: "Terms & Conditions", href: "/terms-and-conditions" },
+      { name: "Privacy Policy", href: "/privacy-policy" },
+    ],
+  },
 ];
 
 export const Footer = () => {
@@ -71,7 +66,7 @@ export const Footer = () => {
         description: "Please try again later.",
       });
       } finally {
-+    setIsLoading(false);
+    setIsLoading(false);
     }
   }
 

@@ -20,7 +20,7 @@ export function AIAssistantBanner() {
           </p>
         </div>
         <Link
-          href="/dashboard/ai-assistant/new"
+          href="/dashboard/ai-assistant"
           className="bg-background text-foreground hover:bg-primary/90 inline-flex cursor-pointer items-center gap-1 self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors"
         >
           Ask Energy AI <ArrowUpRight className="h-4 w-4" />
@@ -34,7 +34,7 @@ export function AIAssistantBanner() {
           {suggestions.map((s) => (
             <Link
               key={s}
-              href="/dashboard/ai-assistant/new"
+              href="/dashboard/ai-assistant"
               className="border-secondary-foreground/20 bg-secondary-foreground/5 hover:bg-secondary-foreground/10 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors"
             >
               {s} <ArrowUpRight className="h-3 w-3" />
