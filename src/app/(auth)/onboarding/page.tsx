@@ -35,10 +35,13 @@ function GoogleAuthSync() {
 
     if (error) {
       window.history.replaceState(null, "", window.location.pathname);
+       const isDuplicateAccount = error === "account_exists" || error === "duplicate";
       toast.error(
-        "An account with this email already exists. Please sign in with your email and password.",
-        { duration: 6000 },
-      );
+        isDuplicateAccount
+          ? "An account with this email already exists. Please sign in with your email and password."
+          : "Sign in failed. Please try again.",
+          { duration: 6000 },
+        );
       router.replace("/login");
       return;
     }
@@ -167,9 +170,16 @@ useEffect(() => {
     };
   }, []);
 
+  const googleAuthSync = (
+    <Suspense fallback={null}>
+      <GoogleAuthSync />
+    </Suspense>
+  );
+
   if (isLoading) {
     return (
       <AuthWrapper>
+        {googleAuthSync}
         <div className="mt-28 flex items-center justify-center lg:mt-44">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
@@ -179,9 +189,7 @@ useEffect(() => {
 
   return (
     <AuthWrapper>
-      <Suspense fallback={null}>
-        <GoogleAuthSync />
-      </Suspense>
+      {googleAuthSync}
       <div className="mt-28 lg:mt-44">
         {step === "select" ? (
           <>
