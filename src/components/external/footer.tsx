@@ -24,7 +24,7 @@ const footerLinks = [
     title: "Company",
     links: [
       { name: "About", href: "/about" },
-      { name: "Blog", href: "/coming-soon" },
+      { name: "Blog", href: "/blog" },
       { name: "Career", href: "/coming-soon" },
       { name: "News", href: "/coming-soon" },
     ],
@@ -71,7 +71,7 @@ export const Footer = () => {
         description: "Please try again later.",
       });
       } finally {
-+    setIsLoading(false);
+    setIsLoading(false);
     }
   }
 
