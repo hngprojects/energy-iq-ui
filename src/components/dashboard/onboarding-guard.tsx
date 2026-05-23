@@ -27,10 +27,21 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, isLoading, isError, isFullyOnboarded, router]);
 
-  if (isLoading || (!isFullyOnboarded && !isError)) {
+  if (!isAuthenticated || isLoading || (!isError && !isFullyOnboarded)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div
+        role="alert"
+        className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground"
+      >
+        Unable to verify onboarding status. Please refresh and try again.
       </div>
     );
   }

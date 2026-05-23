@@ -88,14 +88,18 @@ export const RequestDemo = () => {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || activeIndex === null) return;
+    if (!video || activeIndex === null || videoError) return;
     video.src = badges[activeIndex].video;
     video.load();
     video.play().catch(() => {});
-  }, [activeIndex]);
+  }, [activeIndex, videoError]);
 
   const handleBadgeClick = (index: number) => {
     if (activeIndex === index) {
+      if (videoError) {
+        setVideoError(false);
+        return;
+      }
       const video = videoRef.current;
       if (!video) return;
       if (video.paused) {

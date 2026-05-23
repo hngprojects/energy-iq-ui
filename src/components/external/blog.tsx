@@ -31,6 +31,7 @@ export default function Blog() {
   });
 
   const handleSubscribe = async () => {
+    if (isLoading) return;
     const normalizedEmail = email.trim();
     if (!normalizedEmail) {
       toast.error("Please enter your email");
@@ -158,7 +159,7 @@ export default function Blog() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-6.5 max-w-145 text-base font-light text-white md:text-[18px] md:leading-relaxed"
           >
-            Get a free excess of our exclusive research and tech strategies to
+            Get free access to our exclusive research and tech strategies to
             level{" "}
             <br className="hidden lg:block" />
             up your knowledge about the digital realm
