@@ -259,7 +259,7 @@ export function PricingSection() {
                         : "border border-[#080C13] text-[#080C13] hover:bg-gray-900 hover:text-white"
                   }`}
                 >
-                  <Link href="/pricing">{tier.cta}</Link>
+                  <Link href="/signup">{tier.cta}</Link>
                 </Button>
               </div>
             </motion.div>

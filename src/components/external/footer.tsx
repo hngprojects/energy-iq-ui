@@ -55,7 +55,7 @@ export const Footer = () => {
       await WaitlistService.joinWaitlist(normalizedEmail);
       toast.success("Joined waitlist successfully!");
       setEmail("");
-   } catch (error: unknown) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
@@ -65,10 +65,10 @@ export const Footer = () => {
       toast.error(message, {
         description: "Please try again later.",
       });
-      } finally {
-    setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <footer className="flex w-full justify-center bg-[#1A1F2C] text-white">
@@ -96,7 +96,7 @@ export const Footer = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
-                  className="w-full bg-transparent px-4 py-2 text-[#1A1F2C] outline-none placeholder:text-gray-400 disabled:opacity-50 border-none "
+                  className="w-full bg-transparent px-4 py-2 text-[#1A1F2C] outline-none placeholder:text-gray-400 disabled:opacity-50 border-none"
                   onKeyDown={(e) => e.key === "Enter" && handleJoinWaitlist()}
                 />
                 <Button

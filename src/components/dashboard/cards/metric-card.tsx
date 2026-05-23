@@ -9,6 +9,7 @@ export function MetricCard({
   sub,
   pill,
   pillTone = "success",
+  valueClass,
   children,
 }: {
   icon: LucideIcon;
@@ -19,6 +20,7 @@ export function MetricCard({
   sub?: string;
   pill?: string;
   pillTone?: "success" | "muted";
+  valueClass?: string;
   children?: React.ReactNode;
 }) {
   return (
@@ -28,7 +30,7 @@ export function MetricCard({
         <span>{label}</span>
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-bold tracking-tight">{value}</span>
+        <span className={`text-3xl font-bold tracking-tight ${valueClass ?? ""}`}>{value}</span>
         {unit && (
           <span className="text-foreground/80 text-2xl font-bold">{unit}</span>
         )}
