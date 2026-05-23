@@ -89,7 +89,7 @@ export default function OnboardingPage() {
   const { useOnboardingStatus } = useInverterQueries();
   const { data: onboardingStatus, isLoading: isStatusLoading, isError: isStatusError } = useOnboardingStatus();
 
-  const isLoading = !user?.id || onboardingStorage.isCompleted(user.id);
+  const isLoading = !user?.id;
 
   useEffect(() => {
     stepRef.current = step;
