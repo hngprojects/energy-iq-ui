@@ -286,6 +286,13 @@ function filterAlerts(alerts: Alert[], filter: AlertFilterType): Alert[] {
     return alerts.filter((a) => a.status === "unresolved");
   return alerts.filter((a) => a.severity === filter);
 }
+
+function sortAlertsByNewest(alerts: Alert[]): Alert[] {
+  return [...alerts].sort(
+    (a, b) => new Date(b.sortTime).getTime() - new Date(a.sortTime).getTime(),
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 interface AlertsTableProps {
   initialData?: Alert[];
@@ -334,7 +341,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
     return () => clearInterval(interval);
   }, [handleRefresh]);
 
-  const displayed = filterAlerts(initialData, filter);
+  const displayed = sortAlertsByNewest(filterAlerts(initialData, filter));
   const unreadCount = initialData.filter(
     (a) => a.status === "unresolved",
   ).length;
