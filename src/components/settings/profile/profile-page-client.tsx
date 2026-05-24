@@ -39,21 +39,30 @@ export function ProfilePageClient() {
   const [photoDialogOpen, setPhotoDialogOpen] = React.useState(false);
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
 
-  const { control, register, handleSubmit, watch, reset, setValue, formState: { errors } } =
-    useForm<ProfileFormValues>({
-      resolver: zodResolver(profileSchema),
-      defaultValues: {
-        firstName: user?.firstName ?? "",
-        lastName: user?.lastName ?? "",
-        businessName: user?.businessName ?? "",
-        businessType: user?.businessType ?? "",
-        state: user?.state ?? "",
-        city: user?.city ?? "",
-      },
-    });
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      businessName: user?.businessName ?? "",
+      businessType: user?.businessType ?? "",
+      state: user?.state ?? "",
+      city: user?.city ?? "",
+    },
+  });
 
   const selectedState = watch("state");
-  const cityOptions = selectedState ? (CITIES_BY_STATE[selectedState] ?? []) : [];
+  const cityOptions = selectedState
+    ? (CITIES_BY_STATE[selectedState] ?? [])
+    : [];
 
   React.useEffect(() => {
     if (!isEditing) {
@@ -93,7 +102,9 @@ export function ProfilePageClient() {
     });
   };
 
-  const sectionTitle = profileSaved ? "User Profile" : "Personal Business and Information.";
+  const sectionTitle = profileSaved
+    ? "User Profile"
+    : "Personal Business and Information.";
   const hasPhoto = !!user?.profilePhoto;
 
   return (
@@ -107,7 +118,9 @@ export function ProfilePageClient() {
 
       {/* Profile Photo Section */}
       <div className="mb-4 rounded-xl border border-border bg-white p-6">
-        <h2 className="text-base font-semibold text-dark-text">Profile Photo</h2>
+        <h2 className="text-base font-semibold text-dark-text">
+          Profile Photo
+        </h2>
         <p className="mt-0.5 text-sm text-[#5D5C5D]">PNG or JPG, up to 2MB.</p>
 
         <div className="mt-4 flex items-center gap-4">
@@ -123,7 +136,8 @@ export function ProfilePageClient() {
             ) : (
               <span className="text-xl font-semibold text-[#374151]">
                 {user
-                  ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() || "AA"
+                  ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() ||
+                    "AA"
                   : "AA"}
               </span>
             )}
@@ -144,19 +158,20 @@ export function ProfilePageClient() {
       {/* Personal Business and Information */}
       <div className="rounded-xl border border-border bg-white p-6">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-dark-text">{sectionTitle}</h2>
+              <h2 className="text-base font-semibold text-dark-text">
+                {sectionTitle}
+              </h2>
               <p className="mt-0.5 text-sm text-[#5D5C5D]">
                 This information is used across your EnergyIQ account.
               </p>
             </div>
-
             {!isEditing ? (
               <button
                 type="button"
                 onClick={handleEdit}
-                className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary/90 transition-colors"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 sm:w-auto"
               >
                 <Pencil className="h-4 w-4" />
                 Edit
@@ -171,7 +186,7 @@ export function ProfilePageClient() {
                 Saving
               </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
                 <button
                   type="button"
                   onClick={handleCancel}
@@ -193,7 +208,9 @@ export function ProfilePageClient() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* First name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">First name</label>
+              <label className="text-sm font-medium text-dark-text">
+                First name
+              </label>
               <input
                 {...register("firstName")}
                 disabled={!isEditing}
@@ -201,13 +218,17 @@ export function ProfilePageClient() {
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
               {errors.firstName && (
-                <p className="text-xs text-red-500">{errors.firstName.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.firstName.message}
+                </p>
               )}
             </div>
 
             {/* Last name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Last name</label>
+              <label className="text-sm font-medium text-dark-text">
+                Last name
+              </label>
               <input
                 {...register("lastName")}
                 disabled={!isEditing}
@@ -215,13 +236,17 @@ export function ProfilePageClient() {
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
               {errors.lastName && (
-                <p className="text-xs text-red-500">{errors.lastName.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.lastName.message}
+                </p>
               )}
             </div>
 
             {/* Email */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Email</label>
+              <label className="text-sm font-medium text-dark-text">
+                Email
+              </label>
               <input
                 value={user?.email ?? ""}
                 disabled
@@ -233,7 +258,9 @@ export function ProfilePageClient() {
 
             {/* Business name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Business name</label>
+              <label className="text-sm font-medium text-dark-text">
+                Business name
+              </label>
               <input
                 {...register("businessName")}
                 disabled={!isEditing}
@@ -241,13 +268,17 @@ export function ProfilePageClient() {
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
               {errors.businessName && (
-                <p className="text-xs text-red-500">{errors.businessName.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.businessName.message}
+                </p>
               )}
             </div>
 
             {/* Business type */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Business type</label>
+              <label className="text-sm font-medium text-dark-text">
+                Business type
+              </label>
               <Controller
                 name="businessType"
                 control={control}
@@ -262,13 +293,17 @@ export function ProfilePageClient() {
                 )}
               />
               {errors.businessType && (
-                <p className="text-xs text-red-500">{errors.businessType.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.businessType.message}
+                </p>
               )}
             </div>
 
             {/* State */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">State</label>
+              <label className="text-sm font-medium text-dark-text">
+                State
+              </label>
               <Controller
                 name="state"
                 control={control}
@@ -301,7 +336,9 @@ export function ProfilePageClient() {
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     options={cityOptions}
-                    placeholder={selectedState ? "Select city" : "Select state first"}
+                    placeholder={
+                      selectedState ? "Select city" : "Select state first"
+                    }
                     disabled={!isEditing || !selectedState}
                   />
                 )}
