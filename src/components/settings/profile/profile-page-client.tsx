@@ -104,7 +104,7 @@ export function ProfilePageClient() {
 
   const sectionTitle = profileSaved
     ? "User Profile"
-    : "Personal Business and Information.";
+    : "Personal and Business Information.";
   const hasPhoto = !!user?.profilePhoto;
 
   return (
