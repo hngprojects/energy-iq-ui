@@ -158,7 +158,7 @@ export function ProfilePageClient() {
       {/* Personal Business and Information */}
       <div className="rounded-xl border border-border bg-white p-6">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-6 flex items-center gap-2 justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-base font-semibold text-dark-text">
                 {sectionTitle}
@@ -167,12 +167,11 @@ export function ProfilePageClient() {
                 This information is used across your EnergyIQ account.
               </p>
             </div>
-
             {!isEditing ? (
               <button
                 type="button"
                 onClick={handleEdit}
-                className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary/90 transition-colors"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 sm:w-auto"
               >
                 <Pencil className="h-4 w-4" />
                 Edit
@@ -187,7 +186,7 @@ export function ProfilePageClient() {
                 Saving
               </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
                 <button
                   type="button"
                   onClick={handleCancel}
