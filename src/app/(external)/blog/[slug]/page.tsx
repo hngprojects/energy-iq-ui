@@ -70,10 +70,10 @@ const posts: Omit<BlogPost, "content">[] = [
   },
 ];
 
-const contentMap: Record<string, React.ReactNode> = {
-  "how-to-choose-energy-efficient-appliance": <Post1Content />,
-  "understanding-power-consumption-in-homes": <Post2Content />,
-  "how-ai-improves-energy-management-systems": <Post3Content />,
+const contentMap: Record<string, () => React.ReactNode> = {
+  "how-to-choose-energy-efficient-appliance": () => <Post1Content />,
+  "understanding-power-consumption-in-homes": () => <Post2Content />,
+  "how-ai-improves-energy-management-systems": () => <Post3Content />,
 };
 
 export async function generateMetadata({
@@ -103,9 +103,12 @@ export default async function BlogPostPage({
   const postMeta = posts.find((p) => p.slug === slug);
   if (!postMeta) notFound();
 
+  const contentFn = contentMap[slug];
+  if (!contentFn) notFound();
+
   const post: BlogPost = {
     ...postMeta,
-    content: contentMap[slug] ?? null,
+    content: contentFn(),
   };
 
   return (

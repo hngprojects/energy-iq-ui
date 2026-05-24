@@ -101,7 +101,7 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
             priority
           />
         </motion.div>
-        <div className="from-secondary/40 via-secondary/60 to-secondary absolute inset-0 z-10 bg-linear-to-b" />
+        <div className="from-secondary/40 via-secondary/60 to-secondary absolute inset-0 z-10 bg-gradient-to-b" />
 
         <div className="relative z-20 flex h-full flex-col items-center justify-center px-4 text-center">
           {/* Category badge */}
@@ -144,7 +144,7 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
             <aside className="hidden lg:block lg:sticky lg:top-24 lg:w-1/4">
               <div className="border-none bg-white shadow-none lg:bg-transparent lg:p-0">
                 <h2 className="mb-6 text-lg font-bold tracking-wider text-slate-900 uppercase lg:text-xl">
-                  Table of content
+                  Table of Contents
                 </h2>
 
                 <nav className="flex flex-col space-y-1">
