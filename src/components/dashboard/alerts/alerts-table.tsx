@@ -352,9 +352,9 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
   return (
     <>
       <div className="bg-card border-border overflow-hidden rounded-xl border">
-        <div className="border-border flex flex-col gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
           <FilterDropdown value={filter} onChange={setFilter} />
-          <div className="flex items-center gap-2 border border-[#EDEDED] py-1 px-1.5">
+          <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-[#EDEDED] px-3 py-2">
             <span className="flex items-center gap-1.5 text-sm">
               <span className="bg-secondary inline-block h-1.5 w-1.5 rounded-full" />
               <span className="text-foreground font-medium">
@@ -362,7 +362,6 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                 {unreadCount !== 1 ? "s" : ""}
               </span>
             </span>
-
             {refreshError ? (
               <span className="text-destructive hidden text-sm sm:inline">
                 unable to refresh alerts
@@ -388,7 +387,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-160 table-fixed">
             <colgroup>
               <col className="w-[46%]" />
@@ -489,6 +488,60 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="grid gap-4 md:hidden">
+          {displayed.map((alert) => {
+            const Icon = ICON_MAP[alert.iconType] || AlertTriangle;
+            const isActionable = alert.status === "unresolved";
+
+            return (
+              <article
+                key={alert.id}
+                className="rounded-xl border border-border bg-card p-6"
+              >
+                <div className="mb-7">
+                  <SeverityBadge severity={alert.severity} />
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#E8E8E8]">
+                    <Icon className="size-4 text-[#121212]" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3 className="truncate text-base font-semibold text-foreground">
+                      {alert.title}
+                    </h3>
+                    <p className="text-muted-foreground mt-0.5 whitespace-normal wrap-break-word text-sm leading-relaxed">
+                      {alert.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted-foreground">{alert.time}</p>
+
+                  <Button
+                    onClick={() => isActionable && setSelectedAlertId(alert.id)}
+                    disabled={!isActionable}
+                    className={cn(
+                      "h-10 min-w-24 rounded-lg px-5 text-sm font-medium",
+                      isActionable
+                        ? "bg-secondary text-primary-foreground hover:bg-secondary/80"
+                        : "bg-muted text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    {isActionable
+                      ? "Inspect"
+                      : alert.status === "resolved"
+                        ? "Resolved"
+                        : "No action needed"}{" "}
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
       <InspectModal
