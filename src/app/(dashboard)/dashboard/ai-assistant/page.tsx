@@ -1,32 +1,13 @@
+"use client";
 import { Download, History, Plus } from "lucide-react";
 import Link from "next/link";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { ChatHistoryList } from "@/components/dashboard/ai/chat-history-list";
 import { Button } from "@/components/ui/button";
-import { ComingSoonDashboard } from "@/components/dashboard/coming-soon";
+import { useChatHistory } from "@/hooks/use-chat-queries";
 
-// Replace with a real data fetch when backend is ready
-async function getChatHistory() {
-  // Return mock – swap out for API call
-  return [{ id: "placeholder" }]; // non-empty
-  // return []; // empty state
-}
-
-export default async function AIAssistantPage() {
-  const isReady = false; // Toggle this when ready to launch
-
-  if (!isReady) {
-    return (
-      <ComingSoonDashboard
-        feature="AI Assistant"
-        description="Ask EnergyIQ in English or Pidgin. Get smart insights and answers about your energy usage. Coming soon!"
-      />
-    );
-  }
-
-  const history = await getChatHistory();
-  const hasHistory = history.length > 0;
-
+export default function AIAssistantPage() {
+  const { history, loading, error } = useChatHistory();
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-6 py-4">
@@ -40,7 +21,6 @@ export default async function AIAssistantPage() {
           >
             <History className="h-6 w-6" />
           </Button>
-
           <Button
             variant="ghost"
             size="icon-lg"
@@ -49,11 +29,10 @@ export default async function AIAssistantPage() {
           >
             <Download className="h-6 w-6" />
           </Button>
-
           <Button
             asChild
             variant="secondary"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors hover:opacity-90 shadow-none border-0"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium shadow-none"
           >
             <Link href="/dashboard/ai-assistant/new">
               <Plus className="h-4 w-4" />
@@ -62,12 +41,18 @@ export default async function AIAssistantPage() {
           </Button>
         </div>
       </div>
-
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {hasHistory ? (
+        {loading ? (
+          <div className="px-6 py-8 text-sm text-muted-foreground">
+            Loading chats...
+          </div>
+        ) : error ? (
+          <div className="px-6 py-8 text-sm text-destructive">
+            {error.message}
+          </div>
+        ) : history.length > 0 ? (
           <div className="px-6 pb-8">
-            <ChatHistoryList />
+            <ChatHistoryList history={history} />
           </div>
         ) : (
           <ChatEmptyState />

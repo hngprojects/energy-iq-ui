@@ -1,18 +1,16 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronDown, ChevronUp, Mic, Plus, Send } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
+import { cn } from "@/lib/utils";
+import { chatService } from "@/services/chat-service";
 interface SuggestionCard {
   title: string;
   description: string;
 }
-
 const SUGGESTIONS: SuggestionCard[] = [
   {
     title: "Why did my battery drain fast last night?",
@@ -29,34 +27,57 @@ const SUGGESTIONS: SuggestionCard[] = [
       "Detect weather impact, shading issues, or reduced solar output.",
   },
 ];
-
 export default function NewChatPage() {
   const router = useRouter();
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isTextareaExpanded, setIsTextareaExpanded] = useState(false);
-
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const EXPAND_THRESHOLD = 40;
-
-  const handleStartConversation = (text: string) => {
+  const handleStartConversation = async (text: string) => {
     const cleanText = text.trim();
-    if (!cleanText) return;
-
-    const newChatId = `chat-${Date.now()}`;
-
-    router.push(`/dashboard/ai-assistant/${newChatId}`);
+    if (!cleanText || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      const chat = await chatService.createChat({
+        startingMessage: cleanText,
+      });
+      if (!chat?.id) {
+        throw new Error("The chat was created, but no chat id was returned.");
+      }
+      sessionStorage.setItem(
+        `pending-chat-message:${chat.id}`,
+        JSON.stringify({
+          content: cleanText,
+          timestamp: new Date().toISOString(),
+        }),
+      );
+      router.push(`/dashboard/ai-assistant/${chat.id}`);
+    } catch (err) {
+      console.error("Failed to start chat:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to start chat. Please try again.",
+      );
+    } finally {
+      setSending(false);
+    }
   };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleStartConversation(input);
     }
   };
-
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
   return (
-    <div className="flex h-[calc(100vh-130px)] md:h-[calc(100vh-140px)] w-full flex-col items-center justify-center bg-background px-6 text-foreground overflow-hidden">
-      {" "}
+    <div className="flex h-[calc(100vh-130px)] w-full flex-col items-center justify-center overflow-hidden bg-background px-6 text-foreground md:h-[calc(100vh-140px)]">
       <div className="flex w-full max-w-7xl flex-col items-center text-center">
         <div className="mb-6 flex h-16 w-16 items-center justify-center">
           <Image
@@ -68,16 +89,14 @@ export default function NewChatPage() {
             priority
           />
         </div>
-
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Ask EnergyIQ anything about <br /> your power system
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-xl">
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
           EnergyIQ analyzes your inverter and energy data to explain battery
           drain, generator usage, savings, and solar performance in simple
           language.
         </p>
-
         <div className="mt-8 w-full rounded-xl border border-border bg-card p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
           <div
             className={cn(
@@ -85,27 +104,26 @@ export default function NewChatPage() {
               isTextareaExpanded ? "items-end" : "items-center",
             )}
           >
-            {/* TODO: wire onClick to attach */}
             <Button
               type="button"
               variant="ghost"
               size="icon"
               title="Attach"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:text-foreground hover:bg-transparent"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
             >
               <Plus className="h-5 w-5" />
             </Button>
-
-            <div className="flex-1 flex items-center min-h-9">
+            <div className="flex min-h-9 flex-1 items-center">
               <Textarea
+                ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything about your energy system"
                 rows={1}
                 className={cn(
-                  "w-full resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none py-1 h-auto",
-                  "max-h-32 min-h-0 leading-5 border-0 p-0 shadow-none focus-visible:ring-0",
+                  "h-auto max-h-32 min-h-0 w-full resize-none border-0 bg-transparent p-0 py-1 text-sm leading-5 text-foreground shadow-none outline-none placeholder:text-muted-foreground",
+                  "focus-visible:ring-0",
                 )}
                 onInput={(e) => {
                   const el = e.currentTarget;
@@ -115,15 +133,13 @@ export default function NewChatPage() {
                 }}
               />
             </div>
-
-            <div className="flex shrink-0 items-center gap-2 self-end mb-0.5 md:self-auto md:mb-0">
-              {/* TODO: wire onClick to startVoiceRecording() when voice input is implemented */}
+            <div className="mb-0.5 flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 title="Record voice message"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:text-foreground hover:bg-transparent"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
               >
                 <Mic className="h-4 w-4" />
               </Button>
@@ -131,11 +147,11 @@ export default function NewChatPage() {
                 type="button"
                 title="Send message"
                 onClick={() => handleStartConversation(input)}
-                disabled={!input.trim()}
+                disabled={!input.trim() || sending}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors border-0 p-0 shadow-none",
-                  input.trim()
-                    ? "bg-foreground text-background hover:opacity-90 hover:bg-foreground"
+                  "flex h-8 w-8 items-center justify-center rounded-lg border-0 p-0 shadow-none transition-colors",
+                  input.trim() && !sending
+                    ? "bg-foreground text-background hover:bg-foreground hover:opacity-90"
                     : "bg-muted text-muted-foreground hover:bg-muted",
                 )}
               >
@@ -144,12 +160,14 @@ export default function NewChatPage() {
             </div>
           </div>
         </div>
-
+        {error ? (
+          <p className="mt-3 text-sm text-destructive">{error}</p>
+        ) : null}
         <div className="mt-10 w-full text-left">
           <Button
             variant="ghost"
-            onClick={() => setShowSuggestions(!showSuggestions)}
-            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent p-0 h-auto"
+            onClick={() => setShowSuggestions((value) => !value)}
+            className="flex h-auto items-center gap-1 p-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-transparent hover:text-foreground"
           >
             <span>Suggested Questions</span>
             {showSuggestions ? (
@@ -158,14 +176,14 @@ export default function NewChatPage() {
               <ChevronDown className="h-3.5 w-3.5" />
             )}
           </Button>
-
-          {showSuggestions && (
+          {showSuggestions ? (
             <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {SUGGESTIONS.map((card, i) => (
+              {SUGGESTIONS.map((card) => (
                 <Button
-                  key={i}
+                  key={card.title}
                   variant="outline"
                   onClick={() => handleStartConversation(card.title)}
+                  disabled={sending}
                   className="flex flex-col items-start h-auto text-left rounded-xl border border-border cursor-pointer bg-card p-6 shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20 whitespace-normal"
                 >
                   <span className="text-sm font-semibold text-foreground line-clamp-2">
@@ -177,7 +195,7 @@ export default function NewChatPage() {
                 </Button>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
