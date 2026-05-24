@@ -54,7 +54,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] p-3 text-sm sm:hidden">
         <div className="flex items-center gap-2 font-medium text-[#10B981]">
           <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-          All systems is working fine
+          All systems are working fine
         </div>
         <div className="flex items-center gap-1.5 text-gray-400">
           <span>2 min ago</span>
@@ -73,7 +73,7 @@ export default function SettingsPage() {
             <div>
               <h2 className="font-semibold text-dark-text">Security Audit</h2>
               <p className="mt-0.5 text-sm text-[#5D5C5D]">
-                Last audit completed 2 hhours ago.No anomalies detected.
+                Last audit completed 2 hours ago. No anomalies detected.
               </p>
             </div>
           </div>

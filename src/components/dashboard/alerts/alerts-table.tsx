@@ -532,7 +532,11 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                         : "bg-muted text-muted-foreground hover:bg-muted",
                     )}
                   >
-                    {isActionable ? "Inspect" : "Resolved"}
+                    {isActionable
+                      ? "Inspect"
+                      : alert.status === "resolved"
+                        ? "Resolved"
+                        : "No action needed"}{" "}
                   </Button>
                 </div>
               </article>
