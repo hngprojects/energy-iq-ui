@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { AuthService } from "@/services/auth-service";
@@ -47,6 +47,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 export const useAuthQueries = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuth, logout: storeLogout, token: currentToken, setTempEmail } = useAuthStore();
 
   const useLogin = () =>
@@ -63,7 +64,8 @@ export const useAuthQueries = () => {
         toast.success("Welcome back!", {
           duration: 5000,
         });
-        router.push("/onboarding");
+        const redirect = searchParams.get("redirect");
+        router.push(redirect ?? "/onboarding");
       },
       onError: (error: unknown) => {
         const message = getErrorMessage(error, "The provided email or password is incorrect");
@@ -105,7 +107,8 @@ export const useAuthQueries = () => {
         setAuth(user, token, refreshToken);
         localStorage.removeItem("temp_email");
         toast.success("Email verified successfully!");
-        router.push("/onboarding");
+        const redirect = searchParams.get("redirect");
+        router.push(redirect ?? "/onboarding");
       },
       onError: (error: unknown) => {
         toast.error(getErrorMessage(error, "Verification failed"), {

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, _hasHydrated } = useAuthStore();
   const { useOnboardingStatus } = useInverterQueries();
   const { data: status, isLoading, isError } = useOnboardingStatus();
@@ -20,7 +21,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!_hasHydrated) return;
     if (!isAuthenticated) {
-      router.replace("/login");
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
     if (!isLoading && !isError && !isFullyOnboarded) {
