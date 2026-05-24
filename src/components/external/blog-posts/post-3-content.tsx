@@ -48,7 +48,15 @@ export default function Post3Content() {
             According to the International Energy Agency (IEA), AI has the
             potential to significantly optimise energy systems by improving
             efficiency, forecasting demand and managing power usage in real
-            time.
+            time.{" "}
+            <a
+              href="https://www.iea.org/news/ai-is-set-to-drive-surging-electricity-demand-from-data-centres-while-offering-the-potential-to-transform-how-the-energy-sector-works"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (IEA)
+            </a>
           </blockquote>
         </motion.div>
       </section>
@@ -177,8 +185,29 @@ export default function Post3Content() {
           <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
             The European Commission&apos;s BUILD UP initiative states that AI
             enables real-time optimisation of heating, cooling, lighting and
-            load management systems in buildings.
+            load management systems in buildings.{" "}
+            <a
+              href="https://build-up.ec.europa.eu/en/resources-and-tools/publications/ai-transforms-energy-management-buildings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (BUILD UP)
+            </a>
           </blockquote>
+          <p className={p}>
+            Studies on AI-assisted building control systems also show
+            significant improvements in balancing thermal comfort and energy
+            efficiency.{" "}
+            <a
+              href="https://arxiv.org/abs/2104.02214"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors"
+            >
+              (arXiv)
+            </a>
+          </p>
         </motion.div>
       </section>
 
@@ -216,7 +245,15 @@ export default function Post3Content() {
           <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
             The IEA reports that electricity demand from data centres and
             digital infrastructure has grown rapidly, making accurate
-            forecasting increasingly important for energy operators.
+            forecasting increasingly important for energy operators.{" "}
+            <a
+              href="https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (IEA)
+            </a>
           </blockquote>
         </motion.div>
       </section>
@@ -250,9 +287,30 @@ export default function Post3Content() {
             diesel generators or unstable grids.
           </p>
           <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
+            Research on renewable-colocated AI data centres found that
+            AI-driven energy management systems significantly reduced electricity
+            costs through optimised renewable usage and workload scheduling.{" "}
+            <a
+              href="https://arxiv.org/abs/2507.08011"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (arXiv)
+            </a>
+          </blockquote>
+          <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
             The global AI renewable energy management market is projected to
             grow from approximately $1.68 billion in 2025 to over $8.15 billion
-            by 2033.
+            by 2033.{" "}
+            <a
+              href="https://www.grandviewresearch.com/horizon/statistics/ai-in-energy-market/application/renewable-energy-management/global"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (Grand View Research)
+            </a>
           </blockquote>
         </motion.div>
       </section>
@@ -286,7 +344,7 @@ export default function Post3Content() {
             <li>Generator inefficiencies</li>
           </ul>
           <p className={p}>
-            …before a failure happens. This is called{" "}
+            before a failure happens. This is called{" "}
             <strong className="font-semibold text-slate-100">
               predictive maintenance
             </strong>
@@ -326,11 +384,29 @@ export default function Post3Content() {
             <li>Real-time optimization</li>
           </ul>
           <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
-            According to Grand View Research, the global AI-in-energy market was
+            According to{" "}
+            <a
+              href="https://www.grandviewresearch.com/industry-analysis/ai-energy-market-report"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              Grand View Research
+            </a>
+            , the global AI-in-energy market was
             valued at approximately $5.1 billion in 2025 and is projected to
-            reach $22.2 billion by 2033. This rapid growth is largely driven by
+            reach $22.2 billion by 2033, growing at a CAGR of 20.4%.
+            This rapid growth is largely driven by
             companies seeking lower operational costs and more efficient energy
-            infrastructure.
+            infrastructure.{" "}
+            <a
+              href="https://www.grandviewresearch.com/industry-analysis/ai-energy-market-report"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (Grand View Research)
+            </a>
           </blockquote>
         </motion.div>
       </section>
@@ -393,7 +469,15 @@ export default function Post3Content() {
           </ul>
           <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
             The IEA notes that AI could help accelerate emissions reduction by
-            enabling smarter energy optimisation and grid management.
+            enabling smarter energy optimisation and grid management.{" "}
+            <a
+              href="https://www.iea.org/reports/energy-and-ai/ai-and-climate-change"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (IEA)
+            </a>
           </blockquote>
           <p className={p}>
             For businesses pursuing ESG (Environmental, Social, and Governance)
@@ -432,7 +516,8 @@ export default function Post3Content() {
               {
                 title: "Data Centres",
                 items: ["Cooling systems", "Server workloads", "Power distribution"],
-                note: "The IEA estimates data centres consumed approximately 415 TWh of electricity in 2024.",
+                note: "The IEA estimates data centres consumed approximately 415 terawatt-hours (TWh) of electricity in 2024 and about 1.5% of global electricity consumption.",
+                noteLink: "https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai",
               },
               {
                 title: "Renewable Energy Farms",
@@ -442,7 +527,7 @@ export default function Post3Content() {
                 title: "Smart Homes",
                 items: ["Thermostats", "Appliances", "Smart plugs", "Energy scheduling"],
               },
-            ].map(({ title, items, note }) => (
+            ].map(({ title, items, note, noteLink }) => (
               <div
                 key={title}
                 className="border-border bg-card ring-border rounded-xl border p-5 shadow-sm ring-1"
@@ -455,7 +540,19 @@ export default function Post3Content() {
                   ))}
                 </ul>
                 {note && (
-                  <p className="text-slate-70 mt-3 text-xs italic">{note}</p>
+                  <p className="text-slate-70 mt-3 text-xs italic">
+                    {note}{" "}
+                    {noteLink && (
+                      <a
+                        href={noteLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors"
+                      >
+                        (IEA)
+                      </a>
+                    )}
+                  </p>
                 )}
               </div>
             ))}
@@ -540,7 +637,15 @@ export default function Post3Content() {
           <blockquote className="border-primary bg-amber-10 text-slate-80 rounded-r-lg border-l-4 px-5 py-4 text-base italic md:text-lg">
             The International Energy Agency describes AI as a potentially
             transformative force for the energy sector, similar in significance
-            to electricity itself.
+            to electricity itself.{" "}
+            <a
+              href="https://www.iea.org/reports/energy-and-ai/executive-summary"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-amber-60 font-medium underline underline-offset-2 transition-colors not-italic"
+            >
+              (IEA)
+            </a>
           </blockquote>
           <p className={p}>
             For businesses operating hybrid energy systems, especially in
@@ -584,7 +689,7 @@ export default function Post3Content() {
             operational and financial advantage.
           </p>
           <p className="text-slate-100 text-lg font-bold italic md:text-xl">
-            The future of energy is not just digital — it is intelligent.
+            The future of energy is not just digital, it is intelligent.
           </p>
         </motion.div>
       </section>

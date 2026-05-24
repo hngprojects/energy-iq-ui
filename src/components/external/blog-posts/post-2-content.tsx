@@ -29,7 +29,7 @@ export default function Post2Content() {
             backup no longer lasts as long as it used to.
           </p>
           <p className={p}>
-            In many homes, the problem is not just electricity supply — it is
+            In many homes, the problem is not just electricity supply, it is
             poor understanding of how much power everyday appliances actually
             consume.
           </p>
@@ -160,7 +160,7 @@ export default function Post2Content() {
         >
           <h2 className={h2}>3. Usage Time Matters</h2>
           <p className={p}>
-            Power consumption is not only about appliance wattage — how long the
+            Power consumption is not only about appliance wattage, how long the
             appliance runs also matters.
           </p>
           <h3 className={h3}>For example:</h3>

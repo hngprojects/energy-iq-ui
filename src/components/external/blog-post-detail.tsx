@@ -17,8 +17,6 @@ export interface BlogPost {
   slug: string;
   title: string;
   category: string;
-  date: string;
-  readTime: string;
   image: string;
   excerpt: string;
   toc: TocSection[];
@@ -124,17 +122,6 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
           >
             {post.title}
           </motion.h1>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex items-center gap-3 text-sm text-slate-300"
-          >
-            <span>{post.date}</span>
-            <span className="bg-slate-60 h-1 w-1 rounded-full" />
-            <span>{post.readTime}</span>
-          </motion.div>
         </div>
       </header>
 

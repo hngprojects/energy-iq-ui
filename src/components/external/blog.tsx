@@ -16,8 +16,6 @@ const blogPosts = [
     slug: "how-to-choose-energy-efficient-appliance",
     image: "/images/how_it_works_1.jpg",
     category: "Solar & Inverter",
-    date: "May 20, 2025",
-    readTime: "6 min read",
     title: "How To Choose An Energy Efficient Appliance For Your Solar Inverter",
     excerpt:
       "You finally invest in a solar setup but it drains faster than expected. In most cases, the appliances connected to it are the real issue. Here is how to choose the right ones.",
@@ -27,8 +25,6 @@ const blogPosts = [
     slug: "understanding-power-consumption-in-homes",
     image: "/images/how_it_works_2.jpg",
     category: "Energy Tips",
-    date: "May 24, 2025",
-    readTime: "5 min read",
     title: "Understanding Power Consumption In Homes",
     excerpt:
       "In many homes, the problem is not just electricity supply — it is poor understanding of how much power everyday appliances actually consume.",
@@ -38,8 +34,6 @@ const blogPosts = [
     slug: "how-ai-improves-energy-management-systems",
     image: "/images/how_it_works_3.jpg",
     category: "AI & Technology",
-    date: "May 24, 2025",
-    readTime: "8 min read",
     title: "How AI Improves Your Energy Management Systems",
     excerpt:
       "AI-powered energy management systems are helping businesses cut costs, improve efficiency and reduce carbon emissions. Here is how.",
@@ -153,13 +147,6 @@ export default function Blog() {
 
                 {/* Card body */}
                 <div className="flex flex-1 flex-col gap-3 p-6">
-                  {/* Meta */}
-                  <div className="text-muted-foreground flex items-center gap-3 text-xs">
-                    <span>{post.date}</span>
-                    <span className="bg-slate-50 h-1 w-1 rounded-full" />
-                    <span>{post.readTime}</span>
-                  </div>
-
                   {/* Title */}
                   <h3 className="text-slate-100 text-base font-bold leading-snug md:text-lg">
                     {post.title}

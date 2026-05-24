@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 
-/* Shared class strings — mirrors privacy-policy / terms-and-condition patterns */
 const h2 = "mb-6 text-xl font-bold tracking-tight text-slate-100 lg:text-2xl";
 const h3 = "mb-3 text-lg font-semibold text-slate-100";
 const p = "text-md text-slate-80 leading-relaxed md:text-lg";
@@ -31,7 +30,7 @@ export default function Post1Content() {
             it has only been a month.
           </p>
           <p className={p}>
-            In most cases, the problem might not be the solar setup - the
+            In most cases, the problem might not be the solar setup, the
             appliances connected to it are the real issue.
           </p>
           <p className={p}>
@@ -251,7 +250,7 @@ export default function Post1Content() {
             <li>Pumps</li>
           </ul>
           <p className={p}>
-            …may briefly consume two to three times their normal running wattage
+            may briefly consume two to three times their normal running wattage
             during startup.
           </p>
           <p className={p}>
@@ -263,7 +262,7 @@ export default function Post1Content() {
             <li>Running wattage</li>
             <li>Startup wattage</li>
           </ul>
-          <p className={p}>…before connecting appliances to your inverter.</p>
+          <p className={p}>before connecting appliances to your inverter.</p>
         </motion.div>
       </section>
 

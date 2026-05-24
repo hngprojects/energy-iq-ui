@@ -11,14 +11,10 @@ import Post3Content from "@/components/external/blog-posts/post-3-content";
 const posts: Omit<BlogPost, "content">[] = [
   {
     slug: "how-to-choose-energy-efficient-appliance",
-    title:
-      "How To Choose An Energy Efficient Appliance For Your Solar Inverter",
+    title: "How To Choose An Energy Efficient Appliance For Your Solar Inverter",
     category: "Solar & Inverter",
-    date: "May 20, 2025",
-    readTime: "6 min read",
     image: "/images/how_it_works_1.jpg",
-    excerpt:
-      "You finally invest in a solar setup but it drains faster than expected. In most cases, the appliances connected to it are the real issue.",
+    excerpt: "You finally invest in a solar setup but it drains faster than expected. In most cases, the appliances connected to it are the real issue.",
     toc: [
       { id: "intro", title: "Introduction" },
       { id: "inverter-capacity", title: "1. Understand Your Inverter Capacity" },
@@ -35,11 +31,8 @@ const posts: Omit<BlogPost, "content">[] = [
     slug: "understanding-power-consumption-in-homes",
     title: "Understanding Power Consumption In Homes",
     category: "Energy Tips",
-    date: "May 24, 2025",
-    readTime: "5 min read",
     image: "/images/how_it_works_2.jpg",
-    excerpt:
-      "In many homes, the problem is not just electricity supply — it is poor understanding of how much power everyday appliances actually consume.",
+    excerpt: "In many homes, the problem is not just electricity supply — it is poor understanding of how much power everyday appliances actually consume.",
     toc: [
       { id: "intro", title: "Introduction" },
       { id: "what-power-means", title: "1. What Power Consumption Means" },
@@ -56,11 +49,8 @@ const posts: Omit<BlogPost, "content">[] = [
     slug: "how-ai-improves-energy-management-systems",
     title: "How AI Improves Your Energy Management Systems",
     category: "AI & Technology",
-    date: "May 24, 2025",
-    readTime: "8 min read",
     image: "/images/how_it_works_3.jpg",
-    excerpt:
-      "AI-powered energy management systems are helping businesses cut costs, improve efficiency and reduce carbon emissions. Here is how.",
+    excerpt: "AI-powered energy management systems are helping businesses cut costs, improve efficiency and reduce carbon emissions. Here is how.",
     toc: [
       { id: "intro", title: "Introduction" },
       { id: "what-is-ems", title: "What is an EMS?" },
