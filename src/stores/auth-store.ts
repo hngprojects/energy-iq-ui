@@ -22,6 +22,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   tempEmail: string | null;
+  _hasHydrated: boolean;
   setAuth: (
     user: User,
     token: string,
@@ -31,6 +32,7 @@ interface AuthState {
   setUser: (user: User) => void;
   setTempEmail: (email: string | null) => void;
   logout: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -41,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       tempEmail: null,
+      _hasHydrated: false,
       setAuth: (user, token, refreshToken, rememberMe = false) => {
         if (typeof window !== "undefined") {
           sessionStorage.setItem("session_active", "1");
@@ -61,6 +64,7 @@ export const useAuthStore = create<AuthState>()(
       },
       setUser: (user) => set({ user }),
       setTempEmail: (email) => set({ tempEmail: email }),
+      setHasHydrated: (value) => set({ _hasHydrated: value }),
       logout: () => {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("session_active");
@@ -85,9 +89,9 @@ export const useAuthStore = create<AuthState>()(
         if (state.isAuthenticated && !rememberMe && !sessionActive) {
           state.logout();
         } else if (state.isAuthenticated) {
-          // Recreate the cookie in case it expired or was cleared (e.g. after browser restart)
           setSessionCookie(rememberMe);
         }
+        state.setHasHydrated(true);
       },
     },
   ),
