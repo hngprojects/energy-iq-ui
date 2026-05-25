@@ -6,6 +6,19 @@ import { AuthHeader } from "@/components/auth/auth-header";
 import { AuthLoginForm } from "@/components/auth/auth-login-form";
 import { useAuthStore } from "@/stores/auth-store";
 
+const getSafeRedirect = (redirect: string | null, fallback: string): string => {
+  if (
+    redirect &&
+    redirect.startsWith("/") &&
+    !redirect.startsWith("//") &&
+    !redirect.includes("://")
+  ) {
+    return redirect;
+  }
+
+  return fallback;
+};
+
 export default function LoginPage() {
   const { setTempEmail, isAuthenticated, token } = useAuthStore();
   const router = useRouter();
@@ -14,7 +27,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && token) {
       const redirect = searchParams.get("redirect");
-      router.replace(redirect ?? "/dashboard");
+      router.replace(getSafeRedirect(redirect, "/dashboard"));
       return;
     }
     setTempEmail(null);
