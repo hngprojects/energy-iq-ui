@@ -9,8 +9,9 @@ export default function SignupPage() {
   const { setTempEmail } = useAuthStore();
 
   useEffect(() => {
-    setTempEmail(null);
-    localStorage.removeItem("temp_email");
+    // Only clear if explicitly needed, but not on every mount to allow "Back" from verify-email
+    // setTempEmail(null);
+    // localStorage.removeItem("temp_email");
   }, [setTempEmail]);
 
   return (

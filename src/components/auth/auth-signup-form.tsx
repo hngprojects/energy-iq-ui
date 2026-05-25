@@ -8,10 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormValues } from "@/lib/schemas/auth";
 import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthService } from "@/services/auth-service";
+import { useAuthStore } from "@/stores/auth-store";
+
 
 export function AuthSignupForm() {
   const { useRegister } = useAuthQueries();
   const registerMutation = useRegister();
+
+  const { user, tempEmail } = useAuthStore();
 
   const {
     register,
@@ -22,7 +26,7 @@ export function AuthSignupForm() {
     resolver: zodResolver(registerSchema),
     mode: "onChange",
     defaultValues: {
-      email: "",
+      email: tempEmail ?? "",
       password: "",
       firstName: "",
       lastName: "",

@@ -89,8 +89,19 @@ export const useAuthQueries = () => {
         toast.success("Account created successfully!");
         router.push("/verify-email");
       },
-      onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Registration failed"));
+      onError: (error: unknown, variables) => {
+        const message = getErrorMessage(error, "Registration failed");
+        
+        // If account exists, it might be unverified, so we redirect to verify-email
+        if (message === "This email is already registered") {
+          setTempEmail(variables.email);
+          localStorage.setItem("temp_email", variables.email);
+          toast.info("Account already exists. Redirecting to verification...");
+          router.push("/verify-email");
+          return;
+        }
+
+        toast.error(message);
       },
     });
 

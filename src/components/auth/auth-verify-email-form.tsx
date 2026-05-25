@@ -57,8 +57,9 @@ export function AuthVerifyEmailForm() {
   const isComplete = otp.length === 6;
 
   const handleBack = () => {
-    setTempEmail(null);
-    localStorage.removeItem("temp_email");
+    // We no longer clear tempEmail so user can retry signup
+    // setTempEmail(null);
+    // localStorage.removeItem("temp_email");
   };
 
   const handleResend = () => {
