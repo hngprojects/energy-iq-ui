@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
 import { InverterService } from "@/services/inverter-service";
 import { useAuthStore } from "@/stores/auth-store";
@@ -6,6 +6,8 @@ import { toast } from "sonner";
 
 export const useInverterQueries = () => {
   const { isAuthenticated, user } = useAuthStore();
+
+  const queryClient = useQueryClient();
 
   const useSupportedBrands = () =>
     useQuery({
@@ -19,6 +21,10 @@ export const useInverterQueries = () => {
     useMutation({
       mutationFn: InverterService.connectInverter,
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["user-inverters", user?.id],
+        });
+
         toast.success("Inverter connected successfully!");
         onSuccess?.();
       },
