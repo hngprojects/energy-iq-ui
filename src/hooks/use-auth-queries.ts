@@ -5,10 +5,18 @@ import { toast } from "sonner";
 import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { LoginFormValues } from "@/lib/schemas/auth";
+import { ApiError } from "@/lib/api/error";
 
 type ErrorWithMessage = {
   message?: string;
 };
+
+interface RegistrationErrorDetails {
+  isVerified?: boolean;
+  user?: {
+    isEmailVerified?: boolean;
+  };
+}
 
 const getSafeRedirect = (redirect: string | null, fallback: string): string => {
   if (
@@ -89,7 +97,6 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken, variables.rememberMe ?? false);
-        localStorage.removeItem("temp_email");
         toast.success("Welcome back!", {
           duration: 5000,
         });
@@ -119,12 +126,33 @@ export const useAuthQueries = () => {
       mutationFn: AuthService.register,
       onSuccess: (_, variables) => {
         setTempEmail(variables.email);
-        localStorage.setItem("temp_email", variables.email);
         toast.success("Account created successfully!");
         router.push("/verify-email");
       },
-      onError: (error: unknown) => {
-        toast.error(getErrorMessage(error, "Registration failed"));
+      onError: (error: unknown, variables) => {
+        const message = getErrorMessage(error, "Registration failed");
+        
+        // If account exists, it might be unverified, so we redirect to verify-email
+        if (message === "This email is already registered") {
+          const apiError = error instanceof ApiError ? error : null;
+          const details = apiError?.details as RegistrationErrorDetails | undefined;
+          
+          // Check if the backend explicitly indicates verification status
+          const isVerified = details?.isVerified || details?.user?.isEmailVerified;
+
+          if (isVerified === true) {
+            toast.info("Account already exists and is verified. Please login.");
+            router.push("/login");
+            return;
+          }
+
+          setTempEmail(variables.email);
+          toast.info("Account already exists. Redirecting to verification...");
+          router.push("/verify-email");
+          return;
+        }
+
+        toast.error(message);
       },
     });
 
@@ -137,7 +165,6 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken);
-        localStorage.removeItem("temp_email");
         toast.success("Email verified successfully!");
       },
       onError: (error: unknown) => {
@@ -163,7 +190,6 @@ export const useAuthQueries = () => {
       mutationFn: AuthService.logout,
       onSuccess: () => {
         storeLogout();
-        localStorage.removeItem("temp_email");
         queryClient.clear();
         toast.success("Logged out successfully");
         router.push("/login");
