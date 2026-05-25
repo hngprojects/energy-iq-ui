@@ -1,24 +1,15 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { motion, useScroll, useSpring } from "motion/react";
 import { toast } from "sonner";
+import { ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { WaitlistService } from "@/services/waitlist-service";
-
-const blogPosts = [
-  { id: 1, image: "/images/how_it_works_1.jpg" },
-  { id: 2, image: "/images/how_it_works_2.jpg" },
-  { id: 3, image: "/images/how_it_works_3.jpg" },
-  { id: 4, image: "/images/journey.jpg" },
-  { id: 5, image: "/images/panels.jpg" },
-  { id: 6, image: "/images/hero-img.jpg" },
-  { id: 7, image: "/images/services_1.jpg" },
-  { id: 8, image: "/images/services_2.jpg" },
-  { id: 9, image: "/images/services_3.jpg" },
-];
+import { BLOG_POSTS } from "@/constants/blog-posts";
 
 export default function Blog() {
   const [email, setEmail] = useState("");
@@ -60,7 +51,7 @@ export default function Blog() {
   };
 
   return (
-    <section className="flex flex-col bg-white">
+    <section className="bg-background flex flex-col">
       {/* Scroll progress bar */}
       <motion.div
         className="bg-primary fixed top-0 right-0 left-0 z-50 h-1.5 origin-left"
@@ -99,98 +90,125 @@ export default function Blog() {
       </div>
 
       {/* Blog Grid Section */}
-      <div className="mx-auto w-full max-w-300.25 px-4 pb-20 pt-20 sm:px-6 lg:px-0">
-        <div className="grid grid-cols-1 gap-14.5 sm:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post, index) => (
-            <motion.article
-              key={post.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: (index % 3) * 0.1 }}
-              className="flex cursor-pointer flex-col overflow-hidden rounded-lg"
-            >
-              {/* Image */}
-              <div className="relative h-58.75 w-full overflow-hidden rounded-lg">
-                <Image
-                  src={post.image}
-                  alt="Reducing Waste and Embracing Sustainability"
-                  fill
-                  className="object-cover transition-transform duration-300 hover:scale-105"
-                />
-              </div>
+      <div className="bg-white">
+        <div className="mx-auto w-full max-w-350 px-4 py-16 md:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {BLOG_POSTS.map((post, index) => (
+              <motion.article
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: (index % 3) * 0.1 }}
+                className="group border-border bg-card ring-border flex flex-col overflow-hidden rounded-xl border shadow-sm ring-1 transition-shadow duration-300 hover:shadow-md"
+              >
+                {/* Image */}
+                <div className="relative h-52 w-full overflow-hidden">
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* Category badge */}
+                  <span className="bg-primary text-primary-foreground absolute top-4 left-4 rounded-full px-3 py-1 text-xs font-semibold">
+                    {post.category}
+                  </span>
+                </div>
 
-              {/* Text */}
-              <div className="flex h-13 items-center">
-                <p className="line-clamp-2 text-sm font-medium text-[#1A1F2C] md:text-base">
-                  Reducing Waste and Embracing Sustainability
-                </p>
-              </div>
-            </motion.article>
-          ))}
+                {/* Card body */}
+                <div className="flex flex-1 flex-col gap-3 p-6">
+                  {/* Title */}
+                  <h3 className="text-slate-100 text-base font-bold leading-snug md:text-lg">
+                    {post.title}
+                  </h3>
+
+                  {/* Excerpt */}
+                  <p className="text-slate-70 line-clamp-3 flex-1 text-sm leading-relaxed">
+                    {post.excerpt}
+                  </p>
+
+                  {/* Divider */}
+                  <hr className="border-slate-30 mt-1" />
+
+                  {/* Read more */}
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="text-primary hover:text-amber-60 mt-1 inline-flex items-center gap-1.5 text-sm font-semibold transition-colors duration-200"
+                    aria-label={`Read more about ${post.title}`}
+                  >
+                    Read more
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              </motion.article>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Newsletter Section */}
-      <div className="mx-auto w-full max-w-300.25 px-4 pb-20 sm:px-6 lg:px-0">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="flex w-full flex-col items-center rounded-lg bg-[#1A1F2C] px-6 pb-20 pt-20 text-center sm:px-12 lg:px-20"
-        >
-          {/* Heading */}
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl font-bold text-white md:text-4xl lg:text-[48px] lg:leading-tight"
-          >
-            Sign Up for the Latest Insights
-          </motion.h2>
-
-          {/* Subtext */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-6.5 max-w-145 text-base font-light text-white md:text-[18px] md:leading-relaxed"
-          >
-            Get free access to our exclusive research and tech strategies to
-            level{" "}
-            <br className="hidden lg:block" />
-            up your knowledge about the digital realm
-          </motion.p>
-
-          {/* Email input + button */}
+      <div className="bg-white">
+        <div className="mx-auto w-full max-w-350 px-4 pb-20 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-14.75 flex max-w-md items-center gap-2 rounded-xl bg-white p-1.5 focus-within:ring-2 focus-within:ring-[#F5A623]"
+            transition={{ duration: 0.6 }}
+            className="bg-secondary flex w-full flex-col items-center rounded-lg px-6 pb-20 pt-20 text-center sm:px-12 lg:px-20"
           >
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
-              className="w-full border-none bg-transparent px-4 py-2 text-[#1A1F2C] placeholder:text-gray-400 focus-visible:ring-0 disabled:opacity-50"
-            />
-            <Button
-              onClick={handleSubscribe}
-              disabled={isLoading}
-              className="rounded-lg bg-[#F5A623] px-6 py-2 font-bold text-[#1A1F2C] transition-colors hover:bg-[#E59513] disabled:cursor-not-allowed disabled:opacity-50"
+            {/* Heading */}
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-3xl font-bold text-white md:text-4xl lg:text-[48px] lg:leading-tight"
             >
-              {isLoading ? "Sending..." : "Send"}
-            </Button>
+              Sign Up for the Latest Insights
+            </motion.h2>
+
+            {/* Subtext */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-6.5 max-w-145 text-base font-light text-white md:text-[18px] md:leading-relaxed"
+            >
+              Get free access to our exclusive research and tech strategies to
+              level{" "}
+              <br className="hidden lg:block" />
+              up your knowledge about the digital realm
+            </motion.p>
+
+            {/* Email input + button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="focus-within:ring-primary mt-14.75 flex max-w-md items-center gap-2 rounded-xl bg-white p-1.5 focus-within:ring-2"
+            >
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
+                className="text-slate-100 w-full border-none bg-transparent px-4 py-2 placeholder:text-gray-400 focus-visible:ring-0 disabled:opacity-50"
+              />
+              <Button
+                onClick={handleSubscribe}
+                disabled={isLoading}
+                className="bg-primary text-primary-foreground hover:bg-amber-60 rounded-lg px-6 py-2 font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? "Sending..." : "Send"}
+              </Button>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
