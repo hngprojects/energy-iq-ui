@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { AuthService } from "@/services/auth-service";
@@ -10,18 +10,37 @@ type ErrorWithMessage = {
   message?: string;
 };
 
+const getSafeRedirect = (redirect: string | null, fallback: string): string => {
+  if (
+    redirect &&
+    redirect.startsWith("/") &&
+    !redirect.startsWith("//") &&
+    !redirect.includes("://")
+  ) {
+    return redirect;
+  }
+
+  return fallback;
+};
+
 const getErrorMessage = (error: unknown, fallback: string): string => {
   let message = fallback;
 
   if (error instanceof Error) {
     message = error.message;
-  } else if (typeof error === "object" && error !== null && "message" in error) {
+  } else if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error
+  ) {
     message = (error as ErrorWithMessage).message ?? fallback;
   }
 
   const lowercaseMessage = message.toLowerCase();
 
-  if (lowercaseMessage === "the request conflicts with the current resource state") {
+  if (
+    lowercaseMessage === "the request conflicts with the current resource state"
+  ) {
     return "This email is already registered";
   }
 
@@ -37,7 +56,9 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
     return "We couldn't find an account matching that email address.";
   }
 
-  if (lowercaseMessage === "password must be longer than or equal to 8 characters") {
+  if (
+    lowercaseMessage === "password must be longer than or equal to 8 characters"
+  ) {
     return "The provided email or password is incorrect";
   }
 
@@ -47,12 +68,21 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 export const useAuthQueries = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { setAuth, logout: storeLogout, token: currentToken, setTempEmail } = useAuthStore();
+  const searchParams = useSearchParams();
+  const {
+    setAuth,
+    logout: storeLogout,
+    token: currentToken,
+    setTempEmail,
+  } = useAuthStore();
 
   const useLogin = () =>
     useMutation({
       mutationFn: (variables: LoginFormValues & { rememberMe?: boolean }) =>
-        AuthService.login({ email: variables.email, password: variables.password }),
+        AuthService.login({
+          email: variables.email,
+          password: variables.password,
+        }),
       onSuccess: (data, variables) => {
         const token = data.accessToken;
         const user = data.user;
@@ -63,10 +93,14 @@ export const useAuthQueries = () => {
         toast.success("Welcome back!", {
           duration: 5000,
         });
-        router.push("/onboarding");
+        const redirect = searchParams.get("redirect");
+        router.push(getSafeRedirect(redirect, "/onboarding"));
       },
       onError: (error: unknown) => {
-        const message = getErrorMessage(error, "The provided email or password is incorrect");
+        const message = getErrorMessage(
+          error,
+          "The provided email or password is incorrect",
+        );
         const safeMessages = new Set([
           "Too many attempts. Please try again later.",
         ]);
@@ -105,7 +139,8 @@ export const useAuthQueries = () => {
         setAuth(user, token, refreshToken);
         localStorage.removeItem("temp_email");
         toast.success("Email verified successfully!");
-        router.push("/onboarding");
+        const redirect = searchParams.get("redirect");
+        router.push(getSafeRedirect(redirect, "/onboarding"));
       },
       onError: (error: unknown) => {
         toast.error(getErrorMessage(error, "Verification failed"), {
@@ -180,4 +215,3 @@ export const useAuthQueries = () => {
     useResetPassword,
   };
 };
-

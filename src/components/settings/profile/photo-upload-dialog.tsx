@@ -77,7 +77,7 @@ export function PhotoUploadDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
         showCloseButton={false}
-        className="w-full p-0 overflow-hidden sm:max-w-179 sm:h-156.75 flex flex-col rounded-2xl"
+        className="w-full p-0 overflow-hidden h-[70dvh] sm:max-w-179 sm:h-156.75 flex flex-col rounded-2xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -97,7 +97,7 @@ export function PhotoUploadDialog({
 
         {/* Upload area */}
         <div
-          className="relative flex flex-1 cursor-pointer items-center justify-center overflow-hidden bg-white"
+          className="relative flex min-h-0 flex-1 cursor-pointer items-center justify-center overflow-hidden bg-white"
           onClick={() => !preview && fileInputRef.current?.click()}
         >
           {preview ? (
@@ -112,10 +112,9 @@ export function PhotoUploadDialog({
               {/* Circular preview overlay */}
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div
-                  className="rounded-full border-4 border-white/80"
+                  className="aspect-square rounded-full border-4 border-white/80"
                   style={{
-                    width: "min(320px, 70%)",
-                    height: "min(320px, 70%)",
+                    width: "min(300px, 72%)",
                     boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
                   }}
                 />
@@ -127,7 +126,7 @@ export function PhotoUploadDialog({
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                className="absolute bottom-4 right-4 z-10 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-dark-text shadow hover:bg-white"
+                className="absolute bottom-4 right-4 z-10 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-dark-text shadow hover:bg-white cursor-pointer"
               >
                 Change
               </button>
@@ -165,7 +164,7 @@ export function PhotoUploadDialog({
           <button
             type="button"
             onClick={() => handleClose(false)}
-            className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-dark-text hover:bg-muted transition-colors"
+            className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-dark-text hover:bg-muted transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -173,7 +172,7 @@ export function PhotoUploadDialog({
             type="button"
             disabled={!selectedFile || isPending}
             onClick={handleConfirm}
-            className="rounded-lg bg-secondary px-5 py-2.5 text-sm font-medium text-white hover:bg-secondary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="rounded-lg bg-secondary px-5 py-2.5 text-sm font-medium text-white hover:bg-secondary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
             {isPending ? "Uploading..." : "Confirm Image"}
           </button>

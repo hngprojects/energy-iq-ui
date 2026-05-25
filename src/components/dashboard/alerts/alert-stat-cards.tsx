@@ -21,7 +21,7 @@ const emptyStats: AlertSummaryResponse = {
 
 function StatCard({ dotColor, label, count, sub }: StatCardProps) {
   return (
-    <div className="bg-card border-border flex flex-col gap-2 rounded-xl border p-5">
+    <div className="bg-card border-border flex min-h-36 flex-col justify-between rounded-xl border p-5">
       <div className="flex items-center gap-1.5">
         <span className={`h-2 w-2 rounded-full ${dotColor}`} />
         <span className="text-muted-foreground text-sm font-medium">
@@ -37,7 +37,7 @@ function StatCard({ dotColor, label, count, sub }: StatCardProps) {
 export function AlertStatCards({ data }: AlertStatCardsProps) {
   const s = data ?? emptyStats;
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <StatCard
         dotColor="bg-chart-battery"
         label="Active Alerts"
