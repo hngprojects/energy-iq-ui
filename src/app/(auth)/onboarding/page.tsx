@@ -17,6 +17,7 @@ import { AuthService } from "@/services/auth-service";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 import { onboardingStorage } from "@/lib/onboarding-storage";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { useInverterQueries } from "@/hooks/use-inverter-queries";
 
 type Step = "select" | "connect";
 
@@ -89,7 +90,30 @@ export default function OnboardingPage() {
   const isCompleted = useRef(false);
   const stepRef = useRef<Step>(step);
 
-  const isLoading = !user?.id;
+  const { useOnboardingStatus } = useInverterQueries();
+  const { data: status, isError: isStatusError } = useOnboardingStatus();
+
+  const isFullyOnboarded =
+    status?.onboardingComplete === true &&
+    status?.steps?.accountCreated === true &&
+    status?.steps?.emailVerified === true &&
+    status?.steps?.inverterConnected === true;
+
+  const userId = user?.id;
+
+  const isLoading =
+    !userId ||
+    onboardingStorage.isCompleted(userId) ||
+    (!status && !isStatusError) ||
+    isFullyOnboarded;
+
+  useEffect(() => {
+    if (isFullyOnboarded && user?.id) {
+      onboardingStorage.setCompleted(user.id);
+      isCompleted.current = true;
+      router.replace("/dashboard");
+    }
+  }, [isFullyOnboarded, user?.id, router]);
 
   useEffect(() => {
     stepRef.current = step;
