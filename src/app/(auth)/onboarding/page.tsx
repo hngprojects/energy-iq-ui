@@ -16,6 +16,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 import { onboardingStorage } from "@/lib/onboarding-storage";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 
 type Step = "select" | "connect";
@@ -82,8 +83,7 @@ function GoogleAuthSync() {
 }
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState<Step>("select");
-  const [inverter, setInverter] = useState<InverterType | null>(null);
+  const { step, setStep, inverterType: inverter, resetOnboarding } = useOnboardingStore();
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
   const { user } = useAuthStore();
@@ -124,6 +124,7 @@ useEffect(() => {
     identifyUser(user.id);
     if (onboardingStorage.isCompleted(user.id)) {
       isCompleted.current = true;
+      resetOnboarding();
       router.replace("/dashboard");
       return;
     }
@@ -222,8 +223,6 @@ useEffect(() => {
               subtitle="Select your Inverter type so we can tailor your experience"
             />
             <InverterTypeStep
-              selected={inverter}
-              onSelect={setInverter}
               onNext={() => inverter && setStep("connect")}
               onCancel={() => router.push("/")}
             />
@@ -237,10 +236,10 @@ useEffect(() => {
               />
               <InverterConnectionStep
                 key={inverter}
-                inverter={inverter}
                 onBack={() => setStep("select")}
                 onConnected={() => {
                   isCompleted.current = true;
+                  resetOnboarding();
                   setSuccessOpen(true);
                 }}
               />
