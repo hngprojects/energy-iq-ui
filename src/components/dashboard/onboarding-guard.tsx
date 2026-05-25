@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
+import { onboardingStorage } from "@/lib/onboarding-storage";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated, user } = useAuthStore();
   const { useOnboardingStatus } = useInverterQueries();
   const { data: status, isLoading, isError } = useOnboardingStatus();
   const searchParams = useSearchParams();
@@ -39,6 +40,12 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     router,
     currentUrl,
   ]);
+
+  useEffect(() => {
+    if (isFullyOnboarded && user?.id) {
+      onboardingStorage.setCompleted(user.id);
+    }
+  }, [isFullyOnboarded, user?.id]);
 
   if (
     !_hasHydrated ||

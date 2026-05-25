@@ -146,8 +146,6 @@ export const useAuthQueries = () => {
 
         setAuth(user, token, refreshToken);
         toast.success("Email verified successfully!");
-        const redirect = searchParams.get("redirect");
-        router.push(getSafeRedirect(redirect, "/onboarding"));
       },
       onError: (error: unknown) => {
         toast.error(getErrorMessage(error, "Verification failed"), {
