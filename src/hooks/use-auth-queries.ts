@@ -5,10 +5,18 @@ import { toast } from "sonner";
 import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { LoginFormValues } from "@/lib/schemas/auth";
+import { ApiError } from "@/lib/api/error";
 
 type ErrorWithMessage = {
   message?: string;
 };
+
+interface RegistrationErrorDetails {
+  isVerified?: boolean;
+  user?: {
+    isEmailVerified?: boolean;
+  };
+}
 
 const getSafeRedirect = (redirect: string | null, fallback: string): string => {
   if (
@@ -126,6 +134,18 @@ export const useAuthQueries = () => {
         
         // If account exists, it might be unverified, so we redirect to verify-email
         if (message === "This email is already registered") {
+          const apiError = error instanceof ApiError ? error : null;
+          const details = apiError?.details as RegistrationErrorDetails | undefined;
+          
+          // Check if the backend explicitly indicates verification status
+          const isVerified = details?.isVerified || details?.user?.isEmailVerified;
+
+          if (isVerified === true) {
+            toast.info("Account already exists and is verified. Please login.");
+            router.push("/login");
+            return;
+          }
+
           setTempEmail(variables.email);
           toast.info("Account already exists. Redirecting to verification...");
           router.push("/verify-email");

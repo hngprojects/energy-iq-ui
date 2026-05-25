@@ -1,16 +1,9 @@
 "use client";
-import { useEffect } from "react";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { AuthSignupForm } from "@/components/auth/auth-signup-form";
-import { useAuthStore } from "@/stores/auth-store";
 
 export default function SignupPage() {
-  const { setTempEmail } = useAuthStore();
-
-  useEffect(() => {
-  }, [setTempEmail]);
-
   return (
     <AuthWrapper>
       <div className="mt-28 lg:mt-44">
