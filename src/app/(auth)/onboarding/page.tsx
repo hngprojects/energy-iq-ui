@@ -99,9 +99,11 @@ export default function OnboardingPage() {
     status?.steps?.emailVerified === true &&
     status?.steps?.inverterConnected === true;
 
+  const userId = user?.id;
+
   const isLoading =
-    !user?.id ||
-    onboardingStorage.isCompleted(user.id) ||
+    !userId ||
+    onboardingStorage.isCompleted(userId) ||
     (!status && !isStatusError) ||
     isFullyOnboarded;
 
