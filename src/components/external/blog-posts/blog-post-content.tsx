@@ -60,10 +60,16 @@ function Block({ block }: { block: ContentBlock }) {
               </tr>
             </thead>
             <tbody>
-              {block.rows.map(([col1, col2], i) => (
+              {block.rows.map((row, i) => (
                 <tr key={i} className={i % 2 === 1 ? "bg-surface-50" : ""}>
-                  <td className="border-slate-30 text-slate-80 border-t px-4 py-3">{col1}</td>
-                  <td className="border-slate-30 text-slate-80 border-t px-4 py-3">{col2}</td>
+                  {block.headers.map((_, cellIndex) => (
+                    <td
+                      key={`${i}-${cellIndex}`}
+                      className="border-slate-30 text-slate-80 border-t px-4 py-3"
+                    >
+                      {row[cellIndex] ?? ""}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
