@@ -46,7 +46,8 @@ export function InverterConnectionStep({
 
   const config = INVERTER_CONFIG[inverter.toLowerCase()];
 
-  const values = connectionDetails[inverter.toLowerCase()] ?? config?.fields.map(() => "") ?? [];
+  const rawValues = connectionDetails[inverter.toLowerCase()] ?? [];
+  const values = (config?.fields ?? []).map((_, i) => rawValues[i] ?? "");
   const setValues = (newValues: string[]) => setConnectionDetails(inverter, newValues);
 
   if (!config) {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type OnboardingStep = "select" | "connect";
 
@@ -38,6 +38,11 @@ export const useOnboardingStore = create<OnboardingState>()(
     }),
     {
       name: "energy-iq-onboarding",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        step: state.step,
+        inverterType: state.inverterType,
+      }),
     }
   )
 );
