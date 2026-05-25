@@ -135,30 +135,33 @@ export async function apiFetch<TResponse>(
             if (!refreshingPromise) {
               const refreshUrl = resolveRequestUrl("/auth/refresh", proxy);
               refreshingPromise = axios
-                .request<
-                  RefreshTokenResponse | { data: RefreshTokenResponse }
-                >({
-                  url: refreshUrl,
-                  method: "POST",
-                  data: { refreshToken },
-                  headers: {
-                    "Content-Type": "application/json",
+                .request<RefreshTokenResponse | { data: RefreshTokenResponse }>(
+                  {
+                    url: refreshUrl,
+                    method: "POST",
+                    data: { refreshToken },
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
                   },
-                })
+                )
                 .then((res) => {
-                  const data =
-                    "data" in res.data ? res.data.data : res.data;
-                  const { accessToken: newToken, refreshToken: newRefreshToken } =
-                    data;
+                  const data = "data" in res.data ? res.data.data : res.data;
+                  const {
+                    accessToken: newToken,
+                    refreshToken: newRefreshToken,
+                  } = data;
 
                   const user = useAuthStore.getState().user;
                   if (user && newToken && newRefreshToken) {
-                    useAuthStore.getState().setAuth(
-                      user,
-                      newToken,
-                      newRefreshToken,
-                      localStorage.getItem("remember_me") === "1",
-                    );
+                    useAuthStore
+                      .getState()
+                      .setAuth(
+                        user,
+                        newToken,
+                        newRefreshToken,
+                        localStorage.getItem("remember_me") === "1",
+                      );
                   }
                   return data;
                 })

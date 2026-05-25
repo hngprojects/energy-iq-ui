@@ -5,22 +5,20 @@ import { Button } from "@/components/ui/button";
 import { InverterCard } from "./inverter-card";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { trackEvent } from "@/lib/analytics";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
 export type InverterType = string;
 
 interface InverterTypeStepProps {
-  selected: InverterType | null;
-  onSelect: (type: InverterType) => void;
   onNext: () => void;
   onCancel?: () => void;
 }
 
 export function InverterTypeStep({
-  selected,
-  onSelect,
   onNext,
   onCancel,
 }: InverterTypeStepProps) {
+  const { inverterType: selected, setInverterType: onSelect } = useOnboardingStore();
   const { useSupportedBrands } = useInverterQueries();
   const { data: brandsResponse, isLoading, error } = useSupportedBrands();
 

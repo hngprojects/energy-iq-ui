@@ -1,31 +1,20 @@
+"use client";
 import { Download, History, Plus } from "lucide-react";
 import Link from "next/link";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { ChatHistoryList } from "@/components/dashboard/ai/chat-history-list";
 import { Button } from "@/components/ui/button";
-import { ComingSoonDashboard } from "@/components/dashboard/coming-soon";
+import { useChatHistory } from "@/hooks/use-chat-queries";
+import { useAuthStore } from "@/stores/auth-store";
 
-// Replace with a real data fetch when backend is ready
-async function getChatHistory() {
-  // Return mock – swap out for API call
-  return [{ id: "placeholder" }]; // non-empty
-  // return []; // empty state
-}
+export default function AIAssistantPage() {
+  const { history, loading, error, refreshHistory } = useChatHistory();
 
-export default async function AIAssistantPage() {
-  const isReady = false; // Toggle this when ready to launch
+  const userId = useAuthStore((state) => state.user?.id);
 
-  if (!isReady) {
-    return (
-      <ComingSoonDashboard
-        feature="AI Assistant"
-        description="Ask EnergyIQ in English or Pidgin. Get smart insights and answers about your energy usage. Coming soon!"
-      />
-    );
+  if (error) {
+    console.debug("[AIAssistantPage] Failed to load chat history:", error);
   }
-
-  const history = await getChatHistory();
-  const hasHistory = history.length > 0;
 
   return (
     <div className="flex h-full flex-col">
@@ -40,7 +29,6 @@ export default async function AIAssistantPage() {
           >
             <History className="h-6 w-6" />
           </Button>
-
           <Button
             variant="ghost"
             size="icon-lg"
@@ -49,11 +37,10 @@ export default async function AIAssistantPage() {
           >
             <Download className="h-6 w-6" />
           </Button>
-
           <Button
             asChild
             variant="secondary"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors hover:opacity-90 shadow-none border-0"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium shadow-none"
           >
             <Link href="/dashboard/ai-assistant/new">
               <Plus className="h-4 w-4" />
@@ -62,12 +49,27 @@ export default async function AIAssistantPage() {
           </Button>
         </div>
       </div>
-
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {hasHistory ? (
+        {loading ? (
+          <div className="px-6 py-8 text-sm text-muted-foreground">
+            Loading chats...
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-start gap-3 px-6 py-8">
+            <p className="text-sm text-destructive">
+              Failed to load chat history.
+            </p>
+            <Button variant="outline" size="sm" onClick={refreshHistory}>
+              Retry
+            </Button>
+          </div>
+        ) : !userId ? (
+          <div className="px-6 py-8 text-sm text-muted-foreground">
+            Loading chats...
+          </div>
+        ) : history.length > 0 ? (
           <div className="px-6 pb-8">
-            <ChatHistoryList />
+            <ChatHistoryList key={userId} history={history} userId={userId} />
           </div>
         ) : (
           <ChatEmptyState />
