@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -11,6 +11,9 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, _hasHydrated } = useAuthStore();
   const { useOnboardingStatus } = useInverterQueries();
   const { data: status, isLoading, isError } = useOnboardingStatus();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const currentUrl = `${pathname}${search ? `?${search}` : ""}`;
 
   const isFullyOnboarded =
     status?.onboardingComplete === true &&
@@ -21,15 +24,28 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!_hasHydrated) return;
     if (!isAuthenticated) {
-      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
     if (!isLoading && !isError && !isFullyOnboarded) {
       router.replace("/onboarding");
     }
-  }, [_hasHydrated, isAuthenticated, isLoading, isError, isFullyOnboarded, router]);
+  }, [
+    _hasHydrated,
+    isAuthenticated,
+    isLoading,
+    isError,
+    isFullyOnboarded,
+    router,
+    currentUrl,
+  ]);
 
-  if (!_hasHydrated || !isAuthenticated || isLoading || (!isError && !isFullyOnboarded)) {
+  if (
+    !_hasHydrated ||
+    !isAuthenticated ||
+    isLoading ||
+    (!isError && !isFullyOnboarded)
+  ) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />

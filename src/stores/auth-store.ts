@@ -82,18 +82,26 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+        tempEmail: state.tempEmail,
+      }),
       onRehydrateStorage: () => (state) => {
         if (typeof window === "undefined" || !state) return;
         const rememberMe = localStorage.getItem("remember_me") === "1";
         const sessionActive = sessionStorage.getItem("session_active") === "1";
+
         if (state.isAuthenticated && !rememberMe && !sessionActive) {
           state.logout();
         } else if (state.isAuthenticated) {
           setSessionCookie(rememberMe);
         }
+
         state.setHasHydrated(true);
       },
     },
   ),
 );
-
