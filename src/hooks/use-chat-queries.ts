@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { chatService } from "@/services/chat-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { ChatMessage, ChatSession } from "@/types/chat";
@@ -92,6 +92,7 @@ function normalizeChatMessage(
 }
 
 export function useActiveChat(chatId: string) {
+  const requestSeqRef = useRef(0);
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
 
@@ -103,6 +104,7 @@ export function useActiveChat(chatId: string) {
   const validChatId = useMemo(() => isValidChatId(chatId), [chatId]);
 
   const fetchChatDetails = useCallback(async () => {
+    const requestSeq = ++requestSeqRef.current;
     if (!validChatId || !userId) {
       setChatInfo(null);
       setMessages([]);
@@ -117,6 +119,7 @@ export function useActiveChat(chatId: string) {
         chatService.getChatById(chatId),
         chatService.getChatMessages(chatId, userId),
       ]);
+      if (requestSeq !== requestSeqRef.current) return;
 
       setChatInfo(info);
       setMessages(
@@ -128,10 +131,14 @@ export function useActiveChat(chatId: string) {
       );
       setError(null);
     } catch (err) {
+      if (requestSeq !== requestSeqRef.current) return;
+      setChatInfo(null);
+      setMessages([]);
       setError(
         err instanceof Error ? err : new Error("Failed to load conversation"),
       );
     } finally {
+      if (requestSeq !== requestSeqRef.current) return;
       setLoading(false);
     }
   }, [chatId, userId, validChatId]);

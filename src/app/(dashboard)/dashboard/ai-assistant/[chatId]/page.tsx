@@ -114,6 +114,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   );
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     connected,
@@ -139,6 +140,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   useEffect(() => {
     textareaRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (sendingTimeoutRef.current) clearTimeout(sendingTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -189,6 +196,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       if (incoming.isFinal) {
         streamingMessageIdRef.current = null;
         setSending(false);
+        if (sendingTimeoutRef.current) {
+          clearTimeout(sendingTimeoutRef.current);
+          sendingTimeoutRef.current = null;
+        }
       }
     });
   }, [chatId, setMessages, subscribeToSystemMessages]);
@@ -256,7 +267,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     setMessages((prev) => {
       const alreadyExists = prev.some(
-        (message) => message.role === "user" && message.content.trim() === text,
+        (message) =>
+          message.role === "user" &&
+          message.content.trim() === text &&
+          message.id === `pending-${chatId}`,
       );
 
       return [
@@ -286,7 +300,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     try {
       sendMessage(text);
-      sessionStorage.removeItem(key);
+      if (sendingTimeoutRef.current) clearTimeout(sendingTimeoutRef.current);
+      sendingTimeoutRef.current = setTimeout(() => {
+        streamingMessageIdRef.current = null;
+        setSending(false);
+      }, 30_000);
     } catch (error) {
       streamingMessageIdRef.current = null;
       setSending(false);

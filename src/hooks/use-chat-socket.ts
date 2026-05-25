@@ -129,7 +129,8 @@ export function useChatSocket(chatId: string) {
     const handleMessage = (payload: IncomingPayload) => {
       const message = normalizeIncoming(payload);
 
-      if (message.chatId && message.chatId !== chatId) return;
+      const targetChatId = message.chatId ?? message.sessionId;
+      if (targetChatId && targetChatId !== chatId) return;
 
       callbacksRef.current.forEach((callback) => callback(message));
     };

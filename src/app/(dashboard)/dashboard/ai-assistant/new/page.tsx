@@ -34,6 +34,7 @@ const SUGGESTIONS: SuggestionCard[] = [
 export default function NewChatPage() {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isCreatingChatRef = useRef(false);
 
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -47,7 +48,9 @@ export default function NewChatPage() {
     const cleanText = text.trim();
 
     if (!cleanText || sending) return;
+    if (isCreatingChatRef.current) return;
 
+    isCreatingChatRef.current = true;
     setSending(true);
     setError(null);
 
@@ -78,6 +81,8 @@ export default function NewChatPage() {
       console.error("Failed to start chat:", message);
       setError(message);
       setSending(false);
+    } finally {
+      isCreatingChatRef.current = false;
     }
   };
 

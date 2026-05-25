@@ -6,24 +6,32 @@ import {
   UpdateChatSettingsPayload,
 } from "@/types/chat";
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const chatService = {
   async createChat(payload: CreateChatPayload): Promise<ChatSession> {
-    const response = await apiFetch<
-      | ChatSession
-      | { chat: ChatSession }
-      | { data: ChatSession }
-      | { data: { chat: ChatSession } }
-    >("/chats", {
+    const response = await apiFetch<unknown>("/chats", {
       method: "POST",
       data: payload,
     });
 
-    if ("id" in response) return response;
-    if ("chat" in response) return response.chat;
+    if (!isObject(response)) {
+      throw new Error("The chat was created, but no chat id was returned.");
+    }
+
+    if ("id" in response) return response as unknown as ChatSession;
+    if ("chat" in response)
+      return (response as unknown as { chat: ChatSession }).chat;
 
     if ("data" in response) {
-      if ("id" in response.data) return response.data;
-      if ("chat" in response.data) return response.data.chat;
+      const data = response.data;
+      if (isObject(data)) {
+        if ("id" in data) return data as unknown as ChatSession;
+        if ("chat" in data)
+          return (data as unknown as { chat: ChatSession }).chat;
+      }
     }
 
     throw new Error("The chat was created, but no chat id was returned.");

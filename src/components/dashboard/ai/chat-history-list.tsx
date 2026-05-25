@@ -14,6 +14,7 @@ type TagType = "Solar" | "Alert" | "Report";
 interface ChatHistoryListProps {
   history: ChatSession[];
   selectedId?: string;
+  userId: string; // ← new: required for per-user storage isolation
 }
 
 interface ChatGroup {
@@ -29,6 +30,7 @@ interface StoredChatActions {
 }
 
 const CHAT_ACTIONS_STORAGE_KEY = "energyiq-ai-chat-actions";
+
 const EMPTY_ACTIONS: StoredChatActions = {
   deletedIds: [],
   archivedIds: [],
@@ -42,10 +44,14 @@ const TAG_STYLES: Record<TagType, string> = {
   Report: "bg-muted text-muted-foreground border border-border",
 };
 
-function loadStoredActions(): StoredChatActions {
+function getChatActionsStorageKey(userId: string): string {
+  return `${CHAT_ACTIONS_STORAGE_KEY}:${userId}`;
+}
+
+function loadStoredActions(storageKey: string): StoredChatActions {
   if (typeof window === "undefined") return EMPTY_ACTIONS;
   try {
-    const raw = window.localStorage.getItem(CHAT_ACTIONS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return EMPTY_ACTIONS;
     const parsed = JSON.parse(raw) as Partial<StoredChatActions>;
     return {
@@ -62,12 +68,13 @@ function loadStoredActions(): StoredChatActions {
   }
 }
 
-function saveStoredActions(actions: StoredChatActions) {
+function saveStoredActions(storageKey: string, actions: StoredChatActions) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    CHAT_ACTIONS_STORAGE_KEY,
-    JSON.stringify(actions),
-  );
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(actions));
+  } catch {
+    // Keep UI state in memory when persistence is unavailable.
+  }
 }
 
 function getChatDate(chat: ChatSession) {
@@ -168,21 +175,30 @@ function RowIcon({ tag }: { tag: TagType }) {
   );
 }
 
-export function ChatHistoryList({ history, selectedId }: ChatHistoryListProps) {
+export function ChatHistoryList({
+  history,
+  selectedId,
+  userId,
+}: ChatHistoryListProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterType>("All");
+
+  const storageKey = getChatActionsStorageKey(userId);
+
   const [actions, setActions] = useState<StoredChatActions>(() =>
-    loadStoredActions(),
+    loadStoredActions(storageKey),
   );
+
   const updateActions = (
     updater: (prev: StoredChatActions) => StoredChatActions,
   ) => {
     setActions((prev) => {
       const next = updater(prev);
-      saveStoredActions(next);
+      saveStoredActions(storageKey, next);
       return next;
     });
   };
+
   const visibleChats = useMemo(() => {
     return history
       .filter((chat) => !actions.deletedIds.includes(chat.id))
@@ -268,6 +284,14 @@ export function ChatHistoryList({ history, selectedId }: ChatHistoryListProps) {
                     onClick={() =>
                       router.push(`/dashboard/ai-assistant/${chat.id}`)
                     }
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/dashboard/ai-assistant/${chat.id}`);
+                      }
+                    }}
                     className={cn(
                       "flex cursor-pointer items-start gap-3 px-5 py-4 transition-colors hover:bg-muted/40",
                       selectedId === chat.id && "bg-muted/60",
