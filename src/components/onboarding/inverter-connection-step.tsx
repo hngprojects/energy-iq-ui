@@ -6,13 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./password-input";
 import { cn } from "@/lib/utils";
-import {
-  TestConnectionStatus,
-  LOADING_TOTAL_MS,
-  type TestStatus,
-} from "./test-connection-status";
 import type { InverterType } from "./inverter-type-step";
-import { INVERTER_CONFIG } from "./inverter-config";
+import { INVERTER_CONFIG, type InverterFieldConfig } from "./inverter-config";
+import { getSolarmanEmailError } from "@/lib/schemas/onboarding";
+import { AuthInput } from "@/components/auth/auth-input";
 
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
@@ -38,7 +35,7 @@ export function InverterConnectionStep({
     config?.fields.map(() => "") ?? [],
   );
   const [helperOpen, setHelperOpen] = useState(false);
-  const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     trackEvent("Screen View", { screen_name: "Inverter Connection Details", inverter_type: inverter });
@@ -59,21 +56,37 @@ export function InverterConnectionStep({
     );
   }
 
-  const requiredFilled = config.fields.every(
-    (f, i) => f.optional || (values[i] && values[i].trim().length > 0),
-  );
-  const canConnect =
-    requiredFilled &&
-    (inverter.toLowerCase() === "sandbox" || testStatus === "success") &&
-    !connectInverterMutation.isPending;
+  const syncEmailFieldError = (field: InverterFieldConfig, value: string) => {
+    if (field.kind !== "email") return;
+    const error = getSolarmanEmailError(value);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (error) next[field.id] = error;
+      else delete next[field.id];
+      return next;
+    });
+  };
+
+  const isFieldValid = (f: InverterFieldConfig, i: number): boolean => {
+    const val = (values[i] ?? "").trim();
+    if (f.optional && !val) return true;
+    if (!val) return false;
+    if (f.kind === "email") return !getSolarmanEmailError(val);
+    return true;
+  };
+
+  const fieldsValid = config.fields.every((f, i) => isFieldValid(f, i));
+
+  const canConnect = fieldsValid && !connectInverterMutation.isPending;
 
   const setValue = (i: number, v: string) => {
+    const field = config.fields[i];
     setValues((prev) => {
       const next = [...prev];
       next[i] = v;
       return next;
     });
-    if (testStatus !== "loading") setTestStatus("idle");
+    syncEmailFieldError(field, v);
   };
 
   const handleConnect = () => {
@@ -105,65 +118,57 @@ export function InverterConnectionStep({
       payload.sandboxAccessToken = byId["sandbox-token"];
     }
 
-    connectInverterMutation.mutate(payload, {
-      onError: () => setTestStatus("error"),
-    });
-  };
-
-  const runTest = () => {
-    if (!requiredFilled) return;
-    setTestStatus("loading");
-    window.setTimeout(() => {
-      const ok = config.fields.every((f, i) => {
-        if (f.optional) return true;
-        const val = values[i] || "";
-        if (f.kind === "email") return val.includes("@");
-        if (f.id.includes("token")) return val.length >= 10;
-        return val.length >= 4;
-      });
-      setTestStatus(ok ? "success" : "error");
-    }, LOADING_TOTAL_MS);
+    connectInverterMutation.mutate(payload);
   };
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        {config.fields.map((f, i) => (
-          <div key={f.id} className="space-y-2">
-            <Label
-              htmlFor={f.id}
-              className="text-base font-medium text-dark-text lg:text-lg"
-            >
-              {f.label}
-            </Label>
-            {f.kind === "password" ? (
-              <PasswordInput
-                id={f.id}
-                placeholder={f.placeholder}
-                value={values[i]}
-                onChange={(e) => setValue(i, e.target.value)}
-              />
-            ) : (
-              <Input
-                id={f.id}
-                type={f.kind}
-                placeholder={f.placeholder}
-                value={values[i]}
-                onChange={(e) => setValue(i, e.target.value)}
-                className="h-14 rounded-lg border-[#D8DBE299] bg-[#FCFCFC] text-base placeholder:text-[#9CA3AF] focus-within:bg-white lg:text-lg"
-              />
-            )}
-          </div>
-        ))}
+        {config.fields.map((f, i) =>
+          f.kind === "email" ? (
+            <AuthInput
+              key={f.id}
+              label={f.label}
+              id={f.id}
+              type="email"
+              placeholder={f.placeholder}
+              value={values[i]}
+              onChange={(e) => setValue(i, e.target.value)}
+              onBlur={(e) => syncEmailFieldError(f, e.target.value)}
+              error={fieldErrors[f.id]}
+              statusColor={fieldErrors[f.id] ? "red" : undefined}
+              autoComplete="email"
+              className="h-14 rounded-lg border-[#D8DBE299] bg-[#FCFCFC] text-base placeholder:text-[#9CA3AF] focus-within:bg-white lg:text-lg"
+            />
+          ) : (
+            <div key={f.id} className="space-y-2">
+              <Label
+                htmlFor={f.id}
+                className="text-base font-medium text-dark-text lg:text-lg"
+              >
+                {f.label}
+              </Label>
+              {f.kind === "password" ? (
+                <PasswordInput
+                  id={f.id}
+                  placeholder={f.placeholder}
+                  value={values[i]}
+                  onChange={(e) => setValue(i, e.target.value)}
+                />
+              ) : (
+                <Input
+                  id={f.id}
+                  type={f.kind}
+                  placeholder={f.placeholder}
+                  value={values[i]}
+                  onChange={(e) => setValue(i, e.target.value)}
+                  className="h-14 rounded-lg border-[#D8DBE299] bg-[#FCFCFC] text-base placeholder:text-[#9CA3AF] focus-within:bg-white lg:text-lg"
+                />
+              )}
+            </div>
+          ),
+        )}
       </div>
-
-      {requiredFilled && (
-        <TestConnectionStatus
-          inverterName={config.name}
-          status={testStatus}
-          onRun={runTest}
-        />
-      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Button
@@ -173,6 +178,7 @@ export function InverterConnectionStep({
             trackEvent("Back Button Clicked", { screen_name: "Inverter Connection Details" });
             onBack();
           }}
+          disabled={connectInverterMutation.isPending}
           className="h-14 cursor-pointer rounded-lg border-[#E5E7EB] bg-white text-base font-medium text-dark-text hover:bg-[#F9FAFB]"
         >
           Back
