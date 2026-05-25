@@ -24,10 +24,12 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!_hasHydrated) return;
+    
     if (!isAuthenticated) {
       router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
+    
     if (!isLoading && !isError && !isFullyOnboarded) {
       router.replace("/onboarding");
     }
@@ -47,12 +49,20 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
   }, [isFullyOnboarded, user?.id]);
 
-  if (
-    !_hasHydrated ||
-    !isAuthenticated ||
-    isLoading ||
-    (!isError && !isFullyOnboarded)
-  ) {
+  // IMPORTANT: Wait for hydration before rendering anything or redirecting
+  if (!_hasHydrated) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // The useEffect will handle redirect
+  }
+
+  if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
