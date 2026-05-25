@@ -56,12 +56,6 @@ export function AuthVerifyEmailForm() {
 
   const isComplete = otp.length === 6;
 
-  const handleBack = () => {
-    // We no longer clear tempEmail so user can retry signup
-    // setTempEmail(null);
-    // localStorage.removeItem("temp_email");
-  };
-
   const handleResend = () => {
     resendMutation.mutate(
       { email },
@@ -237,7 +231,6 @@ export function AuthVerifyEmailForm() {
           size="lg"
           asChild
           className="text-md h-14 rounded-xl border border-slate-200 bg-transparent font-medium text-slate-900 shadow-none transition-colors hover:bg-slate-50 md:order-1 md:text-lg"
-          onClick={handleBack}
         >
           <Link href="/signup">Back</Link>
         </Button>
