@@ -1,5 +1,5 @@
 import type { BlogPostMeta, BlogPostContent } from "@/types/blog";
-import { POST_1_CONTENT, POST_2_CONTENT, POST_3_CONTENT } from "@/constants/blog-post-contents";
+import { BLOG_POST_CONTENTS } from "@/constants/blog-post-contents";
 
 export interface BlogPostEntry extends BlogPostMeta {
   content: BlogPostContent;
@@ -25,7 +25,7 @@ export const BLOG_POSTS: BlogPostEntry[] = [
       { id: "long-term", title: "7. Think Long Term" },
       { id: "key-takeaways", title: "Key Takeaways" },
     ],
-    content: POST_1_CONTENT,
+    content: BLOG_POST_CONTENTS["how-to-choose-energy-efficient-appliance"],
   },
   {
     id: 2,
@@ -46,7 +46,7 @@ export const BLOG_POSTS: BlogPostEntry[] = [
       { id: "monitoring", title: "7. Monitoring Consumption" },
       { id: "key-takeaways", title: "Key Takeaways" },
     ],
-    content: POST_2_CONTENT,
+    content: BLOG_POST_CONTENTS["understanding-power-consumption-in-homes"],
   },
   {
     id: 3,
@@ -72,6 +72,6 @@ export const BLOG_POSTS: BlogPostEntry[] = [
       { id: "future", title: "The Future" },
       { id: "key-takeaways", title: "Key Takeaways" },
     ],
-    content: POST_3_CONTENT,
+    content: BLOG_POST_CONTENTS["how-ai-improves-energy-management-systems"],
   },
 ];

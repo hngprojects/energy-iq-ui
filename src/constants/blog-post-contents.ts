@@ -1,6 +1,6 @@
 import type { BlogPostContent } from "@/types/blog";
 
-export const POST_1_CONTENT: BlogPostContent = {
+const POST_1_CONTENT: BlogPostContent = {
   sections: [
     {
       id: "intro",
@@ -120,7 +120,7 @@ export const POST_1_CONTENT: BlogPostContent = {
   ],
 };
 
-export const POST_2_CONTENT: BlogPostContent = {
+const POST_2_CONTENT: BlogPostContent = {
   sections: [
     {
       id: "intro",
@@ -233,7 +233,7 @@ export const POST_2_CONTENT: BlogPostContent = {
   ],
 };
 
-export const POST_3_CONTENT: BlogPostContent = {
+const POST_3_CONTENT: BlogPostContent = {
   sections: [
     {
       id: "intro",
@@ -404,4 +404,10 @@ export const POST_3_CONTENT: BlogPostContent = {
       ],
     },
   ],
+};
+
+export const BLOG_POST_CONTENTS: Record<string, BlogPostContent> = {
+  "how-to-choose-energy-efficient-appliance": POST_1_CONTENT,
+  "understanding-power-consumption-in-homes": POST_2_CONTENT,
+  "how-ai-improves-energy-management-systems": POST_3_CONTENT,
 };

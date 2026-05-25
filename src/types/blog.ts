@@ -14,7 +14,7 @@ export interface BlogPostMeta {
 }
 
 export interface BlogPost extends Omit<BlogPostMeta, "id"> {
-  content: React.ReactNode;
+  content: BlogPostContent;
 }
 
 export interface CitationLink {

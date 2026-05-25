@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import BlogPostDetail from "@/components/external/blog-post-detail";
-import BlogPostContent from "@/components/external/blog-posts/blog-post-content";
 import type { BlogPost } from "@/types/blog";
 import { BLOG_POSTS } from "@/constants/blog-posts";
 
@@ -39,7 +38,7 @@ export default async function BlogPostPage({
     title: entry.title,
     excerpt: entry.excerpt,
     toc: entry.toc,
-    content: <BlogPostContent content={entry.content} />,
+    content: entry.content,
   };
 
   return (

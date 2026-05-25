@@ -7,6 +7,7 @@ import { motion, useScroll, useSpring } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BlogPost } from "@/types/blog";
+import BlogPostContent from "@/components/external/blog-posts/blog-post-content";
 
 export type { BlogPost };
 
@@ -162,7 +163,7 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
 
             {/* ── Article content ── */}
             <div className="w-full lg:w-3/4 lg:pl-8">
-              {post.content}
+              <BlogPostContent content={post.content} />
             </div>
           </div>
         </main>
