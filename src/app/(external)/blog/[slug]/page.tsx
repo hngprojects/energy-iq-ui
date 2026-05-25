@@ -1,16 +1,15 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import BlogPostDetail from "@/components/external/blog-post-detail";
-import type { BlogPost } from "@/types/blog";
+import BlogPostContent from "@/components/external/blog-posts/blog-post-content";
+import type { BlogPost, BlogPostContent as BlogPostContentType } from "@/types/blog";
 import { BLOG_POSTS } from "@/constants/blog-posts";
-import Post1Content from "@/components/external/blog-posts/post-1-content";
-import Post2Content from "@/components/external/blog-posts/post-2-content";
-import Post3Content from "@/components/external/blog-posts/post-3-content";
+import { POST_1_CONTENT, POST_2_CONTENT, POST_3_CONTENT } from "@/constants/blog-post-contents";
 
-const contentMap: Record<string, () => React.ReactNode> = {
-  "how-to-choose-energy-efficient-appliance": () => <Post1Content />,
-  "understanding-power-consumption-in-homes": () => <Post2Content />,
-  "how-ai-improves-energy-management-systems": () => <Post3Content />,
+const contentMap: Record<string, BlogPostContentType> = {
+  "how-to-choose-energy-efficient-appliance": POST_1_CONTENT,
+  "understanding-power-consumption-in-homes": POST_2_CONTENT,
+  "how-ai-improves-energy-management-systems": POST_3_CONTENT,
 };
 
 export async function generateMetadata({
@@ -40,11 +39,14 @@ export default async function BlogPostPage({
   const postMeta = BLOG_POSTS.find((p) => p.slug === slug);
   if (!postMeta) notFound();
 
-  const contentFn = contentMap[slug];
-  if (!contentFn) notFound();
+  const postContent = contentMap[slug];
+  if (!postContent) notFound();
 
   const { id: _id, ...meta } = postMeta;
-  const post: BlogPost = { ...meta, content: contentFn() };
+  const post: BlogPost = {
+    ...meta,
+    content: <BlogPostContent content={postContent} />,
+  };
 
   return (
     <div className="flex w-full flex-col">
