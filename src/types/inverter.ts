@@ -22,6 +22,7 @@ export interface ConnectInverterRequest {
 }
 
 export interface Inverter {
+  id: string;
   brand: string;
   userId: string;
   accessToken?: string;
