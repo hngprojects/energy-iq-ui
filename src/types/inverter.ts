@@ -9,6 +9,9 @@ export interface SupportedBrandsResponse {
 
 export interface ConnectInverterRequest {
   brand: string;
+  systemCapacityKw?: number;
+  hardwareSerialNumber?: string;
+  accessApiToken?: string;
   victronAccessToken?: string;
   growattApiToken?: string;
   solarmanEmail?: string;
@@ -18,10 +21,13 @@ export interface ConnectInverterRequest {
 }
 
 export interface Inverter {
-  id: string;
   brand: string;
   userId: string;
   accessToken?: string;
+  serialNumber?: string;
+  capacityKw?: number;
+  status?: "ACTIVE" | "INACTIVE" | "OFFLINE";
+  lastSyncAt?: string;
   createdAt: string;
   updatedAt: string;
 }
