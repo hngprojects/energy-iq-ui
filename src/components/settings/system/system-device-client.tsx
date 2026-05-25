@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/settings/select-field";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
+import type { ConnectInverterRequest } from "@/types/inverter";
 
 const fallbackDevices = [
   {
@@ -34,12 +35,7 @@ export function SystemDeviceClient() {
 
   const connect = useConnectInverter(() => setOpen(false));
 
-  const brandOptions = brands?.data ?? [
-    "Growatt",
-    "Sunsynk",
-    "Victron",
-    "Deye",
-  ];
+  const brandOptions = brands?.data ?? ["Growatt", "Sunsynk", "Victron"];
 
   const devices = useMemo(() => {
     if (!inverters?.length) return fallbackDevices;
@@ -61,12 +57,32 @@ export function SystemDeviceClient() {
   }, [inverters]);
 
   const handleSubmit = () => {
-    connect.mutate({
+    const payload: ConnectInverterRequest = {
       brand: brand.toUpperCase(),
-      systemCapacityKw: Number(capacity),
-      hardwareSerialNumber: serial,
-      accessApiToken: token,
-    });
+    };
+
+    const normalizedBrand = brand.toLowerCase();
+
+    if (normalizedBrand === "growatt") {
+      payload.growattApiToken = token;
+    }
+
+    if (normalizedBrand === "victron") {
+      payload.victronAccessToken = token;
+    }
+
+    if (normalizedBrand === "sandbox") {
+      payload.sandboxAccessToken = token;
+    }
+
+    if (normalizedBrand === "sunsynk") {
+      // Current backend expects Solarman credentials for Sunsynk/Deye,
+      // not a single generic access token.
+      // We need either email/password fields in the modal,
+      // or backend support for token-based Sunsynk linking.
+    }
+
+    connect.mutate(payload);
   };
 
   return (

@@ -9,9 +9,10 @@ export interface SupportedBrandsResponse {
 
 export interface ConnectInverterRequest {
   brand: string;
-  systemCapacityKw?: number;
-  hardwareSerialNumber?: string;
-  accessApiToken?: string;
+  // Do not send yet:
+  // systemCapacityKw?: number;
+  // hardwareSerialNumber?: string;
+  // accessApiToken?: string;
   victronAccessToken?: string;
   growattApiToken?: string;
   solarmanEmail?: string;
