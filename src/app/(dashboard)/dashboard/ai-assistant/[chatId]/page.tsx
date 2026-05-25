@@ -104,15 +104,18 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const chatId = resolvedParams.chatId;
   const { chatInfo, messages, setMessages, loading, error } =
     useActiveChat(chatId);
+
   const [input, setInput] = useState("");
-  const [sending] = useState(false);
+  const [sending, setSending] = useState(false);
+  const streamingMessageIdRef = useRef<string | null>(null);
+
   const [actions, setActions] = useState<StoredChatActions>(() =>
     loadStoredActions(),
   );
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { connected, socketError, sendMessage, onSystemMessage } =
+  const { connected, socketError, sendMessage, subscribeToSystemMessages } =
     useChatSocket(chatId);
 
   const updateActions = (
@@ -133,13 +136,74 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, []);
 
   useEffect(() => {
-    return onSystemMessage((message) => {
+    return subscribeToSystemMessages((incoming) => {
+      if (!incoming.text && !incoming.isFinal) return;
+
       setMessages((prev) => {
-        if (prev.some((item) => item.id === message.id)) return prev;
-        return [...prev, message];
+        const activeStreamingId = streamingMessageIdRef.current;
+
+        if (!activeStreamingId) {
+          const newMessageId = incoming.id || `assistant-${Date.now()}`;
+          streamingMessageIdRef.current = incoming.isFinal
+            ? null
+            : newMessageId;
+
+          return [
+            ...prev,
+            {
+              id: newMessageId,
+              role: "assistant",
+              content: incoming.text,
+              timestamp: formatMessageTime(incoming.timestamp),
+              isStreaming: !incoming.isFinal,
+            },
+          ];
+        }
+
+        return prev.map((message) => {
+          if (message.id !== activeStreamingId) return message;
+
+          const nextContent = incoming.isChunk
+            ? `${message.content}${incoming.text}`
+            : incoming.text || message.content;
+
+          return {
+            ...message,
+            content: nextContent,
+            isStreaming: !incoming.isFinal,
+            timestamp: formatMessageTime(incoming.timestamp),
+          };
+        });
       });
+
+      if (incoming.sessionId) {
+        localStorage.setItem(`chat-session:${chatId}`, incoming.sessionId);
+      }
+
+      if (incoming.isFinal) {
+        streamingMessageIdRef.current = null;
+        setSending(false);
+      }
     });
-  }, [onSystemMessage, setMessages]);
+  }, [chatId, setMessages, subscribeToSystemMessages]);
+
+  useEffect(() => {
+    if (!socketError) return;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `socket-error-${Date.now()}`,
+        role: "system",
+        content: socketError,
+        timestamp: formatMessageTime(),
+        failed: true,
+      },
+    ]);
+
+    setSending(false);
+    streamingMessageIdRef.current = null;
+  }, [setMessages, socketError]);
 
   useEffect(() => {
     const key = `pending-chat-message:${chatId}`;
@@ -169,7 +233,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           {
             id: `pending-${chatId}`,
             role: "user",
-            content: pending.content,
+            content: pending.content ?? "",
             timestamp: new Date(
               pending.timestamp ?? Date.now(),
             ).toLocaleTimeString([], {
@@ -196,45 +260,66 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
+  const formatMessageTime = (value?: string) => {
+    const date = value ? new Date(value) : new Date();
+
+    return date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending) return;
 
     setInput("");
     resetComposer();
+    setSending(true);
 
-    const localMessage: ChatMessage = {
+    const userMessage: ChatMessage = {
       id: `local-${Date.now()}`,
       role: "user",
       content: text,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
+      timestamp: formatMessageTime(),
       userInitials: "AA",
     };
 
-    setMessages((prev) => [...prev, localMessage]);
+    const assistantMessageId = `assistant-stream-${Date.now()}`;
+    streamingMessageIdRef.current = assistantMessageId;
+
+    const assistantPlaceholder: ChatMessage = {
+      id: assistantMessageId,
+      role: "assistant",
+      content: "",
+      timestamp: formatMessageTime(),
+      isStreaming: true,
+    };
+
+    setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
 
     try {
       sendMessage(text);
     } catch (error) {
-      console.error("Failed to send websocket chat message:", error);
+      streamingMessageIdRef.current = null;
+      setSending(false);
 
-      const failedMessage: ChatMessage = {
-        id: `system-error-${Date.now()}`,
-        role: "system",
-        content:
-          error instanceof Error
-            ? error.message
-            : "Unable to send message. Please try again.",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-      };
-
-      setMessages((prev) => [...prev, failedMessage]);
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                role: "system",
+                content:
+                  error instanceof Error
+                    ? error.message
+                    : "Unable to send message. Please try again.",
+                isStreaming: false,
+                failed: true,
+              }
+            : message,
+        ),
+      );
     }
   };
 
