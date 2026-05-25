@@ -5,6 +5,7 @@ import { ChatMessage, ChatSession } from "@/types/chat";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export function isValidChatId(chatId: string) {
   return UUID_REGEX.test(chatId);
 }
@@ -13,6 +14,7 @@ export function useChatHistory() {
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
@@ -26,22 +28,80 @@ export function useChatHistory() {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
     void (async () => {
       await fetchHistory();
     })();
   }, [fetchHistory]);
+
   return { history, loading, error, refreshHistory: fetchHistory };
+}
+
+function formatMessageTime(value?: string) {
+  const date = value ? new Date(value) : new Date();
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function normalizeChatMessage(
+  message: Record<string, unknown>,
+  currentUserId: string,
+): ChatMessage {
+  const senderId = getString(
+    message.senderId ?? message.sender_id ?? message.userId ?? message.user_id,
+  );
+  const rawRole = String(
+    message.role ?? message.senderRole ?? message.sender_type ?? "",
+  ).toLowerCase();
+
+  const role: ChatMessage["role"] =
+    rawRole === "user" || senderId === currentUserId
+      ? "user"
+      : rawRole === "system"
+        ? "system"
+        : "assistant";
+
+  return {
+    id: getString(message.id) ?? `message-${Date.now()}-${Math.random()}`,
+    role,
+    content:
+      getString(
+        message.content ??
+          message.textContent ??
+          message.text_content ??
+          message.message ??
+          message.text,
+      ) ?? "",
+    timestamp: formatMessageTime(
+      getString(
+        message.createdAt ??
+          message.created_at ??
+          message.timestamp ??
+          message.updatedAt,
+      ),
+    ),
+    userInitials: role === "user" ? "AA" : undefined,
+  };
 }
 
 export function useActiveChat(chatId: string) {
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
+
   const [chatInfo, setChatInfo] = useState<Partial<ChatSession> | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
   const validChatId = useMemo(() => isValidChatId(chatId), [chatId]);
+
   const fetchChatDetails = useCallback(async () => {
     if (!validChatId || !userId) {
       setChatInfo(null);
@@ -50,14 +110,22 @@ export function useActiveChat(chatId: string) {
       setError(null);
       return;
     }
+
     try {
       setLoading(true);
       const [info, msgs] = await Promise.all([
         chatService.getChatById(chatId),
         chatService.getChatMessages(chatId, userId),
       ]);
+
       setChatInfo(info);
-      setMessages(Array.isArray(msgs) ? msgs : []);
+      setMessages(
+        Array.isArray(msgs)
+          ? (msgs as unknown as Record<string, unknown>[]).map((message) =>
+              normalizeChatMessage(message, userId),
+            )
+          : [],
+      );
       setError(null);
     } catch (err) {
       setError(
@@ -67,11 +135,13 @@ export function useActiveChat(chatId: string) {
       setLoading(false);
     }
   }, [chatId, userId, validChatId]);
+
   useEffect(() => {
     void (async () => {
       await fetchChatDetails();
     })();
   }, [fetchChatDetails]);
+
   return {
     chatInfo,
     messages,

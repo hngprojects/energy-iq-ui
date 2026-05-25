@@ -4,16 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/auth-store";
 
-type MessageContentType = "TEXT";
-
-interface SendChatMessagePayload {
-  chatId: string;
-  senderId: string;
-  contentType: MessageContentType;
-  textContent: string;
-}
-
-type IncomingSystemMessagePayload =
+type IncomingPayload =
   | string
   | {
       id?: string;
@@ -21,6 +12,8 @@ type IncomingSystemMessagePayload =
       textContent?: string;
       content?: string;
       message?: string;
+      description?: string;
+      action?: string;
       token?: string;
       delta?: string;
       chunk?: string;
@@ -33,7 +26,7 @@ type IncomingSystemMessagePayload =
       timestamp?: string;
     };
 
-interface NormalizedSystemMessage {
+interface NormalizedMessage {
   id: string;
   chatId?: string;
   text: string;
@@ -43,21 +36,20 @@ interface NormalizedSystemMessage {
   timestamp?: string;
 }
 
-type SystemMessageCallback = (message: NormalizedSystemMessage) => void;
+type MessageCallback = (message: NormalizedMessage) => void;
 
 function getSocketUrl() {
-  return (
-    process.env.NEXT_PUBLIC_CHAT_SOCKET_URL ||
-    process.env.NEXT_PUBLIC_CHAT_WS_URL
-  );
+  return process.env.NEXT_PUBLIC_CHAT_SOCKET_URL;
 }
 
-function normalizeSystemMessage(
-  payload: IncomingSystemMessagePayload,
-): NormalizedSystemMessage {
+function withBearer(token: string) {
+  return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+}
+
+function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
   if (typeof payload === "string") {
     return {
-      id: `system-${Date.now()}`,
+      id: `socket-${Date.now()}`,
       text: payload,
       isChunk: true,
       isFinal: false,
@@ -65,21 +57,25 @@ function normalizeSystemMessage(
   }
 
   const chunk = payload.delta ?? payload.token ?? payload.chunk;
-  const fullText = payload.textContent ?? payload.content ?? payload.message;
+  const fullText =
+    payload.textContent ??
+    payload.content ??
+    payload.message ??
+    payload.description ??
+    "";
+
   const isChunk = typeof chunk === "string";
-  const text = chunk ?? fullText ?? "";
 
   return {
-    id: payload.id ?? `system-${Date.now()}`,
+    id: payload.id ?? `socket-${Date.now()}`,
     chatId: payload.chatId,
-    text,
+    text: chunk ?? fullText,
     isChunk,
     isFinal:
       Boolean(payload.done) ||
       Boolean(payload.final) ||
       Boolean(payload.isFinal) ||
-      Boolean(payload.completed) ||
-      (!isChunk && Boolean(fullText)),
+      Boolean(payload.completed),
     sessionId: payload.sessionId,
     timestamp: payload.createdAt ?? payload.timestamp,
   };
@@ -91,27 +87,38 @@ export function useChatSocket(chatId: string) {
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const socketRef = useRef<Socket | null>(null);
-  const callbacksRef = useRef<Set<SystemMessageCallback>>(new Set());
+  const callbacksRef = useRef<Set<MessageCallback>>(new Set());
 
   const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(true);
   const [socketError, setSocketError] = useState<string | null>(null);
 
   useEffect(() => {
     const socketUrl = getSocketUrl();
 
-    if (!hasHydrated || !socketUrl || !chatId || !userId || !token) {
-      return;
+    if (!hasHydrated) return;
+
+    if (!socketUrl || !userId || !token) {
+      const timer = setTimeout(() => {
+        setConnecting(false);
+        setSocketError("Chat connection is missing authentication details.");
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
+    const connectingTimer = setTimeout(() => {
+      setConnecting(true);
+    }, 0);
+
     const socket = io(socketUrl, {
-      transports: ["websocket"],
-      auth: {
-        token,
-      },
       query: {
-        userId,
-        chatId,
+        user_id: userId,
       },
+      auth: {
+        token: withBearer(token),
+        Authorization: withBearer(token),
+      },
+      transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -119,28 +126,29 @@ export function useChatSocket(chatId: string) {
 
     socketRef.current = socket;
 
-    const handleSystemMessage = (payload: IncomingSystemMessagePayload) => {
-      const message = normalizeSystemMessage(payload);
+    const handleMessage = (payload: IncomingPayload) => {
+      const message = normalizeIncoming(payload);
 
-      if (message.chatId && message.chatId !== chatId) {
-        return;
-      }
+      if (message.chatId && message.chatId !== chatId) return;
 
       callbacksRef.current.forEach((callback) => callback(message));
     };
 
     socket.on("connect", () => {
       setConnected(true);
+      setConnecting(false);
       setSocketError(null);
     });
 
     socket.on("disconnect", () => {
       setConnected(false);
+      setConnecting(false);
     });
 
     socket.on("connect_error", (error) => {
       setConnected(false);
-      setSocketError(error.message);
+      setConnecting(false);
+      setSocketError(error.message || "Unable to connect to chat.");
     });
 
     socket.on("error", (error) => {
@@ -157,13 +165,25 @@ export function useChatSocket(chatId: string) {
       setSocketError("A chat connection error occurred.");
     });
 
-    socket.on("new_system_msg", handleSystemMessage);
+    socket.on("chat_action", handleMessage);
+    socket.on("new_system_msg", handleMessage);
+    socket.on("agent_msg", handleMessage);
+    socket.on("receive_msg", handleMessage);
+    socket.on("message", handleMessage);
 
     return () => {
-      socket.off("new_system_msg", handleSystemMessage);
+      clearTimeout(connectingTimer);
+
+      socket.off("chat_action", handleMessage);
+      socket.off("new_system_msg", handleMessage);
+      socket.off("agent_msg", handleMessage);
+      socket.off("receive_msg", handleMessage);
+      socket.off("message", handleMessage);
+
       socket.disconnect();
       socketRef.current = null;
       setConnected(false);
+      setConnecting(false);
       setSocketError(null);
     };
   }, [chatId, hasHydrated, token, userId]);
@@ -180,14 +200,12 @@ export function useChatSocket(chatId: string) {
         throw new Error("Chat socket is not connected.");
       }
 
-      const payload: SendChatMessagePayload = {
+      socket.emit("send_msg", {
         chatId,
-        senderId: userId,
         contentType: "TEXT",
+        senderId: userId,
         textContent,
-      };
-
-      socket.emit("send_msg", payload);
+      });
     },
     [chatId, userId],
   );
@@ -195,28 +213,24 @@ export function useChatSocket(chatId: string) {
   const joinActiveChats = useCallback(() => {
     const socket = socketRef.current;
 
-    if (!socket || !socket.connected || !userId) {
-      return;
-    }
+    if (!socket || !socket.connected || !userId) return;
 
     socket.emit("join_active_chats", {
       userId,
     });
   }, [userId]);
 
-  const subscribeToSystemMessages = useCallback(
-    (callback: SystemMessageCallback) => {
-      callbacksRef.current.add(callback);
+  const subscribeToSystemMessages = useCallback((callback: MessageCallback) => {
+    callbacksRef.current.add(callback);
 
-      return () => {
-        callbacksRef.current.delete(callback);
-      };
-    },
-    [],
-  );
+    return () => {
+      callbacksRef.current.delete(callback);
+    };
+  }, []);
 
   return {
     connected,
+    connecting,
     socketError,
     sendMessage,
     joinActiveChats,

@@ -8,10 +8,25 @@ import {
 
 export const chatService = {
   async createChat(payload: CreateChatPayload): Promise<ChatSession> {
-    return apiFetch<ChatSession>("/chats", {
+    const response = await apiFetch<
+      | ChatSession
+      | { chat: ChatSession }
+      | { data: ChatSession }
+      | { data: { chat: ChatSession } }
+    >("/chats", {
       method: "POST",
       data: payload,
     });
+
+    if ("id" in response) return response;
+    if ("chat" in response) return response.chat;
+
+    if ("data" in response) {
+      if ("id" in response.data) return response.data;
+      if ("chat" in response.data) return response.data.chat;
+    }
+
+    throw new Error("The chat was created, but no chat id was returned.");
   },
   async getAllChats(): Promise<ChatSession[]> {
     return apiFetch<ChatSession[]>("/chats", {

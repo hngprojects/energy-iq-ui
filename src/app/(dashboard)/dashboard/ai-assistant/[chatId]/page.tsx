@@ -115,8 +115,14 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { connected, socketError, sendMessage, subscribeToSystemMessages } =
-    useChatSocket(chatId);
+  const {
+    connected,
+    connecting,
+    socketError,
+    sendMessage,
+    // joinActiveChats,
+    subscribeToSystemMessages,
+  } = useChatSocket(chatId);
 
   const updateActions = (
     updater: (prev: StoredChatActions) => StoredChatActions,
@@ -190,26 +196,42 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   useEffect(() => {
     if (!socketError) return;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `socket-error-${Date.now()}`,
-        role: "system",
-        content: socketError,
-        timestamp: formatMessageTime(),
-        failed: true,
-      },
-    ]);
+    setMessages((prev) => {
+      const lastMessage = prev[prev.length - 1];
+
+      if (
+        lastMessage?.role === "system" &&
+        lastMessage.content === socketError
+      ) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          id: `socket-error-${Date.now()}`,
+          role: "system",
+          content: socketError,
+          timestamp: formatMessageTime(),
+          failed: true,
+        },
+      ];
+    });
 
     setSending(false);
     streamingMessageIdRef.current = null;
   }, [setMessages, socketError]);
 
   useEffect(() => {
+    if (!connected) return;
+
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
 
     if (!raw) return;
+
+    let text = "";
+    let timestamp: string | undefined;
 
     try {
       const pending = JSON.parse(raw) as {
@@ -217,37 +239,76 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         timestamp?: string;
       };
 
-      if (!pending.content) return;
-
-      setMessages((prev) => {
-        const alreadyExists = prev.some(
-          (message) =>
-            message.role === "user" &&
-            message.content.trim() === pending.content?.trim(),
-        );
-
-        if (alreadyExists) return prev;
-
-        return [
-          ...prev,
-          {
-            id: `pending-${chatId}`,
-            role: "user",
-            content: pending.content ?? "",
-            timestamp: new Date(
-              pending.timestamp ?? Date.now(),
-            ).toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-            }),
-            userInitials: "AA",
-          },
-        ];
-      });
-    } finally {
+      text = pending.content?.trim() ?? "";
+      timestamp = pending.timestamp;
+    } catch {
       sessionStorage.removeItem(key);
+      return;
     }
-  }, [chatId, setMessages]);
+
+    if (!text) {
+      sessionStorage.removeItem(key);
+      return;
+    }
+
+    const assistantMessageId = `assistant-stream-${Date.now()}`;
+    streamingMessageIdRef.current = assistantMessageId;
+
+    setMessages((prev) => {
+      const alreadyExists = prev.some(
+        (message) => message.role === "user" && message.content.trim() === text,
+      );
+
+      return [
+        ...(alreadyExists
+          ? prev
+          : [
+              ...prev,
+              {
+                id: `pending-${chatId}`,
+                role: "user" as const,
+                content: text,
+                timestamp: formatMessageTime(timestamp),
+                userInitials: "AA",
+              },
+            ]),
+        {
+          id: assistantMessageId,
+          role: "assistant" as const,
+          content: "",
+          timestamp: formatMessageTime(),
+          isStreaming: true,
+        },
+      ];
+    });
+
+    setSending(true);
+
+    try {
+      sendMessage(text);
+      sessionStorage.removeItem(key);
+    } catch (error) {
+      streamingMessageIdRef.current = null;
+      setSending(false);
+
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                role: "system",
+                content:
+                  error instanceof Error
+                    ? error.message
+                    : "Unable to send your first message. Please try again.",
+                isStreaming: false,
+                failed: true,
+              }
+            : message,
+        ),
+      );
+    }
+  }, [chatId, connected, sendMessage, setMessages]);
 
   const resetComposer = () => {
     const el = textareaRef.current;
@@ -272,6 +333,23 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending) return;
+
+    if (!connected) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `socket-not-connected-${Date.now()}`,
+          role: "system",
+          content: connecting
+            ? "Chat is still connecting. Please wait a moment and try again."
+            : socketError ||
+              "Chat is not connected. Please refresh and try again.",
+          timestamp: formatMessageTime(),
+          failed: true,
+        },
+      ]);
+      return;
+    }
 
     setInput("");
     resetComposer();
@@ -458,7 +536,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             {messages.map((msg) => (
               <ChatMessageBubble key={msg.id} message={msg} />
             ))}
-            {sending ? (
+            {/* {sending ? (
               <div className="flex items-end gap-3">
                 <div className="rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm">
                   <div className="flex gap-1">
@@ -471,7 +549,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   AI
                 </div>
               </div>
-            ) : null}
+            ) : null} */}
           </div>
         )}
         <div ref={bottomRef} />
@@ -519,10 +597,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               title="Send message"
               aria-label="Send message"
               onClick={handleSend}
-              disabled={!input.trim() || sending || !connected}
+              disabled={!input.trim() || sending || connecting || !connected}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-lg border-0 p-0 shadow-none transition-colors",
-                input.trim() && !sending
+                input.trim() && !sending && connected
                   ? "bg-secondary text-secondary-foreground hover:opacity-90"
                   : "bg-muted text-muted-foreground hover:bg-muted",
               )}

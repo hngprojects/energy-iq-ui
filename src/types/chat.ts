@@ -8,6 +8,21 @@ export interface AlertCard {
 
 export type ChatRole = "user" | "ai" | "assistant" | "system";
 
+export type AiResponseCardType =
+  | "summary"
+  | "insight"
+  | "anomaly"
+  | "recommendation";
+
+export interface AiResponseCard {
+  type: AiResponseCardType;
+  headline: string;
+  description: string;
+  severity?: "critical" | "warning" | "info";
+  dataPoint?: string;
+  actionLabel?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
@@ -17,6 +32,8 @@ export interface ChatMessage {
   userInitials?: string;
   isStreaming?: boolean;
   error?: string;
+  failed?: boolean;
+  cards?: AiResponseCard[];
 }
 
 export interface ChatSession {
