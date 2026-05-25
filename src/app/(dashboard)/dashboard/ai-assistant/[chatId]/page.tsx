@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "@/types/chat";
+import { useChatSocket } from "@/hooks/use-chat-socket";
+
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
 }
@@ -109,6 +111,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   );
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const { connected, socketError, sendMessage, onSystemMessage } =
+    useChatSocket(chatId);
+
   const updateActions = (
     updater: (prev: StoredChatActions) => StoredChatActions,
   ) => {
@@ -121,9 +127,64 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
+
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    return onSystemMessage((message) => {
+      setMessages((prev) => {
+        if (prev.some((item) => item.id === message.id)) return prev;
+        return [...prev, message];
+      });
+    });
+  }, [onSystemMessage, setMessages]);
+
+  useEffect(() => {
+    const key = `pending-chat-message:${chatId}`;
+    const raw = sessionStorage.getItem(key);
+
+    if (!raw) return;
+
+    try {
+      const pending = JSON.parse(raw) as {
+        content?: string;
+        timestamp?: string;
+      };
+
+      if (!pending.content) return;
+
+      setMessages((prev) => {
+        const alreadyExists = prev.some(
+          (message) =>
+            message.role === "user" &&
+            message.content.trim() === pending.content?.trim(),
+        );
+
+        if (alreadyExists) return prev;
+
+        return [
+          ...prev,
+          {
+            id: `pending-${chatId}`,
+            role: "user",
+            content: pending.content,
+            timestamp: new Date(
+              pending.timestamp ?? Date.now(),
+            ).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+            userInitials: "AA",
+          },
+        ];
+      });
+    } finally {
+      sessionStorage.removeItem(key);
+    }
+  }, [chatId, setMessages]);
+
   const resetComposer = () => {
     const el = textareaRef.current;
     if (!el) return;
@@ -134,11 +195,14 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       wrapper.classList.add("items-center");
     }
   };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending) return;
+
     setInput("");
     resetComposer();
+
     const localMessage: ChatMessage = {
       id: `local-${Date.now()}`,
       role: "user",
@@ -149,17 +213,38 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       }),
       userInitials: "AA",
     };
+
     setMessages((prev) => [...prev, localMessage]);
-    console.warn(
-      "No backend endpoint exists in Swagger for sending a follow-up message to an existing chat.",
-    );
+
+    try {
+      sendMessage(text);
+    } catch (error) {
+      console.error("Failed to send websocket chat message:", error);
+
+      const failedMessage: ChatMessage = {
+        id: `system-error-${Date.now()}`,
+        role: "system",
+        content:
+          error instanceof Error
+            ? error.message
+            : "Unable to send message. Please try again.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, failedMessage]);
+    }
   };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const el = e.currentTarget;
     el.style.height = "auto";
@@ -349,7 +434,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               title="Send message"
               aria-label="Send message"
               onClick={handleSend}
-              disabled={!input.trim() || sending}
+              disabled={!input.trim() || sending || !connected}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-lg border-0 p-0 shadow-none transition-colors",
                 input.trim() && !sending
