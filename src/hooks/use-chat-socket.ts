@@ -43,8 +43,13 @@ interface NormalizedSystemMessage {
   timestamp?: string;
 }
 
+type SystemMessageCallback = (message: NormalizedSystemMessage) => void;
+
 function getSocketUrl() {
-  return process.env.NEXT_PUBLIC_CHAT_SOCKET_URL;
+  return (
+    process.env.NEXT_PUBLIC_CHAT_SOCKET_URL ||
+    process.env.NEXT_PUBLIC_CHAT_WS_URL
+  );
 }
 
 function normalizeSystemMessage(
@@ -60,11 +65,8 @@ function normalizeSystemMessage(
   }
 
   const chunk = payload.delta ?? payload.token ?? payload.chunk;
-
   const fullText = payload.textContent ?? payload.content ?? payload.message;
-
   const isChunk = typeof chunk === "string";
-
   const text = chunk ?? fullText ?? "";
 
   return {
@@ -86,17 +88,18 @@ function normalizeSystemMessage(
 export function useChatSocket(chatId: string) {
   const userId = useAuthStore((state) => state.user?.id);
   const token = useAuthStore((state) => state.token);
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const socketRef = useRef<Socket | null>(null);
+  const callbacksRef = useRef<Set<SystemMessageCallback>>(new Set());
 
   const [connected, setConnected] = useState(false);
-
   const [socketError, setSocketError] = useState<string | null>(null);
 
   useEffect(() => {
     const socketUrl = getSocketUrl();
 
-    if (!socketUrl || !chatId || !userId || !token) {
+    if (!hasHydrated || !socketUrl || !chatId || !userId || !token) {
       return;
     }
 
@@ -115,6 +118,16 @@ export function useChatSocket(chatId: string) {
     });
 
     socketRef.current = socket;
+
+    const handleSystemMessage = (payload: IncomingSystemMessagePayload) => {
+      const message = normalizeSystemMessage(payload);
+
+      if (message.chatId && message.chatId !== chatId) {
+        return;
+      }
+
+      callbacksRef.current.forEach((callback) => callback(message));
+    };
 
     socket.on("connect", () => {
       setConnected(true);
@@ -144,18 +157,26 @@ export function useChatSocket(chatId: string) {
       setSocketError("A chat connection error occurred.");
     });
 
+    socket.on("new_system_msg", handleSystemMessage);
+
     return () => {
+      socket.off("new_system_msg", handleSystemMessage);
       socket.disconnect();
       socketRef.current = null;
       setConnected(false);
+      setSocketError(null);
     };
-  }, [chatId, token, userId]);
+  }, [chatId, hasHydrated, token, userId]);
 
   const sendMessage = useCallback(
     (textContent: string) => {
       const socket = socketRef.current;
 
-      if (!socket || !socket.connected || !userId) {
+      if (!userId) {
+        throw new Error("User is not available for chat.");
+      }
+
+      if (!socket || !socket.connected) {
         throw new Error("Chat socket is not connected.");
       }
 
@@ -184,30 +205,14 @@ export function useChatSocket(chatId: string) {
   }, [userId]);
 
   const subscribeToSystemMessages = useCallback(
-    (callback: (message: NormalizedSystemMessage) => void) => {
-      const socket = socketRef.current;
-
-      if (!socket) {
-        return () => undefined;
-      }
-
-      const handler = (payload: IncomingSystemMessagePayload) => {
-        const message = normalizeSystemMessage(payload);
-
-        if (message.chatId && message.chatId !== chatId) {
-          return;
-        }
-
-        callback(message);
-      };
-
-      socket.on("new_system_msg", handler);
+    (callback: SystemMessageCallback) => {
+      callbacksRef.current.add(callback);
 
       return () => {
-        socket.off("new_system_msg", handler);
+        callbacksRef.current.delete(callback);
       };
     },
-    [chatId],
+    [],
   );
 
   return {
