@@ -25,6 +25,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
       statusColor,
       helperText,
       hideErrorMessage,
+      className,
       ...props
     },
     ref,
@@ -63,6 +64,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
                 "border-destructive focus-visible:border-destructive focus:border-destructive",
               (statusColor === "red" || statusColor === "green") &&
                 (isPassword ? "pr-20" : "pr-12"),
+              className,
             )}
             {...props}
           />
