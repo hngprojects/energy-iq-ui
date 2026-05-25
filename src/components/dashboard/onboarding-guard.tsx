@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
+import { onboardingStorage } from "@/lib/onboarding-storage";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated, user } = useAuthStore();
   const { useOnboardingStatus } = useInverterQueries();
   const { data: status, isLoading, isError } = useOnboardingStatus();
   const searchParams = useSearchParams();
@@ -23,10 +24,12 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!_hasHydrated) return;
+    
     if (!isAuthenticated) {
       router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
+    
     if (!isLoading && !isError && !isFullyOnboarded) {
       router.replace("/onboarding");
     }
@@ -40,12 +43,26 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     currentUrl,
   ]);
 
-  if (
-    !_hasHydrated ||
-    !isAuthenticated ||
-    isLoading ||
-    (!isError && !isFullyOnboarded)
-  ) {
+  useEffect(() => {
+    if (isFullyOnboarded && user?.id) {
+      onboardingStorage.setCompleted(user.id);
+    }
+  }, [isFullyOnboarded, user?.id]);
+
+  // IMPORTANT: Wait for hydration before rendering anything or redirecting
+  if (!_hasHydrated) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // The useEffect will handle redirect
+  }
+
+  if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
