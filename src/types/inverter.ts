@@ -28,7 +28,7 @@ export interface Inverter {
   accessToken?: string;
   serialNumber?: string;
   capacityKw?: number;
-  status?: "ACTIVE" | "INACTIVE" | "OFFLINE";
+  status?: "ACTIVE" | "ONLINE" | "INACTIVE" | "OFFLINE" | "STALE";
   lastSyncAt?: string;
   createdAt: string;
   updatedAt: string;

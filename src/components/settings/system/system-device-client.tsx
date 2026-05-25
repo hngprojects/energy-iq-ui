@@ -9,16 +9,75 @@ import { SelectField } from "@/components/settings/select-field";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import type { ConnectInverterRequest } from "@/types/inverter";
 
-const fallbackDevices = [
-  {
-    initials: "GW",
-    name: "Growatt SPF 5KW",
-    meta: "Hybrid Inverter",
-    serial: "SN-GW5KW-2025",
-    connectionDate: "Mar 12, 2025",
-    lastSync: "2 min ago",
+const statusStyles = {
+  active: {
+    label: "Active",
+    className: "bg-chart-battery text-success-alt",
+    dotClassName: "bg-success-alt",
   },
-];
+  warning: {
+    label: "Offline",
+    className: "bg-warning-bg text-warning",
+    dotClassName: "bg-warning",
+  },
+  unknown: {
+    label: "Unknown",
+    className: "bg-muted text-muted-foreground",
+    dotClassName: "bg-muted-foreground",
+  },
+};
+
+function getStatusMeta(status?: string) {
+  const normalized = status?.toLowerCase();
+
+  if (!normalized || normalized === "active" || normalized === "online") {
+    return statusStyles.active;
+  }
+
+  if (
+    normalized === "offline" ||
+    normalized === "stale" ||
+    normalized === "inactive"
+  ) {
+    return {
+      ...statusStyles.warning,
+      label: normalized.charAt(0).toUpperCase() + normalized.slice(1),
+    };
+  }
+
+  return statusStyles.unknown;
+}
+
+function formatRelativeTime(value?: string) {
+  if (!value) return "Never synced";
+
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) return "Unavailable";
+
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (diffSeconds < 60) return "Just now";
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min${diffMinutes === 1 ? "" : "s"} ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours} hr${diffHours === 1 ? "" : "s"} ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) {
+    return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  }
+
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export function SystemDeviceClient() {
   const [open, setOpen] = useState(false);
@@ -38,7 +97,7 @@ export function SystemDeviceClient() {
   const brandOptions = brands?.data ?? ["Growatt", "Sunsynk", "Victron"];
 
   const devices = useMemo(() => {
-    if (!inverters?.length) return fallbackDevices;
+    if (!inverters?.length) return [];
 
     return inverters.map((item) => ({
       initials: item.brand.slice(0, 2).toUpperCase(),
@@ -52,7 +111,10 @@ export function SystemDeviceClient() {
         day: "numeric",
         year: "numeric",
       }),
-      lastSync: item.lastSyncAt ? "Just now" : "2 min ago",
+      lastSync: formatRelativeTime(
+        item.lastSyncAt ?? item.updatedAt ?? item.createdAt,
+      ),
+      status: getStatusMeta(item.status),
     }));
   }, [inverters]);
 
@@ -76,10 +138,11 @@ export function SystemDeviceClient() {
     }
 
     if (normalizedBrand === "sunsynk") {
-      // Current backend expects Solarman credentials for Sunsynk/Deye,
-      // not a single generic access token.
-      // We need either email/password fields in the modal,
-      // or backend support for token-based Sunsynk linking.
+      return; // show toast/error until sunsynk credential fields are implemented
+    }
+
+    if (!token.trim()) {
+      return; // show toast/error: token required
     }
 
     connect.mutate(payload);
@@ -126,9 +189,13 @@ export function SystemDeviceClient() {
                 </div>
               </div>
 
-              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-chart-battery px-2.5 py-1 text-xs font-medium text-success-alt">
-                <span className="h-1.5 w-1.5 rounded-full bg-success-alt" />
-                Active
+              <span
+                className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${device.status.className}`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${device.status.dotClassName}`}
+                />
+                {device.status.label}
               </span>
             </div>
 
@@ -213,9 +280,11 @@ export function SystemDeviceClient() {
             <div className="mt-4 space-y-2">
               <Label>Access API token</Label>
               <Input
+                type="password"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="paste your access secure token"
+                autoComplete="off"
               />
             </div>
 
