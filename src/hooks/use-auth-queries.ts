@@ -105,7 +105,6 @@ export const useAuthQueries = () => {
         setAuth(user, token, refreshToken);
         localStorage.removeItem("temp_email");
         toast.success("Email verified successfully!");
-        router.push("/onboarding");
       },
       onError: (error: unknown) => {
         toast.error(getErrorMessage(error, "Verification failed"), {
