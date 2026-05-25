@@ -15,7 +15,7 @@ export function AuthSignupForm() {
   const { useRegister } = useAuthQueries();
   const registerMutation = useRegister();
 
-  const { user, tempEmail } = useAuthStore();
+  const { tempEmail } = useAuthStore();
 
   const {
     register,

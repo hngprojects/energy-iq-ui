@@ -89,7 +89,6 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken, variables.rememberMe ?? false);
-        localStorage.removeItem("temp_email");
         toast.success("Welcome back!", {
           duration: 5000,
         });
@@ -119,7 +118,6 @@ export const useAuthQueries = () => {
       mutationFn: AuthService.register,
       onSuccess: (_, variables) => {
         setTempEmail(variables.email);
-        localStorage.setItem("temp_email", variables.email);
         toast.success("Account created successfully!");
         router.push("/verify-email");
       },
@@ -129,7 +127,6 @@ export const useAuthQueries = () => {
         // If account exists, it might be unverified, so we redirect to verify-email
         if (message === "This email is already registered") {
           setTempEmail(variables.email);
-          localStorage.setItem("temp_email", variables.email);
           toast.info("Account already exists. Redirecting to verification...");
           router.push("/verify-email");
           return;
@@ -148,7 +145,6 @@ export const useAuthQueries = () => {
         const refreshToken = data.refreshToken;
 
         setAuth(user, token, refreshToken);
-        localStorage.removeItem("temp_email");
         toast.success("Email verified successfully!");
         const redirect = searchParams.get("redirect");
         router.push(getSafeRedirect(redirect, "/onboarding"));
@@ -176,7 +172,6 @@ export const useAuthQueries = () => {
       mutationFn: AuthService.logout,
       onSuccess: () => {
         storeLogout();
-        localStorage.removeItem("temp_email");
         queryClient.clear();
         toast.success("Logged out successfully");
         router.push("/login");
