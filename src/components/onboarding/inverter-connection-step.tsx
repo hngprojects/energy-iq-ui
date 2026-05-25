@@ -15,33 +15,40 @@ import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ConnectInverterRequest } from "@/types/inverter";
 import { trackEvent } from "@/lib/analytics";
+import { useOnboardingStore } from "@/stores/onboarding-store";
 
 interface InverterConnectionStepProps {
-  inverter: InverterType;
   onBack: () => void;
   onConnected: () => void;
 }
 
 export function InverterConnectionStep({
-  inverter,
   onBack,
   onConnected,
 }: InverterConnectionStepProps) {
-  const config = INVERTER_CONFIG[inverter.toLowerCase()];
+  const { inverterType: inverter, connectionDetails, setConnectionDetails } = useOnboardingStore();
   const { user } = useAuthStore();
   const { useConnectInverter } = useInverterQueries();
-
-  const [values, setValues] = useState<string[]>(
-    config?.fields.map(() => "") ?? [],
-  );
   const [helperOpen, setHelperOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  
+  const connectInverterMutation = useConnectInverter(onConnected);
 
   useEffect(() => {
-    trackEvent("Screen View", { screen_name: "Inverter Connection Details", inverter_type: inverter });
+    if (inverter) {
+      trackEvent("Screen View", { screen_name: "Inverter Connection Details", inverter_type: inverter });
+    }
   }, [inverter]);
 
-  const connectInverterMutation = useConnectInverter(onConnected);
+  if (!inverter) {
+    return null; // Should not happen if store is correct
+  }
+
+  const config = INVERTER_CONFIG[inverter.toLowerCase()];
+
+  const rawValues = connectionDetails[inverter.toLowerCase()] ?? [];
+  const values = (config?.fields ?? []).map((_, i) => rawValues[i] ?? "");
+  const setValues = (newValues: string[]) => setConnectionDetails(inverter, newValues);
 
   if (!config) {
     return (
@@ -81,11 +88,9 @@ export function InverterConnectionStep({
 
   const setValue = (i: number, v: string) => {
     const field = config.fields[i];
-    setValues((prev) => {
-      const next = [...prev];
-      next[i] = v;
-      return next;
-    });
+    const next = [...values];
+    next[i] = v;
+    setValues(next);
     syncEmailFieldError(field, v);
   };
 
