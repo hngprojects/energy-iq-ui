@@ -6,22 +6,9 @@ import { useState, useEffect } from "react";
 import { motion, useScroll, useSpring } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { BlogPost } from "@/types/blog";
 
-
-export interface TocSection {
-  id: string;
-  title: string;
-}
-
-export interface BlogPost {
-  slug: string;
-  title: string;
-  category: string;
-  image: string;
-  excerpt: string;
-  toc: TocSection[];
-  content: React.ReactNode;
-}
+export type { BlogPost };
 
 interface BlogPostDetailProps {
   post: BlogPost;

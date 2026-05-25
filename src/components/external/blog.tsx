@@ -9,36 +9,7 @@ import { ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { WaitlistService } from "@/services/waitlist-service";
-
-const blogPosts = [
-  {
-    id: 1,
-    slug: "how-to-choose-energy-efficient-appliance",
-    image: "/images/how_it_works_1.jpg",
-    category: "Solar & Inverter",
-    title: "How To Choose An Energy Efficient Appliance For Your Solar Inverter",
-    excerpt:
-      "You finally invest in a solar setup but it drains faster than expected. In most cases, the appliances connected to it are the real issue. Here is how to choose the right ones.",
-  },
-  {
-    id: 2,
-    slug: "understanding-power-consumption-in-homes",
-    image: "/images/how_it_works_2.jpg",
-    category: "Energy Tips",
-    title: "Understanding Power Consumption In Homes",
-    excerpt:
-      "In many homes, the problem is not just electricity supply — it is poor understanding of how much power everyday appliances actually consume.",
-  },
-  {
-    id: 3,
-    slug: "how-ai-improves-energy-management-systems",
-    image: "/images/how_it_works_3.jpg",
-    category: "AI & Technology",
-    title: "How AI Improves Your Energy Management Systems",
-    excerpt:
-      "AI-powered energy management systems are helping businesses cut costs, improve efficiency and reduce carbon emissions. Here is how.",
-  },
-];
+import { BLOG_POSTS } from "@/constants/blog-posts";
 
 export default function Blog() {
   const [email, setEmail] = useState("");
@@ -122,7 +93,7 @@ export default function Blog() {
       <div className="bg-white">
         <div className="mx-auto w-full max-w-350 px-4 py-16 md:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {blogPosts.map((post, index) => (
+            {BLOG_POSTS.map((post, index) => (
               <motion.article
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
