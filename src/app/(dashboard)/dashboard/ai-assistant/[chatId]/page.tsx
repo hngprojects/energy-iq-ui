@@ -1,5 +1,5 @@
 "use client";
-import { use, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -125,6 +125,37 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     subscribeToSystemMessages,
   } = useChatSocket(chatId);
 
+  const clearSendingTimeout = useCallback(() => {
+    if (sendingTimeoutRef.current) {
+      clearTimeout(sendingTimeoutRef.current);
+      sendingTimeoutRef.current = null;
+    }
+  }, []);
+
+  const startSendingTimeout = useCallback(
+    (assistantMessageId: string) => {
+      clearSendingTimeout();
+      sendingTimeoutRef.current = setTimeout(() => {
+        streamingMessageIdRef.current = null;
+        setSending(false);
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  role: "system" as const,
+                  content: "Response timed out. Please try again.",
+                  isStreaming: false,
+                  failed: true,
+                }
+              : message,
+          ),
+        );
+      }, 30_000);
+    },
+    [clearSendingTimeout, setMessages],
+  );
+
   const updateActions = (
     updater: (prev: StoredChatActions) => StoredChatActions,
   ) => {
@@ -134,6 +165,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       return next;
     });
   };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
@@ -143,10 +175,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (sendingTimeoutRef.current) clearTimeout(sendingTimeoutRef.current);
-    };
-  }, []);
+    return () => clearSendingTimeout();
+  }, [clearSendingTimeout]);
 
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
@@ -196,13 +226,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       if (incoming.isFinal) {
         streamingMessageIdRef.current = null;
         setSending(false);
-        if (sendingTimeoutRef.current) {
-          clearTimeout(sendingTimeoutRef.current);
-          sendingTimeoutRef.current = null;
-        }
+        clearSendingTimeout();
       }
     });
-  }, [chatId, setMessages, subscribeToSystemMessages]);
+  }, [chatId, clearSendingTimeout, setMessages, subscribeToSystemMessages]);
 
   useEffect(() => {
     if (!socketError) return;
@@ -229,9 +256,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       ];
     });
 
+    clearSendingTimeout();
     setSending(false);
     streamingMessageIdRef.current = null;
-  }, [setMessages, socketError]);
+  }, [clearSendingTimeout, setMessages, socketError]);
 
   useEffect(() => {
     if (!connected) return;
@@ -300,11 +328,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     try {
       sendMessage(text);
-      if (sendingTimeoutRef.current) clearTimeout(sendingTimeoutRef.current);
-      sendingTimeoutRef.current = setTimeout(() => {
-        streamingMessageIdRef.current = null;
-        setSending(false);
-      }, 30_000);
+      sessionStorage.removeItem(key);
+      startSendingTimeout(assistantMessageId);
     } catch (error) {
       streamingMessageIdRef.current = null;
       setSending(false);
@@ -326,7 +351,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         ),
       );
     }
-  }, [chatId, connected, sendMessage, setMessages]);
+  }, [chatId, connected, sendMessage, setMessages, startSendingTimeout]);
 
   const resetComposer = () => {
     const el = textareaRef.current;
@@ -396,6 +421,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     try {
       sendMessage(text);
+      startSendingTimeout(assistantMessageId);
     } catch (error) {
       streamingMessageIdRef.current = null;
       setSending(false);
@@ -422,7 +448,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      void handleSend();
     }
   };
 
@@ -440,6 +466,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       wrapper.classList.add("items-center");
     }
   };
+
   const renderHeaderIcon = () => {
     switch (chatInfo?.iconType) {
       case "solar":
@@ -450,6 +477,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return <Battery className="h-4 w-4 text-destructive" />;
     }
   };
+
   const title =
     actions.renamedTitles[chatId] ??
     chatInfo?.title ??
@@ -457,6 +485,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const dateLabel = formatChatHeaderDateTime(
     chatInfo?.updatedAt ?? chatInfo?.createdAt ?? chatInfo?.dateLabel,
   );
+
   return (
     <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
@@ -554,20 +583,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             {messages.map((msg) => (
               <ChatMessageBubble key={msg.id} message={msg} />
             ))}
-            {/* {sending ? (
-              <div className="flex items-end gap-3">
-                <div className="rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3 shadow-sm">
-                  <div className="flex gap-1">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:0ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:150ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-600 [animation-delay:300ms]" />
-                  </div>
-                </div>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-                  AI
-                </div>
-              </div>
-            ) : null} */}
           </div>
         )}
         <div ref={bottomRef} />

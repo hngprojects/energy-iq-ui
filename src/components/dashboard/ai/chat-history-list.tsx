@@ -310,6 +310,7 @@ export function ChatHistoryList({
                           className="flex shrink-0 items-center gap-2"
                           onClick={(event) => event.stopPropagation()}
                           onPointerDown={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
                         >
                           <span className="whitespace-nowrap text-xs text-muted-foreground">
                             {formatChatTimestamp(chat)}

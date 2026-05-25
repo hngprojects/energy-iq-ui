@@ -10,7 +10,7 @@ import { useAuthStore } from "@/stores/auth-store";
 export default function AIAssistantPage() {
   const { history, loading, error, refreshHistory } = useChatHistory();
 
-  const userId = useAuthStore((state) => state.user?.id) ?? "";
+  const userId = useAuthStore((state) => state.user?.id);
 
   if (error) {
     console.debug("[AIAssistantPage] Failed to load chat history:", error);
@@ -63,9 +63,13 @@ export default function AIAssistantPage() {
               Retry
             </Button>
           </div>
+        ) : !userId ? (
+          <div className="px-6 py-8 text-sm text-muted-foreground">
+            Loading chats...
+          </div>
         ) : history.length > 0 ? (
           <div className="px-6 pb-8">
-            <ChatHistoryList history={history} userId={userId} />{" "}
+            <ChatHistoryList key={userId} history={history} userId={userId} />
           </div>
         ) : (
           <ChatEmptyState />
