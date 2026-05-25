@@ -7,6 +7,7 @@ export interface AlertCard {
 }
 
 export type ChatRole = "user" | "ai" | "assistant" | "system";
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
@@ -14,6 +15,8 @@ export interface ChatMessage {
   timestamp: string;
   alertCard?: AlertCard;
   userInitials?: string;
+  isStreaming?: boolean;
+  error?: string;
 }
 
 export interface ChatSession {
@@ -34,4 +37,24 @@ export interface CreateChatPayload {
 
 export interface UpdateChatSettingsPayload {
   chatId: string;
+}
+
+export type MessageContentType = "TEXT";
+
+export interface SendChatMessagePayload {
+  chatId: string;
+  senderId: string;
+  contentType: MessageContentType;
+  textContent: string;
+}
+
+export interface IncomingSystemMessagePayload {
+  id?: string;
+  chatId?: string;
+  textContent?: string;
+  content?: string;
+  message?: string;
+  createdAt?: string;
+  timestamp?: string;
+  sessionId?: string;
 }
