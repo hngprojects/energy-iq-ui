@@ -69,7 +69,8 @@ function formatChatHeaderDateTime(chatInfoDate?: string) {
 }
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
-  const userId = useAuthStore((state) => state.user?.id);
+  const user = useAuthStore((state) => state.user);
+  const userId = user?.id;
   const resolvedParams = use(params);
   const chatId = resolvedParams.chatId;
   const { chatInfo, messages, setMessages, loading, error } =
@@ -79,7 +80,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const [sending, setSending] = useState(false);
   const streamingMessageIdRef = useRef<string | null>(null);
   const pendingMessageSentRef = useRef(false);
-  const userInitials = getUserInitials(useAuthStore((state) => state.user));
+  const userInitials = getUserInitials(user);
   const storageKey = getChatActionsStorageKey(userId);
 
   const [actions, setActions] = useState<StoredChatActions>(() =>
@@ -519,7 +520,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
-  // AFTER
   const handleRetry = (failedAssistantId: string) => {
     const text = lastUserMessageRef.current;
     if (!text) return;
@@ -555,8 +555,31 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     ]);
 
     setSending(true);
-    sendMessage(text, getSessionId());
-    startSendingTimeout(assistantMessageId);
+    try {
+      sendMessage(text, getSessionId());
+      startSendingTimeout(assistantMessageId);
+    } catch (error) {
+      streamingMessageIdRef.current = null;
+      setSending(false);
+
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                role: "assistant" as const,
+                content: "",
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "Unable to retry message. Please try again.",
+                isStreaming: false,
+                failed: true,
+              }
+            : message,
+        ),
+      );
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

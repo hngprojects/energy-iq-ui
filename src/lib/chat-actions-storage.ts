@@ -7,12 +7,14 @@ export interface StoredChatActions {
 
 const CHAT_ACTIONS_STORAGE_KEY = "energyiq-ai-chat-actions";
 
-export const EMPTY_CHAT_ACTIONS: StoredChatActions = {
-  deletedIds: [],
-  archivedIds: [],
-  pinnedIds: [],
-  renamedTitles: {},
-};
+function createEmptyChatActions(): StoredChatActions {
+  return {
+    deletedIds: [],
+    archivedIds: [],
+    pinnedIds: [],
+    renamedTitles: {},
+  };
+}
 
 export function getChatActionsStorageKey(userId?: string): string {
   return userId
@@ -21,10 +23,10 @@ export function getChatActionsStorageKey(userId?: string): string {
 }
 
 function readStoredChatActions(storageKey: string): StoredChatActions {
-  if (typeof window === "undefined") return EMPTY_CHAT_ACTIONS;
+  if (typeof window === "undefined") return createEmptyChatActions();
   try {
     const raw = window.localStorage.getItem(storageKey);
-    if (!raw) return EMPTY_CHAT_ACTIONS;
+    if (!raw) return createEmptyChatActions();
     const parsed = JSON.parse(raw) as Partial<StoredChatActions>;
     return {
       deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
@@ -36,7 +38,7 @@ function readStoredChatActions(storageKey: string): StoredChatActions {
           : {},
     };
   } catch {
-    return EMPTY_CHAT_ACTIONS;
+    return createEmptyChatActions();
   }
 }
 

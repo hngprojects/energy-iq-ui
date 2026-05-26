@@ -54,14 +54,20 @@ function getChatTime(chat: ChatSession) {
   return Number.isNaN(time) ? 0 : time;
 }
 
-async function findRecoveredCreatedChat(requestedAt: number) {
+async function findRecoveredCreatedChat(
+  requestedAt: number,
+  expectedTitle: string,
+) {
   const chats = await chatService.getAllChats();
   return chats
     .filter((chat) => {
       const title = chat.title?.trim().toLowerCase();
       return (
         getChatTime(chat) >= requestedAt - 60_000 &&
-        (!title || title === "untitled" || title === "untitled chat")
+        (!title ||
+          title === "untitled" ||
+          title === "untitled chat" ||
+          title === expectedTitle.toLowerCase())
       );
     })
     .sort((a, b) => getChatTime(b) - getChatTime(a))[0];
@@ -92,6 +98,7 @@ export default function NewChatPage() {
     setError(null);
 
     const requestedAt = Date.now();
+    const expectedTitle = createLocalChatTitle(cleanText);
 
     try {
       let chat: ChatSession | undefined;
@@ -105,7 +112,7 @@ export default function NewChatPage() {
           throw createError;
         }
 
-        chat = await findRecoveredCreatedChat(requestedAt);
+        chat = await findRecoveredCreatedChat(requestedAt, expectedTitle);
         if (!chat) throw createError;
       }
 

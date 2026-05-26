@@ -48,6 +48,7 @@ const buildForwardHeaders = (req: Request): Headers => {
   const forwardedHeaderNames = [
     "accept",
     "authorization",
+    "cookie",
     "content-type",
   ];
 

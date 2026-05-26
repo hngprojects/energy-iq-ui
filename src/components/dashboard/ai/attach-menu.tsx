@@ -6,11 +6,15 @@ import { Button } from "@/components/ui/button";
 interface AttachMenuProps {
   buttonClassName?: string;
   iconSize?: string;
+  onFilesSelected?: (files: FileList) => void;
+  onTakeScreenshot?: () => void;
 }
 
 export function AttachMenu({
   buttonClassName,
   iconSize = "h-4 w-4",
+  onFilesSelected,
+  onTakeScreenshot,
 }: AttachMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -49,12 +53,18 @@ export function AttachMenu({
               accept="image/*,.pdf,.doc,.docx,.txt"
               multiple
               className="sr-only"
-              onChange={() => setOpen(false)}
+              onChange={(e) => {
+                if (e.target.files?.length) onFilesSelected?.(e.target.files);
+                setOpen(false);
+              }}
             />
           </label>
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              onTakeScreenshot?.();
+              setOpen(false);
+            }}
             className="flex w-full items-center gap-3 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted"
           >
             <Camera className="h-4 w-4 shrink-0 text-muted-foreground" />

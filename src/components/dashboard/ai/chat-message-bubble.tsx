@@ -48,65 +48,52 @@ export function ChatMessageBubble({
 
   if (isAssistant) {
     return (
-      <div className="flex items-end justify-start gap-3 w-full">
+      <div className="flex w-full items-end justify-start gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           AI
         </div>
 
         <div className="flex flex-col gap-1">
-          {message.alertCard ? (
-            // Inside isAssistant branch, single bubble wrapper:
-            <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
-              {message.isStreaming && !message.failed ? (
-                <p className="mb-2 text-xs text-muted-foreground">Typing…</p>
-              ) : null}
+          <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
+            {message.isStreaming && !message.failed ? (
+              <p className="mb-2 text-xs text-muted-foreground">Typing…</p>
+            ) : null}
 
-              {message.failed && message.error ? (
-                <p className="mb-2 text-sm text-destructive">{message.error}</p>
-              ) : null}
+            {message.failed && message.error ? (
+              <p className="mb-2 text-sm text-destructive">{message.error}</p>
+            ) : null}
 
-              {message.content ? (
-                <p className="text-sm text-foreground">{message.content}</p>
-              ) : null}
+            {message.content ? (
+              <p className="wrap-break-word whitespace-pre-wrap text-sm text-foreground">
+                {message.content}
+              </p>
+            ) : null}
 
-              {message.alertCard ? (
-                <AlertDetailsCard
-                  severity={message.alertCard.severity}
-                  title={message.alertCard.title}
-                  triggeredAt={message.alertCard.triggeredAt}
-                  status={message.alertCard.status}
-                  details={message.alertCard.details}
-                />
-              ) : null}
+            {message.alertCard ? (
+              <AlertDetailsCard
+                severity={message.alertCard.severity}
+                title={message.alertCard.title}
+                triggeredAt={message.alertCard.triggeredAt}
+                status={message.alertCard.status}
+                details={message.alertCard.details}
+              />
+            ) : null}
 
-              {message.failed && onRetry ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => onRetry(message.id)}
-                >
-                  Try again
-                </Button>
-              ) : null}
+            {message.failed && onRetry ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => onRetry(message.id)}
+              >
+                Try again
+              </Button>
+            ) : null}
 
-              <span className="mt-2 block text-xs text-muted-foreground">
-                {message.timestamp}
-              </span>
-            </div>
-          ) : (
-            <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
-              {message.isStreaming ? (
-                <p className="mb-2 text-xs text-muted-foreground">Typing...</p>
-              ) : null}
-
-              <p className="text-sm text-foreground">{message.content}</p>
-
-              <span className="mt-2 block text-xs text-muted-foreground">
-                {message.timestamp}
-              </span>
-            </div>
-          )}
+            <span className="mt-2 block text-xs text-muted-foreground">
+              {message.timestamp}
+            </span>
+          </div>
         </div>
       </div>
     );

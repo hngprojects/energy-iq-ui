@@ -85,7 +85,7 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
 export function useChatSocket(chatId: string) {
   const userId = useAuthStore((state) => state.user?.id);
   const token = useAuthStore((state) => state.token);
-  const hasHydrated = useAuthStore((state) => state._hasHydrated);
+  // const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const socketRef = useRef<Socket | null>(null);
   const callbacksRef = useRef<Set<MessageCallback>>(new Set());
@@ -205,7 +205,7 @@ export function useChatSocket(chatId: string) {
       setConnecting(false);
       setSocketError(null);
     };
-  }, [chatId, hasHydrated, token, userId]);
+  }, [chatId, token, userId]); // hasHydrated,
 
   const sendMessage = useCallback(
     (textContent: string, sessionId?: string) => {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { chatService } from "@/services/chat-service";
+import { toast } from "sonner";
 import {
   createLocalChatTitle,
   getChatActionsStorageKey,
@@ -67,6 +68,7 @@ export function AIAssistantBanner() {
     setSending(true);
 
     const requestedAt = new Date().getTime();
+
     try {
       let chat:
         | {
@@ -102,6 +104,14 @@ export function AIAssistantBanner() {
       );
 
       router.push(`/dashboard/ai-assistant/${chat.id}`);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to start chat. Please try again.";
+
+      console.error("Failed to start chat:", message);
+      toast.error(message);
     } finally {
       isCreatingChatRef.current = false;
       setSending(false);
