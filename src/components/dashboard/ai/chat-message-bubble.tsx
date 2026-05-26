@@ -29,8 +29,8 @@ export function ChatMessageBubble({
   if (isUser) {
     return (
       <div className="flex items-end justify-end gap-3">
-        <div className="flex flex-col items-end gap-1">
-          <div className="max-w-sm rounded-2xl rounded-br-sm bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+        <div className="flex min-w-0 flex-col items-end gap-1">
+          <div className="max-w-sm wrap-break-word whitespace-pre-wrap rounded-2xl rounded-br-sm bg-secondary px-4 py-3 text-sm text-secondary-foreground">
             {message.content}
           </div>
 

@@ -97,7 +97,7 @@ export function useChatSocket(chatId: string) {
   useEffect(() => {
     const socketUrl = getSocketUrl();
 
-    if (!hasHydrated) return;
+    // if (!hasHydrated) return;
 
     if (!socketUrl || !userId || !token) {
       const timer = setTimeout(() => {

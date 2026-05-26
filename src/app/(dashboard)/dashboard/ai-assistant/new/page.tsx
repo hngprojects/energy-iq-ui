@@ -43,8 +43,7 @@ function isStackOverflowCreateError(error: unknown) {
 
   const message = error.message.toLowerCase();
   return (
-    message.includes("maximum call stack") ||
-    message.includes("rangeerror")
+    message.includes("maximum call stack") || message.includes("rangeerror")
   );
 }
 
@@ -55,9 +54,7 @@ function getChatTime(chat: ChatSession) {
   return Number.isNaN(time) ? 0 : time;
 }
 
-async function findRecoveredCreatedChat(
-  requestedAt: number,
-) {
+async function findRecoveredCreatedChat(requestedAt: number) {
   const chats = await chatService.getAllChats();
   return chats
     .filter((chat) => {

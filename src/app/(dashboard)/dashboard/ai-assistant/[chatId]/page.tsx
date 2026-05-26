@@ -6,11 +6,11 @@ import {
   Battery,
   Download,
   Mic,
-  Plus,
   Send,
   Sun,
   Zap,
 } from "lucide-react";
+import { AttachMenu } from "@/components/dashboard/ai/attach-menu";
 import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
 import { Button } from "@/components/ui/button";
@@ -127,7 +127,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               : message,
           ),
         );
-      }, 30_000);
+      }, 2000);
     },
     [clearSendingTimeout, setMessages],
   );
@@ -689,8 +689,37 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </div>
         ) : null}
         {loading ? (
-          <div className="text-sm text-muted-foreground">
-            Loading messages...
+          <div className="flex flex-col gap-5">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className={`flex gap-3 animate-pulse ${
+                  i % 2 === 1 ? "flex-row-reverse" : ""
+                }`}
+              >
+                <div className="h-8 w-8 shrink-0 rounded-full bg-muted" />
+
+                <div className="flex flex-col gap-2">
+                  <div
+                    className={`h-4 rounded-full bg-muted ${
+                      i % 2 === 1 ? "w-24 self-end" : "w-32"
+                    }`}
+                  />
+
+                  <div
+                    className={`h-10 rounded-xl bg-muted ${
+                      i % 2 === 1 ? "w-48 self-end" : "w-64"
+                    }`}
+                  />
+
+                  <div
+                    className={`h-4 rounded-full bg-muted/60 ${
+                      i % 2 === 1 ? "w-16 self-end" : "w-20"
+                    }`}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex flex-col gap-5">
@@ -707,16 +736,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       </div>
       <div className="shrink-0 border-t border-border bg-card px-6 py-4">
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            title="Attach"
-            aria-label="Attach"
-            className="h-7 w-7 shrink-0 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          <AttachMenu buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground" />
           <div className="flex min-h-8 flex-1 items-center">
             <Textarea
               ref={textareaRef}
