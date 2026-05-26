@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/auth-store";
 
 type IncomingPayload =
@@ -65,17 +66,19 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     "";
 
   const isChunk = typeof chunk === "string";
+  const text = chunk ?? fullText;
+  const hasExplicitFinal =
+    Boolean(payload.done) ||
+    Boolean(payload.final) ||
+    Boolean(payload.isFinal) ||
+    Boolean(payload.completed);
 
   return {
     id: payload.id ?? `socket-${Date.now()}`,
     chatId: payload.chatId,
-    text: chunk ?? fullText,
+    text,
     isChunk,
-    isFinal:
-      Boolean(payload.done) ||
-      Boolean(payload.final) ||
-      Boolean(payload.isFinal) ||
-      Boolean(payload.completed),
+    isFinal: hasExplicitFinal || (!isChunk && text.trim().length > 0),
     sessionId: payload.sessionId,
     timestamp: payload.createdAt ?? payload.timestamp,
   };
@@ -125,25 +128,41 @@ export function useChatSocket(chatId: string) {
     });
 
     socketRef.current = socket;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const clearReconnectTimer = () => {
+      if (!reconnectTimer) return;
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    };
 
     const handleMessage = (payload: IncomingPayload) => {
       const message = normalizeIncoming(payload);
 
-      const targetChatId = message.chatId ?? message.sessionId;
-      if (targetChatId && targetChatId !== chatId) return;
+      if (message.chatId && message.chatId !== chatId) return;
 
       callbacksRef.current.forEach((callback) => callback(message));
     };
 
     socket.on("connect", () => {
+      clearReconnectTimer();
       setConnected(true);
       setConnecting(false);
       setSocketError(null);
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       setConnected(false);
-      setConnecting(false);
+
+      if (reason === "io server disconnect") {
+        setConnecting(true);
+        reconnectTimer = setTimeout(() => {
+          socket.connect();
+        }, 500);
+        return;
+      }
+
+      setConnecting(socket.active);
     });
 
     socket.on("connect_error", (error) => {
@@ -174,6 +193,7 @@ export function useChatSocket(chatId: string) {
 
     return () => {
       clearTimeout(connectingTimer);
+      clearReconnectTimer();
 
       socket.off("chat_action", handleMessage);
       socket.off("new_system_msg", handleMessage);
@@ -190,7 +210,7 @@ export function useChatSocket(chatId: string) {
   }, [chatId, hasHydrated, token, userId]);
 
   const sendMessage = useCallback(
-    (textContent: string) => {
+    (textContent: string, sessionId?: string) => {
       const socket = socketRef.current;
 
       if (!userId) {
@@ -201,11 +221,18 @@ export function useChatSocket(chatId: string) {
         throw new Error("Chat socket is not connected.");
       }
 
+      const storedSessionId =
+        sessionId ??
+        (typeof window !== "undefined"
+          ? localStorage.getItem(`chat-session:${chatId}`)
+          : null);
+
       socket.emit("send_msg", {
         chatId,
         contentType: "TEXT",
         senderId: userId,
         textContent,
+        ...(storedSessionId ? { sessionId: storedSessionId } : {}),
       });
     },
     [chatId, userId],

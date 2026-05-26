@@ -8,6 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { chatService } from "@/services/chat-service";
+import {
+  clearChatCreateAttempt,
+  createChatRecoveryToken,
+  findRecoveredCreatedChat,
+  stashChatCreateAttempt,
+} from "@/lib/chat-create-recovery";
+import {
+  createLocalChatTitle,
+  getChatActionsStorageKey,
+  saveLocalChatTitle,
+} from "@/lib/chat-actions-storage";
+import { useAuthStore } from "@/stores/auth-store";
+import type { ChatSession } from "@/types/chat";
 
 interface SuggestionCard {
   title: string;
@@ -31,8 +44,18 @@ const SUGGESTIONS: SuggestionCard[] = [
   },
 ];
 
+function isStackOverflowCreateError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("maximum call stack") || message.includes("rangeerror")
+  );
+}
+
 export default function NewChatPage() {
   const router = useRouter();
+  const userId = useAuthStore((state) => state.user?.id);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isCreatingChatRef = useRef(false);
 
@@ -49,18 +72,50 @@ export default function NewChatPage() {
 
     if (!cleanText || sending) return;
     if (isCreatingChatRef.current) return;
+    if (!userId) {
+      setError("Please wait while your session loads, then try again.");
+      return;
+    }
 
     isCreatingChatRef.current = true;
     setSending(true);
     setError(null);
 
+    const requestedAt = Date.now();
+    const recoveryToken = createChatRecoveryToken();
+
+    stashChatCreateAttempt(userId, recoveryToken, cleanText, requestedAt);
+
     try {
-      const chat = await chatService.createChat({
-        startingMessage: cleanText,
-      });
+      let chat: ChatSession | undefined;
+
+      try {
+        chat = await chatService.createChat({
+          startingMessage: cleanText,
+        });
+      } catch (createError) {
+        if (!isStackOverflowCreateError(createError)) {
+          throw createError;
+        }
+
+        chat = await findRecoveredCreatedChat(
+          userId,
+          recoveryToken,
+          cleanText,
+          requestedAt,
+        );
+        if (!chat) throw createError;
+      }
+
+      clearChatCreateAttempt(userId, recoveryToken);
 
       if (!chat?.id) {
         throw new Error("The chat was created, but no chat id was returned.");
+      }
+
+      const title = createLocalChatTitle(cleanText);
+      if (userId) {
+        saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
       }
 
       sessionStorage.setItem(
@@ -174,7 +229,7 @@ export default function NewChatPage() {
                 type="button"
                 title="Send message"
                 onClick={() => void handleStartConversation(input)}
-                disabled={!input.trim() || sending}
+                disabled={!input.trim() || sending || !userId}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg border-0 p-0 shadow-none transition-colors",
                   input.trim() && !sending
