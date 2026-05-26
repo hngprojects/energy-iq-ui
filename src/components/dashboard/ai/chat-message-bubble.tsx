@@ -1,13 +1,18 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { AlertDetailsCard } from "./alert-details-card";
 import { ChatMessage } from "@/types/chat";
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
+  onRetry?: (messageId: string) => void;
 }
 
-export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
+export function ChatMessageBubble({
+  message,
+  onRetry,
+}: ChatMessageBubbleProps) {
   const isUser = message.role === "user";
   const isAssistant = message.role === "ai" || message.role === "assistant";
 
@@ -50,20 +55,40 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
 
         <div className="flex flex-col gap-1">
           {message.alertCard ? (
+            // Inside isAssistant branch, single bubble wrapper:
             <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
-              {message.isStreaming ? (
-                <p className="mb-2 text-xs text-muted-foreground">Typing...</p>
+              {message.isStreaming && !message.failed ? (
+                <p className="mb-2 text-xs text-muted-foreground">Typing…</p>
               ) : null}
 
-              <p className="mb-3 text-sm text-foreground">{message.content}</p>
+              {message.failed && message.error ? (
+                <p className="mb-2 text-sm text-destructive">{message.error}</p>
+              ) : null}
 
-              <AlertDetailsCard
-                severity={message.alertCard.severity}
-                title={message.alertCard.title}
-                triggeredAt={message.alertCard.triggeredAt}
-                status={message.alertCard.status}
-                details={message.alertCard.details}
-              />
+              {message.content ? (
+                <p className="text-sm text-foreground">{message.content}</p>
+              ) : null}
+
+              {message.alertCard ? (
+                <AlertDetailsCard
+                  severity={message.alertCard.severity}
+                  title={message.alertCard.title}
+                  triggeredAt={message.alertCard.triggeredAt}
+                  status={message.alertCard.status}
+                  details={message.alertCard.details}
+                />
+              ) : null}
+
+              {message.failed && onRetry ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => onRetry(message.id)}
+                >
+                  Try again
+                </Button>
+              ) : null}
 
               <span className="mt-2 block text-xs text-muted-foreground">
                 {message.timestamp}

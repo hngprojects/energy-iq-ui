@@ -137,8 +137,7 @@ export function useChatSocket(chatId: string) {
     const handleMessage = (payload: IncomingPayload) => {
       const message = normalizeIncoming(payload);
 
-      const targetChatId = message.chatId ?? message.sessionId;
-      if (targetChatId && targetChatId !== chatId) return;
+      if (message.chatId && message.chatId !== chatId) return;
 
       callbacksRef.current.forEach((callback) => callback(message));
     };
@@ -209,7 +208,7 @@ export function useChatSocket(chatId: string) {
   }, [chatId, hasHydrated, token, userId]);
 
   const sendMessage = useCallback(
-    (textContent: string) => {
+    (textContent: string, sessionId?: string) => {
       const socket = socketRef.current;
 
       if (!userId) {
@@ -220,11 +219,18 @@ export function useChatSocket(chatId: string) {
         throw new Error("Chat socket is not connected.");
       }
 
+      const storedSessionId =
+        sessionId ??
+        (typeof window !== "undefined"
+          ? localStorage.getItem(`chat-session:${chatId}`)
+          : null);
+
       socket.emit("send_msg", {
         chatId,
         contentType: "TEXT",
         senderId: userId,
         textContent,
+        ...(storedSessionId ? { sessionId: storedSessionId } : {}),
       });
     },
     [chatId, userId],

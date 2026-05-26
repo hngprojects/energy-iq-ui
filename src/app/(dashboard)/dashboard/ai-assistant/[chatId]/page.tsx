@@ -89,6 +89,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const lastUserMessageRef = useRef<string>("");
+
   const {
     connected,
     connecting,
@@ -116,8 +118,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             message.id === assistantMessageId
               ? {
                   ...message,
-                  role: "system" as const,
-                  content: "Response timed out. Please try again.",
+                  role: "assistant" as const,
+                  content: message.content || "",
+                  error: "Response timed out. Please try again.",
                   isStreaming: false,
                   failed: true,
                 }
@@ -164,22 +167,22 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
-      if (!incoming.text && !incoming.isFinal) return;
+      if (!incoming.text && !incoming.isFinal && !streamingMessageIdRef.current)
+        return;
+
+      const activeStreamingId = streamingMessageIdRef.current;
 
       setMessages((prev) => {
-        const activeStreamingId = streamingMessageIdRef.current;
-
         if (!activeStreamingId) {
           const newMessageId = incoming.id || `assistant-${Date.now()}`;
           streamingMessageIdRef.current = incoming.isFinal
             ? null
             : newMessageId;
-
           return [
             ...prev,
             {
               id: newMessageId,
-              role: "assistant",
+              role: "assistant" as const,
               content: incoming.text,
               timestamp: formatMessageTime(incoming.timestamp),
               isStreaming: !incoming.isFinal,
@@ -194,10 +197,29 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             ? `${message.content}${incoming.text}`
             : incoming.text || message.content;
 
+          if (incoming.isFinal) {
+            return nextContent.trim()
+              ? {
+                  ...message,
+                  content: nextContent,
+                  isStreaming: false,
+                  timestamp: formatMessageTime(incoming.timestamp),
+                }
+              : {
+                  ...message,
+                  content: nextContent,
+                  isStreaming: false,
+                  failed: true,
+                  error:
+                    "The assistant didn't return a response. Please try again.",
+                  timestamp: formatMessageTime(incoming.timestamp),
+                };
+          }
+
           return {
             ...message,
             content: nextContent,
-            isStreaming: !incoming.isFinal,
+            isStreaming: true,
             timestamp: formatMessageTime(incoming.timestamp),
           };
         });
@@ -218,31 +240,44 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   useEffect(() => {
     if (!socketError) return;
 
-    setMessages((prev) => {
-      const lastMessage = prev[prev.length - 1];
+    const activeId = streamingMessageIdRef.current;
+    clearSendingTimeout();
+    setSending(false);
+    streamingMessageIdRef.current = null;
 
+    setMessages((prev) => {
+      const updated = activeId
+        ? prev.map((message) =>
+            message.id === activeId
+              ? {
+                  ...message,
+                  isStreaming: false,
+                  failed: true,
+                  error: "Connection lost. Check your internet and try again.",
+                }
+              : message,
+          )
+        : prev;
+
+      const lastMessage = updated[updated.length - 1];
       if (
         lastMessage?.role === "system" &&
         lastMessage.content === socketError
       ) {
-        return prev;
+        return updated;
       }
 
       return [
-        ...prev,
+        ...updated,
         {
           id: `socket-error-${Date.now()}`,
-          role: "system",
+          role: "system" as const,
           content: socketError,
           timestamp: formatMessageTime(),
           failed: true,
         },
       ];
     });
-
-    clearSendingTimeout();
-    setSending(false);
-    streamingMessageIdRef.current = null;
   }, [clearSendingTimeout, setMessages, socketError]);
 
   useEffect(() => {
@@ -364,8 +399,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           message.id === assistantMessageId
             ? {
                 ...message,
-                role: "system",
-                content:
+                role: "assistant" as const,
+                content: message.content || "",
+                error:
                   error instanceof Error
                     ? error.message
                     : "Unable to send your first message. Please try again.",
@@ -404,6 +440,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       minute: "2-digit",
     });
   };
+
+  const getSessionId = () =>
+    localStorage.getItem(`chat-session:${chatId}`) ?? undefined;
 
   const handleSend = async () => {
     const text = input.trim();
@@ -452,7 +491,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
 
     try {
-      sendMessage(text);
+      lastUserMessageRef.current = text;
+
+      sendMessage(text, getSessionId());
       startSendingTimeout(assistantMessageId);
     } catch (error) {
       streamingMessageIdRef.current = null;
@@ -463,8 +504,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           message.id === assistantMessageId
             ? {
                 ...message,
-                role: "system",
-                content:
+                role: "assistant" as const,
+                content: message.content || "",
+                error:
                   error instanceof Error
                     ? error.message
                     : "Unable to send message. Please try again.",
@@ -475,6 +517,46 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         ),
       );
     }
+  };
+
+  // AFTER
+  const handleRetry = (failedAssistantId: string) => {
+    const text = lastUserMessageRef.current;
+    if (!text) return;
+
+    if (!connected) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `retry-not-connected-${Date.now()}`,
+          role: "system" as const,
+          content: connecting
+            ? "Chat is still connecting. Please wait a moment and try again."
+            : "Chat is not connected. Please refresh and try again.",
+          timestamp: formatMessageTime(),
+          failed: true,
+        },
+      ]);
+      return;
+    }
+
+    const assistantMessageId = `assistant-stream-${Date.now()}`;
+    streamingMessageIdRef.current = assistantMessageId;
+
+    setMessages((prev) => [
+      ...prev.filter((m) => m.id !== failedAssistantId),
+      {
+        id: assistantMessageId,
+        role: "assistant" as const,
+        content: "",
+        timestamp: formatMessageTime(),
+        isStreaming: true,
+      },
+    ]);
+
+    setSending(true);
+    sendMessage(text, getSessionId());
+    startSendingTimeout(assistantMessageId);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -613,7 +695,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         ) : (
           <div className="flex flex-col gap-5">
             {messages.map((msg) => (
-              <ChatMessageBubble key={msg.id} message={msg} />
+              <ChatMessageBubble
+                key={msg.id}
+                message={msg}
+                onRetry={handleRetry}
+              />
             ))}
           </div>
         )}
