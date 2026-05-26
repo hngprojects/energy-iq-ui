@@ -66,17 +66,19 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     "";
 
   const isChunk = typeof chunk === "string";
+  const text = chunk ?? fullText;
+  const hasExplicitFinal =
+    Boolean(payload.done) ||
+    Boolean(payload.final) ||
+    Boolean(payload.isFinal) ||
+    Boolean(payload.completed);
 
   return {
     id: payload.id ?? `socket-${Date.now()}`,
     chatId: payload.chatId,
-    text: chunk ?? fullText,
+    text,
     isChunk,
-    isFinal:
-      Boolean(payload.done) ||
-      Boolean(payload.final) ||
-      Boolean(payload.isFinal) ||
-      Boolean(payload.completed),
+    isFinal: hasExplicitFinal || (!isChunk && text.trim().length > 0),
     sessionId: payload.sessionId,
     timestamp: payload.createdAt ?? payload.timestamp,
   };
@@ -85,7 +87,7 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
 export function useChatSocket(chatId: string) {
   const userId = useAuthStore((state) => state.user?.id);
   const token = useAuthStore((state) => state.token);
-  // const hasHydrated = useAuthStore((state) => state._hasHydrated);
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const socketRef = useRef<Socket | null>(null);
   const callbacksRef = useRef<Set<MessageCallback>>(new Set());
@@ -97,7 +99,7 @@ export function useChatSocket(chatId: string) {
   useEffect(() => {
     const socketUrl = getSocketUrl();
 
-    // if (!hasHydrated) return;
+    if (!hasHydrated) return;
 
     if (!socketUrl || !userId || !token) {
       const timer = setTimeout(() => {
@@ -205,7 +207,7 @@ export function useChatSocket(chatId: string) {
       setConnecting(false);
       setSocketError(null);
     };
-  }, [chatId, token, userId]); // hasHydrated,
+  }, [chatId, hasHydrated, token, userId]);
 
   const sendMessage = useCallback(
     (textContent: string, sessionId?: string) => {

@@ -128,7 +128,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               : message,
           ),
         );
-      }, 2000);
+      }, 10_000);
     },
     [clearSendingTimeout, setMessages],
   );

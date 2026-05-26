@@ -11,6 +11,12 @@ import {
   getChatActionsStorageKey,
   saveLocalChatTitle,
 } from "@/lib/chat-actions-storage";
+import {
+  clearChatCreateAttempt,
+  createChatRecoveryToken,
+  findRecoveredCreatedChat,
+  stashChatCreateAttempt,
+} from "@/lib/chat-create-recovery";
 import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 
@@ -27,30 +33,6 @@ function isStackOverflowCreateError(error: unknown) {
   return (
     message.includes("maximum call stack") || message.includes("rangeerror")
   );
-}
-
-function getChatTime(chat: {
-  updatedAt?: string;
-  createdAt?: string;
-  dateLabel?: string;
-}) {
-  const value = chat.updatedAt ?? chat.createdAt ?? chat.dateLabel;
-  if (!value) return 0;
-  const time = new Date(value).getTime();
-  return Number.isNaN(time) ? 0 : time;
-}
-
-async function findRecoveredCreatedChat(requestedAt: number) {
-  const chats = await chatService.getAllChats();
-  return chats
-    .filter((chat) => {
-      const title = chat.title?.trim().toLowerCase();
-      return (
-        getChatTime(chat) >= requestedAt - 60_000 &&
-        (!title || title === "untitled" || title === "untitled chat")
-      );
-    })
-    .sort((a, b) => getChatTime(b) - getChatTime(a))[0];
 }
 
 export function AIAssistantBanner() {
@@ -70,6 +52,9 @@ export function AIAssistantBanner() {
     setSending(true);
 
     const requestedAt = new Date().getTime();
+    const recoveryToken = createChatRecoveryToken();
+
+    stashChatCreateAttempt(userId, recoveryToken, cleanText, requestedAt);
 
     try {
       let chat:
@@ -86,10 +71,17 @@ export function AIAssistantBanner() {
         chat = await chatService.createChat({ startingMessage: cleanText });
       } catch (createError) {
         if (!isStackOverflowCreateError(createError)) throw createError;
-        chat = await findRecoveredCreatedChat(requestedAt);
+
+        chat = await findRecoveredCreatedChat(
+          userId,
+          recoveryToken,
+          cleanText,
+          requestedAt,
+        );
         if (!chat) throw createError;
       }
 
+      clearChatCreateAttempt(userId, recoveryToken);
       if (!chat?.id) {
         throw new Error("The chat was created, but no chat id was returned.");
       }
