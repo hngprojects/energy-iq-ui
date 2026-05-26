@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { chatService } from "@/services/chat-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { ChatMessage, ChatSession } from "@/types/chat";
+import { getUserInitials } from "@/lib/user-initials";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -53,6 +54,7 @@ function getString(value: unknown): string | undefined {
 function normalizeChatMessage(
   message: Record<string, unknown>,
   currentUserId: string,
+  userInitials: string,
 ): ChatMessage {
   const senderId = getString(
     message.senderId ?? message.sender_id ?? message.userId ?? message.user_id,
@@ -87,7 +89,7 @@ function normalizeChatMessage(
           message.updatedAt,
       ),
     ),
-    userInitials: role === "user" ? "AA" : undefined,
+    userInitials: role === "user" ? userInitials : undefined,
   };
 }
 
@@ -95,6 +97,7 @@ export function useActiveChat(chatId: string) {
   const requestSeqRef = useRef(0);
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
+  const userInitials = getUserInitials(user);
 
   const [chatInfo, setChatInfo] = useState<Partial<ChatSession> | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -125,7 +128,7 @@ export function useActiveChat(chatId: string) {
       setMessages(
         Array.isArray(msgs)
           ? (msgs as unknown as Record<string, unknown>[]).map((message) =>
-              normalizeChatMessage(message, userId),
+              normalizeChatMessage(message, userId, userInitials),
             )
           : [],
       );
@@ -141,7 +144,7 @@ export function useActiveChat(chatId: string) {
       if (requestSeq !== requestSeqRef.current) return;
       setLoading(false);
     }
-  }, [chatId, userId, validChatId]);
+  }, [chatId, userId, userInitials, validChatId]);
 
   useEffect(() => {
     void (async () => {

@@ -35,7 +35,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
         </div>
 
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-10 text-xs font-semibold text-amber-80">
-          {message.userInitials ?? "AA"}
+          {message.userInitials ?? "ME"}
         </div>
       </div>
     );

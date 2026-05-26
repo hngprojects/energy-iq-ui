@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { chatService } from "@/services/chat-service";
+import {
+  createLocalChatTitle,
+  getChatActionsStorageKey,
+  saveLocalChatTitle,
+} from "@/lib/chat-actions-storage";
+import { useAuthStore } from "@/stores/auth-store";
+import type { ChatSession } from "@/types/chat";
 
 interface SuggestionCard {
   title: string;
@@ -31,8 +38,41 @@ const SUGGESTIONS: SuggestionCard[] = [
   },
 ];
 
+function isStackOverflowCreateError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("maximum call stack") ||
+    message.includes("rangeerror")
+  );
+}
+
+function getChatTime(chat: ChatSession) {
+  const value = chat.updatedAt ?? chat.createdAt ?? chat.dateLabel;
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+async function findRecoveredCreatedChat(
+  requestedAt: number,
+) {
+  const chats = await chatService.getAllChats();
+  return chats
+    .filter((chat) => {
+      const title = chat.title?.trim().toLowerCase();
+      return (
+        getChatTime(chat) >= requestedAt - 60_000 &&
+        (!title || title === "untitled" || title === "untitled chat")
+      );
+    })
+    .sort((a, b) => getChatTime(b) - getChatTime(a))[0];
+}
+
 export default function NewChatPage() {
   const router = useRouter();
+  const userId = useAuthStore((state) => state.user?.id);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isCreatingChatRef = useRef(false);
 
@@ -54,14 +94,30 @@ export default function NewChatPage() {
     setSending(true);
     setError(null);
 
+    const requestedAt = Date.now();
+
     try {
-      const chat = await chatService.createChat({
-        startingMessage: cleanText,
-      });
+      let chat: ChatSession | undefined;
+
+      try {
+        chat = await chatService.createChat({
+          startingMessage: cleanText,
+        });
+      } catch (createError) {
+        if (!isStackOverflowCreateError(createError)) {
+          throw createError;
+        }
+
+        chat = await findRecoveredCreatedChat(requestedAt);
+        if (!chat) throw createError;
+      }
 
       if (!chat?.id) {
         throw new Error("The chat was created, but no chat id was returned.");
       }
+
+      const title = createLocalChatTitle(cleanText);
+      saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
 
       sessionStorage.setItem(
         `pending-chat-message:${chat.id}`,
