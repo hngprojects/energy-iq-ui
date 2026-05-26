@@ -92,6 +92,10 @@ export default function NewChatPage() {
 
     if (!cleanText || sending) return;
     if (isCreatingChatRef.current) return;
+    if (!userId) {
+      setError("Please wait while your session loads, then try again.");
+      return;
+    }
 
     isCreatingChatRef.current = true;
     setSending(true);
@@ -121,7 +125,9 @@ export default function NewChatPage() {
       }
 
       const title = createLocalChatTitle(cleanText);
-      saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
+      if (userId) {
+        saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
+      }
 
       sessionStorage.setItem(
         `pending-chat-message:${chat.id}`,
@@ -234,7 +240,7 @@ export default function NewChatPage() {
                 type="button"
                 title="Send message"
                 onClick={() => void handleStartConversation(input)}
-                disabled={!input.trim() || sending}
+                disabled={!input.trim() || sending || !userId}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg border-0 p-0 shadow-none transition-colors",
                   input.trim() && !sending

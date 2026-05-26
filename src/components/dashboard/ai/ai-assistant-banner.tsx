@@ -12,6 +12,7 @@ import {
   saveLocalChatTitle,
 } from "@/lib/chat-actions-storage";
 import { useAuthStore } from "@/stores/auth-store";
+import { Button } from "@/components/ui/button";
 
 const suggestions = [
   "Why is my battery low?",
@@ -62,6 +63,7 @@ export function AIAssistantBanner() {
   const handleStartConversation = async (text: string) => {
     const cleanText = text.trim();
     if (!cleanText || sending) return;
+    if (!userId) return;
     if (isCreatingChatRef.current) return;
 
     isCreatingChatRef.current = true;
@@ -93,8 +95,9 @@ export function AIAssistantBanner() {
       }
 
       const title = createLocalChatTitle(cleanText);
-      saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
-
+      if (userId) {
+        saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
+      }
       sessionStorage.setItem(
         `pending-chat-message:${chat.id}`,
         JSON.stringify({
@@ -130,7 +133,6 @@ export function AIAssistantBanner() {
           </p>
         </div>
 
-        {/* Keep CTA link, but route to new chat page */}
         <Link
           href="/dashboard/ai-assistant/new"
           className="bg-background text-foreground hover:bg-primary/90 inline-flex cursor-pointer items-center gap-1 self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors"
@@ -146,15 +148,15 @@ export function AIAssistantBanner() {
 
         <div className="flex flex-wrap gap-2">
           {suggestions.map((s) => (
-            <button
+            <Button
               key={s}
               type="button"
-              disabled={sending}
+              disabled={sending || !userId}
               onClick={() => void handleStartConversation(s)}
               className="border-secondary-foreground/20 bg-secondary-foreground/5 hover:bg-secondary-foreground/10 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
               {s} <ArrowUpRight className="h-3 w-3" />
-            </button>
+            </Button>
           ))}
         </div>
       </div>
