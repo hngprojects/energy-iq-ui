@@ -1,5 +1,16 @@
+"use client";
+
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
+import { chatService } from "@/services/chat-service";
+import {
+  createLocalChatTitle,
+  getChatActionsStorageKey,
+  saveLocalChatTitle,
+} from "@/lib/chat-actions-storage";
+import { useAuthStore } from "@/stores/auth-store";
 
 const suggestions = [
   "Why is my battery low?",
@@ -7,7 +18,96 @@ const suggestions = [
   "Should I run the AC tonight?",
 ];
 
+function isStackOverflowCreateError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("maximum call stack") || message.includes("rangeerror")
+  );
+}
+
+function getChatTime(chat: {
+  updatedAt?: string;
+  createdAt?: string;
+  dateLabel?: string;
+}) {
+  const value = chat.updatedAt ?? chat.createdAt ?? chat.dateLabel;
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+async function findRecoveredCreatedChat(requestedAt: number) {
+  const chats = await chatService.getAllChats();
+  return chats
+    .filter((chat) => {
+      const title = chat.title?.trim().toLowerCase();
+      return (
+        getChatTime(chat) >= requestedAt - 60_000 &&
+        (!title || title === "untitled" || title === "untitled chat")
+      );
+    })
+    .sort((a, b) => getChatTime(b) - getChatTime(a))[0];
+}
+
 export function AIAssistantBanner() {
+  const router = useRouter();
+  const userId = useAuthStore((state) => state.user?.id);
+  const isCreatingChatRef = useRef(false);
+
+  const [sending, setSending] = useState(false);
+
+  const handleStartConversation = async (text: string) => {
+    const cleanText = text.trim();
+    if (!cleanText || sending) return;
+    if (isCreatingChatRef.current) return;
+
+    isCreatingChatRef.current = true;
+    setSending(true);
+
+    const requestedAt = new Date().getTime();
+    try {
+      let chat:
+        | {
+            id: string;
+            title?: string;
+            updatedAt?: string;
+            createdAt?: string;
+            dateLabel?: string;
+          }
+        | undefined;
+
+      try {
+        chat = await chatService.createChat({ startingMessage: cleanText });
+      } catch (createError) {
+        if (!isStackOverflowCreateError(createError)) throw createError;
+        chat = await findRecoveredCreatedChat(requestedAt);
+        if (!chat) throw createError;
+      }
+
+      if (!chat?.id) {
+        throw new Error("The chat was created, but no chat id was returned.");
+      }
+
+      const title = createLocalChatTitle(cleanText);
+      saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
+
+      sessionStorage.setItem(
+        `pending-chat-message:${chat.id}`,
+        JSON.stringify({
+          content: cleanText,
+          timestamp: new Date().toISOString(),
+        }),
+      );
+
+      router.push(`/dashboard/ai-assistant/${chat.id}`);
+    } finally {
+      isCreatingChatRef.current = false;
+      setSending(false);
+    }
+  };
+
   return (
     <div className="bg-secondary text-secondary-foreground rounded-2xl p-5 lg:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -19,26 +119,32 @@ export function AIAssistantBanner() {
             Ask EnergyIQ in English or Pidgin
           </p>
         </div>
+
+        {/* Keep CTA link, but route to new chat page */}
         <Link
-          href="/dashboard/ai-assistant"
+          href="/dashboard/ai-assistant/new"
           className="bg-background text-foreground hover:bg-primary/90 inline-flex cursor-pointer items-center gap-1 self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors"
         >
           Ask Energy AI <ArrowUpRight className="h-4 w-4" />
         </Link>
       </div>
+
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <span className="text-secondary-foreground/60 shrink-0 text-sm">
           Try this:
         </span>
+
         <div className="flex flex-wrap gap-2">
           {suggestions.map((s) => (
-            <Link
+            <button
               key={s}
-              href="/dashboard/ai-assistant"
-              className="border-secondary-foreground/20 bg-secondary-foreground/5 hover:bg-secondary-foreground/10 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors"
+              type="button"
+              disabled={sending}
+              onClick={() => void handleStartConversation(s)}
+              className="border-secondary-foreground/20 bg-secondary-foreground/5 hover:bg-secondary-foreground/10 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
               {s} <ArrowUpRight className="h-3 w-3" />
-            </Link>
+            </button>
           ))}
         </div>
       </div>
