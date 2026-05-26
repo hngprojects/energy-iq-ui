@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/auth-store";
 
 type IncomingPayload =
@@ -125,6 +126,13 @@ export function useChatSocket(chatId: string) {
     });
 
     socketRef.current = socket;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const clearReconnectTimer = () => {
+      if (!reconnectTimer) return;
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    };
 
     const handleMessage = (payload: IncomingPayload) => {
       const message = normalizeIncoming(payload);
@@ -136,14 +144,24 @@ export function useChatSocket(chatId: string) {
     };
 
     socket.on("connect", () => {
+      clearReconnectTimer();
       setConnected(true);
       setConnecting(false);
       setSocketError(null);
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       setConnected(false);
-      setConnecting(false);
+
+      if (reason === "io server disconnect") {
+        setConnecting(true);
+        reconnectTimer = setTimeout(() => {
+          socket.connect();
+        }, 500);
+        return;
+      }
+
+      setConnecting(socket.active);
     });
 
     socket.on("connect_error", (error) => {
@@ -174,6 +192,7 @@ export function useChatSocket(chatId: string) {
 
     return () => {
       clearTimeout(connectingTimer);
+      clearReconnectTimer();
 
       socket.off("chat_action", handleMessage);
       socket.off("new_system_msg", handleMessage);

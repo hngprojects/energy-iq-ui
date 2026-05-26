@@ -17,50 +17,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
-import { ChatMessage } from "@/types/chat";
+import type { ChatMessage } from "@/types/chat";
 import { useChatSocket } from "@/hooks/use-chat-socket";
+import {
+  getChatActionsStorageKey,
+  loadStoredChatActions,
+  saveStoredChatActions,
+} from "@/lib/chat-actions-storage";
+import type { StoredChatActions } from "@/lib/chat-actions-storage";
+import { useAuthStore } from "@/stores/auth-store";
+import { getUserInitials } from "@/lib/user-initials";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
-}
-interface StoredChatActions {
-  deletedIds: string[];
-  archivedIds: string[];
-  pinnedIds: string[];
-  renamedTitles: Record<string, string>;
-}
-const CHAT_ACTIONS_STORAGE_KEY = "energyiq-ai-chat-actions";
-const EMPTY_ACTIONS: StoredChatActions = {
-  deletedIds: [],
-  archivedIds: [],
-  pinnedIds: [],
-  renamedTitles: {},
-};
-function loadStoredActions(): StoredChatActions {
-  if (typeof window === "undefined") return EMPTY_ACTIONS;
-  try {
-    const raw = window.localStorage.getItem(CHAT_ACTIONS_STORAGE_KEY);
-    if (!raw) return EMPTY_ACTIONS;
-    const parsed = JSON.parse(raw) as Partial<StoredChatActions>;
-    return {
-      deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
-      archivedIds: Array.isArray(parsed.archivedIds) ? parsed.archivedIds : [],
-      pinnedIds: Array.isArray(parsed.pinnedIds) ? parsed.pinnedIds : [],
-      renamedTitles:
-        parsed.renamedTitles && typeof parsed.renamedTitles === "object"
-          ? parsed.renamedTitles
-          : {},
-    };
-  } catch {
-    return EMPTY_ACTIONS;
-  }
-}
-function saveStoredActions(actions: StoredChatActions) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    CHAT_ACTIONS_STORAGE_KEY,
-    JSON.stringify(actions),
-  );
 }
 function formatChatHeaderDateTime(chatInfoDate?: string) {
   const rawDate = chatInfoDate ?? new Date().toISOString();
@@ -100,6 +69,7 @@ function formatChatHeaderDateTime(chatInfoDate?: string) {
 }
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
+  const userId = useAuthStore((state) => state.user?.id);
   const resolvedParams = use(params);
   const chatId = resolvedParams.chatId;
   const { chatInfo, messages, setMessages, loading, error } =
@@ -108,9 +78,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const streamingMessageIdRef = useRef<string | null>(null);
+  const pendingMessageSentRef = useRef(false);
+  const userInitials = getUserInitials(useAuthStore((state) => state.user));
+  const storageKey = getChatActionsStorageKey(userId);
 
   const [actions, setActions] = useState<StoredChatActions>(() =>
-    loadStoredActions(),
+    loadStoredChatActions(storageKey),
   );
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -161,10 +134,21 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   ) => {
     setActions((prev) => {
       const next = updater(prev);
-      saveStoredActions(next);
+      saveStoredChatActions(storageKey, next);
       return next;
     });
   };
+
+  useEffect(() => {
+    setActions(loadStoredChatActions(storageKey));
+  }, [storageKey]);
+
+  useEffect(() => {
+    pendingMessageSentRef.current = false;
+    streamingMessageIdRef.current = null;
+    clearSendingTimeout();
+    setSending(false);
+  }, [chatId, clearSendingTimeout]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -262,7 +246,38 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, [clearSendingTimeout, setMessages, socketError]);
 
   useEffect(() => {
+    if (!socketError) return;
+
+    const key = `pending-chat-message:${chatId}`;
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return;
+
+    setMessages((prev) => {
+      const hasPendingNotice = prev.some(
+        (message) =>
+          message.role === "system" &&
+          message.id === `pending-socket-error-${chatId}`,
+      );
+
+      if (hasPendingNotice) return prev;
+
+      return [
+        ...prev,
+        {
+          id: `pending-socket-error-${chatId}`,
+          role: "system",
+          content:
+            "Your message was saved, but the AI connection is not available yet.",
+          timestamp: formatMessageTime(),
+          failed: true,
+        },
+      ];
+    });
+  }, [chatId, setMessages, socketError]);
+
+  useEffect(() => {
     if (!connected) return;
+    if (pendingMessageSentRef.current) return;
 
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
@@ -290,6 +305,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       return;
     }
 
+    pendingMessageSentRef.current = true;
+    sessionStorage.removeItem(key);
+
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
 
@@ -311,7 +329,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 role: "user" as const,
                 content: text,
                 timestamp: formatMessageTime(timestamp),
-                userInitials: "AA",
+                userInitials,
               },
             ]),
         {
@@ -328,9 +346,16 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     try {
       sendMessage(text);
-      sessionStorage.removeItem(key);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
+      sessionStorage.setItem(
+        key,
+        JSON.stringify({
+          content: text,
+          timestamp,
+        }),
+      );
+      pendingMessageSentRef.current = false;
       streamingMessageIdRef.current = null;
       setSending(false);
 
@@ -351,7 +376,14 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         ),
       );
     }
-  }, [chatId, connected, sendMessage, setMessages, startSendingTimeout]);
+  }, [
+    chatId,
+    connected,
+    sendMessage,
+    setMessages,
+    startSendingTimeout,
+    userInitials,
+  ]);
 
   const resetComposer = () => {
     const el = textareaRef.current;
@@ -403,7 +435,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       role: "user",
       content: text,
       timestamp: formatMessageTime(),
-      userInitials: "AA",
+      userInitials,
     };
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
