@@ -135,7 +135,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             };
           }),
         );
-      }, 120_000);
+      }, 30_000);
     },
     [clearSendingTimeout, setMessages],
   );
