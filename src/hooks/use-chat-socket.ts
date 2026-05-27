@@ -10,6 +10,7 @@ type IncomingPayload =
   | {
       id?: string;
       chatId?: string;
+      chat?: { id?: string };
       textContent?: string;
       content?: string;
       message?: string;
@@ -65,17 +66,26 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     payload.description ??
     "";
 
-  const isChunk = typeof chunk === "string";
-  const text = chunk ?? fullText;
+  // Only treat as chunk when there is actual chunk text
+  const hasChunk = typeof chunk === "string" && chunk.length > 0;
+  const text = hasChunk ? chunk : fullText;
+  const isChunk = hasChunk;
+
   const hasExplicitFinal =
     Boolean(payload.done) ||
     Boolean(payload.final) ||
     Boolean(payload.isFinal) ||
     Boolean(payload.completed);
 
+  const resolvedChatId =
+    payload.chatId ??
+    (typeof payload.chat === "object" && payload.chat !== null
+      ? (payload.chat as { id?: string }).id
+      : undefined);
+
   return {
     id: payload.id ?? `socket-${Date.now()}`,
-    chatId: payload.chatId,
+    chatId: resolvedChatId,
     text,
     isChunk,
     isFinal: hasExplicitFinal || (!isChunk && text.trim().length > 0),
@@ -91,6 +101,14 @@ export function useChatSocket(chatId: string) {
 
   const socketRef = useRef<Socket | null>(null);
   const callbacksRef = useRef<Set<MessageCallback>>(new Set());
+  const tokenRef = useRef(token);
+  const userIdRef = useRef(userId);
+
+  // Keep refs in sync without triggering socket recreation
+  useEffect(() => {
+    tokenRef.current = token;
+    userIdRef.current = userId;
+  });
 
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -101,7 +119,10 @@ export function useChatSocket(chatId: string) {
 
     if (!hasHydrated) return;
 
-    if (!socketUrl || !userId || !token) {
+    const activeUserId = userIdRef.current;
+    const activeToken = tokenRef.current;
+
+    if (!socketUrl || !activeUserId || !activeToken) {
       const timer = setTimeout(() => {
         setConnecting(false);
         setSocketError("Chat connection is missing authentication details.");
@@ -115,11 +136,11 @@ export function useChatSocket(chatId: string) {
 
     const socket = io(socketUrl, {
       query: {
-        user_id: userId,
+        user_id: activeUserId,
       },
       auth: {
-        token: withBearer(token),
-        Authorization: withBearer(token),
+        token: withBearer(activeToken),
+        Authorization: withBearer(activeToken),
       },
       transports: ["websocket"],
       reconnection: true,
@@ -185,35 +206,45 @@ export function useChatSocket(chatId: string) {
       setSocketError("A chat connection error occurred.");
     });
 
-    socket.on("chat_action", handleMessage);
+    socket.on("chat_action", (payload: Record<string, unknown>) => {
+      if (payload?.action === "typing") {
+        // Fire typing callbacks here if we want a "orochimaru is typing" indicator
+        // For now, ignore — the streaming placeholder already shows "Typing…"
+      }
+    });
     socket.on("new_system_msg", handleMessage);
     socket.on("agent_msg", handleMessage);
     socket.on("receive_msg", handleMessage);
     socket.on("message", handleMessage);
 
+    const thisSocket = socket;
+
     return () => {
       clearTimeout(connectingTimer);
       clearReconnectTimer();
 
-      socket.off("chat_action", handleMessage);
-      socket.off("new_system_msg", handleMessage);
-      socket.off("agent_msg", handleMessage);
-      socket.off("receive_msg", handleMessage);
-      socket.off("message", handleMessage);
+      thisSocket.off("chat_action", handleMessage);
+      thisSocket.off("new_system_msg", handleMessage);
+      thisSocket.off("agent_msg", handleMessage);
+      thisSocket.off("receive_msg", handleMessage);
+      thisSocket.off("message", handleMessage);
 
-      socket.disconnect();
-      socketRef.current = null;
+      thisSocket.disconnect();
+      if (socketRef.current === thisSocket) {
+        socketRef.current = null;
+      }
       setConnected(false);
       setConnecting(false);
       setSocketError(null);
     };
-  }, [chatId, hasHydrated, token, userId]);
+  }, [chatId, hasHydrated]);
 
   const sendMessage = useCallback(
     (textContent: string, sessionId?: string) => {
       const socket = socketRef.current;
+      const activeUserId = userIdRef.current;
 
-      if (!userId) {
+      if (!activeUserId) {
         throw new Error("User is not available for chat.");
       }
 
@@ -230,12 +261,12 @@ export function useChatSocket(chatId: string) {
       socket.emit("send_msg", {
         chatId,
         contentType: "TEXT",
-        senderId: userId,
+        senderId: activeUserId,
         textContent,
         ...(storedSessionId ? { sessionId: storedSessionId } : {}),
       });
     },
-    [chatId, userId],
+    [chatId],
   );
 
   const joinActiveChats = useCallback(() => {

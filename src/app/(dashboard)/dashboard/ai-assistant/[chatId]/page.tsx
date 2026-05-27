@@ -115,20 +115,27 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         streamingMessageIdRef.current = null;
         setSending(false);
         setMessages((prev) =>
-          prev.map((message) =>
-            message.id === assistantMessageId
-              ? {
-                  ...message,
-                  role: "assistant" as const,
-                  content: message.content || "",
-                  error: "Response timed out. Please try again.",
-                  isStreaming: false,
-                  failed: true,
-                }
-              : message,
-          ),
+          prev.map((message) => {
+            if (message.id !== assistantMessageId) return message;
+            if (message.content?.trim()) {
+              return {
+                ...message,
+                isStreaming: false,
+                failed: false,
+                error: undefined,
+              };
+            }
+            return {
+              ...message,
+              role: "assistant" as const,
+              content: "",
+              error: "Response timed out. Please try again.",
+              isStreaming: false,
+              failed: true,
+            };
+          }),
         );
-      }, 10_000);
+      }, 120_000);
     },
     [clearSendingTimeout, setMessages],
   );
@@ -173,8 +180,37 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
       const activeStreamingId = streamingMessageIdRef.current;
 
+      const isCompleteMessage =
+        incoming.isFinal ||
+        (!incoming.isChunk && incoming.text.trim().length > 0);
+
       setMessages((prev) => {
         if (!activeStreamingId) {
+          // Try to update the last assistant message first (handles late arrivals)
+          const lastAssistantIdx = [...prev]
+            .reverse()
+            .findIndex((m) => m.role === "assistant" || m.role === "ai");
+          if (lastAssistantIdx !== -1) {
+            const idx = prev.length - 1 - lastAssistantIdx;
+            const lastAssistant = prev[idx];
+            // Only update if it's empty/failed or the most recent one
+            if (!lastAssistant.content?.trim() || lastAssistant.failed) {
+              return prev.map((m, i) =>
+                i === idx
+                  ? {
+                      ...m,
+                      content: incoming.text || m.content,
+                      isStreaming: false,
+                      failed: false,
+                      error: undefined,
+                      timestamp: formatMessageTime(incoming.timestamp),
+                    }
+                  : m,
+              );
+            }
+          }
+
+          // Otherwise create a new message as before
           const newMessageId = incoming.id || `assistant-${Date.now()}`;
           streamingMessageIdRef.current = incoming.isFinal
             ? null
@@ -198,7 +234,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             ? `${message.content}${incoming.text}`
             : incoming.text || message.content;
 
-          if (incoming.isFinal) {
+          if (isCompleteMessage) {
             return nextContent.trim()
               ? {
                   ...message,
@@ -230,7 +266,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         localStorage.setItem(`chat-session:${chatId}`, incoming.sessionId);
       }
 
-      if (incoming.isFinal) {
+      if (isCompleteMessage) {
         streamingMessageIdRef.current = null;
         setSending(false);
         clearSendingTimeout();
@@ -313,12 +349,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   useEffect(() => {
     if (!connected) return;
+    if (loading) return;
     if (pendingMessageSentRef.current) return;
 
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
-
     if (!raw) return;
+
+    // Immediately remove from storage to prevent double-send on remount
+    sessionStorage.removeItem(key);
 
     let text = "";
     let timestamp: string | undefined;
@@ -332,27 +371,19 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       text = pending.content?.trim() ?? "";
       timestamp = pending.timestamp;
     } catch {
-      sessionStorage.removeItem(key);
       return;
     }
 
-    if (!text) {
-      sessionStorage.removeItem(key);
-      return;
-    }
+    if (!text) return;
 
     pendingMessageSentRef.current = true;
-    sessionStorage.removeItem(key);
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
 
     setMessages((prev) => {
       const alreadyExists = prev.some(
-        (message) =>
-          message.role === "user" &&
-          message.content.trim() === text &&
-          message.id === `pending-${chatId}`,
+        (message) => message.role === "user" && message.content.trim() === text,
       );
 
       return [
@@ -416,6 +447,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, [
     chatId,
     connected,
+    loading,
+    messages,
     sendMessage,
     setMessages,
     startSendingTimeout,
