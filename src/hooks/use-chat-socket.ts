@@ -26,6 +26,8 @@ type IncomingPayload =
       sessionId?: string;
       createdAt?: string;
       timestamp?: string;
+      token_chunk?: string;
+      stream_end?: boolean;
     };
 
 interface NormalizedMessage {
@@ -58,7 +60,9 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     };
   }
 
-  const chunk = payload.delta ?? payload.token ?? payload.chunk;
+  const chunk =
+    payload.token_chunk ?? payload.delta ?? payload.token ?? payload.chunk;
+
   const fullText =
     payload.textContent ??
     payload.content ??
@@ -72,6 +76,7 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
   const isChunk = hasChunk;
 
   const hasExplicitFinal =
+    Boolean(payload.stream_end) ||
     Boolean(payload.done) ||
     Boolean(payload.final) ||
     Boolean(payload.isFinal) ||
@@ -212,10 +217,9 @@ export function useChatSocket(chatId: string) {
         // For now, ignore — the streaming placeholder already shows "Typing…"
       }
     });
-    socket.on("new_system_msg", handleMessage);
-    socket.on("agent_msg", handleMessage);
-    socket.on("receive_msg", handleMessage);
-    socket.on("message", handleMessage);
+
+    socket.on("token_chunk", handleMessage);
+    socket.on("stream_end", handleMessage);
 
     const thisSocket = socket;
 
@@ -224,10 +228,8 @@ export function useChatSocket(chatId: string) {
       clearReconnectTimer();
 
       thisSocket.off("chat_action", handleMessage);
-      thisSocket.off("new_system_msg", handleMessage);
-      thisSocket.off("agent_msg", handleMessage);
-      thisSocket.off("receive_msg", handleMessage);
-      thisSocket.off("message", handleMessage);
+      thisSocket.off("token_chunk", handleMessage);
+      thisSocket.off("stream_end", handleMessage);
 
       thisSocket.disconnect();
       if (socketRef.current === thisSocket) {
