@@ -49,6 +49,10 @@ export function ProfilePageClient() {
   const [aiLanguage, setAiLanguage] = React.useState(initialLang);
   const [langSaving, setLangSaving] = React.useState(false);
 
+  React.useEffect(() => {
+    setAiLanguage(initialLang);
+  }, [initialLang]);
+
   const handleLanguageSave = async () => {
     if (!aiLanguage || langSaving) return;
     setLangSaving(true);
