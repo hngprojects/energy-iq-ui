@@ -310,14 +310,34 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
       setMessages((prev) => {
         if (!activeStreamingId) {
-          if (incoming.isChunk) return prev; // Try to update the last assistant message first (handles late arrivals)
+          if (incoming.isChunk) return prev;
+
           const lastAssistantIdx = [...prev]
             .reverse()
             .findIndex((m) => m.role === "assistant" || m.role === "ai");
+
           if (lastAssistantIdx !== -1) {
             const idx = prev.length - 1 - lastAssistantIdx;
             const lastAssistant = prev[idx];
-            // Only update if it's empty/failed or the most recent one
+
+            // Clean-text replacement: when new_system_msg arrives with
+            // complete text after streaming, replace streamed content
+            if (incoming.isFinal && incoming.text) {
+              return prev.map((m, i) =>
+                i === idx
+                  ? {
+                      ...m,
+                      content: incoming.text,
+                      isStreaming: false,
+                      failed: false,
+                      error: undefined,
+                      timestamp: formatMessageTime(incoming.timestamp),
+                    }
+                  : m,
+              );
+            }
+
+            // Only update if it's empty/failed
             if (!lastAssistant.content?.trim() || lastAssistant.failed) {
               return prev.map((m, i) =>
                 i === idx
@@ -334,7 +354,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             }
           }
 
-          // Otherwise create a new message as before
+          // Otherwise create a new message
           const newMessageId = incoming.id || `assistant-${Date.now()}`;
           streamingMessageIdRef.current = incoming.isFinal
             ? null
