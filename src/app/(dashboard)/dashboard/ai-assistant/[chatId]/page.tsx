@@ -17,7 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "@/types/chat";
+import type {
+  ChatMessage,
+  AiResponseCard,
+  AiResponseCardType,
+} from "@/types/chat";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import {
   getChatActionsStorageKey,
@@ -82,6 +86,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const pendingMessageSentRef = useRef(false);
   const userInitials = getUserInitials(user);
   const storageKey = getChatActionsStorageKey(userId);
+  const processedSocketIdsRef = useRef<Set<string>>(new Set());
 
   const [actions, setActions] = useState<StoredChatActions>(() =>
     loadStoredChatActions(storageKey),
@@ -97,7 +102,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     connecting,
     socketError,
     sendMessage,
-    // joinActiveChats,
+    joinActiveChats,
     subscribeToSystemMessages,
   } = useChatSocket(chatId);
 
@@ -159,6 +164,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     streamingMessageIdRef.current = null;
     clearSendingTimeout();
     setSending(false);
+    processedSocketIdsRef.current.clear(); // ADD THIS
   }, [chatId, clearSendingTimeout]);
 
   useEffect(() => {
@@ -175,18 +181,26 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
+      const isGeneratedId =
+        typeof incoming.id === "string" && incoming.id.startsWith("socket-");
+      const dedupKey =
+        incoming.id && !isGeneratedId
+          ? incoming.id
+          : `${incoming.chatId || chatId}:${incoming.text}`;
+      if (dedupKey && processedSocketIdsRef.current.has(dedupKey)) return;
+      if (dedupKey) processedSocketIdsRef.current.add(dedupKey);
+
       if (!incoming.text && !incoming.isFinal && !streamingMessageIdRef.current)
         return;
 
       const activeStreamingId = streamingMessageIdRef.current;
 
-      const isCompleteMessage =
-        incoming.isFinal ||
-        (!incoming.isChunk && incoming.text.trim().length > 0);
+      const isCompleteMessage = incoming.isFinal;
 
       // If it's a chunk, add word-by-word streaming delay
       if (
         activeStreamingId &&
+        incoming.isChunk &&
         incoming.text.trim() &&
         incoming.text.includes(" ")
       ) {
@@ -278,12 +292,37 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           if (message.id !== activeStreamingId) return message;
 
           if (isCompleteMessage) {
-            // incoming.text has the full response; message.content might be empty
-            const finalContent = incoming.text || message.content;
-            return finalContent.trim()
+            const rawContent = incoming.text || message.content;
+
+            let parsedContent = rawContent;
+            let cards: AiResponseCard[] | undefined;
+
+            try {
+              const parsed = JSON.parse(rawContent);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                cards = parsed.map((item: Record<string, unknown>) => ({
+                  type: "alert" as AiResponseCardType,
+                  headline: String(item.message || item.type || ""),
+                  description: String(item.message || ""),
+                  severity: (String(item.severity || "").toLowerCase() ===
+                  "critical"
+                    ? "critical"
+                    : String(item.severity || "").toLowerCase() === "warning"
+                      ? "warning"
+                      : "info") as "critical" | "warning" | "info",
+                  dataPoint: String(item.type || ""),
+                }));
+                parsedContent = `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
+              }
+            } catch {
+              // Not JSON — keep raw text as-is
+            }
+
+            return parsedContent.trim() || cards
               ? {
                   ...message,
-                  content: finalContent,
+                  content: parsedContent,
+                  cards,
                   isStreaming: false,
                   timestamp: formatMessageTime(incoming.timestamp),
                 }
@@ -481,9 +520,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     });
   };
 
-  const getSessionId = () =>
-    localStorage.getItem(`chat-session:${chatId}`) ?? undefined;
-
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending) return;
@@ -530,12 +566,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
 
+    sessionStorage.removeItem(`pending-chat-message:${chatId}`);
+
     try {
       lastUserMessageRef.current = text;
 
-      sendMessage(text, getSessionId());
+      sendMessage(text);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
+      joinActiveChats();
       streamingMessageIdRef.current = null;
       setSending(false);
 
@@ -595,9 +634,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     setSending(true);
     try {
-      sendMessage(text, getSessionId());
+      sendMessage(text);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
+      joinActiveChats();
       streamingMessageIdRef.current = null;
       setSending(false);
 

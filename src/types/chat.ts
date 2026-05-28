@@ -12,7 +12,8 @@ export type AiResponseCardType =
   | "summary"
   | "insight"
   | "anomaly"
-  | "recommendation";
+  | "recommendation"
+  | "alert";
 
 export interface AiResponseCard {
   type: AiResponseCardType;
@@ -21,6 +22,7 @@ export interface AiResponseCard {
   severity?: "critical" | "warning" | "info";
   dataPoint?: string;
   actionLabel?: string;
+  cards?: AiResponseCard[];
 }
 
 export interface ChatMessage {

@@ -67,9 +67,7 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     payload.delta ??
     payload.token ??
     payload.chunk ??
-    payload.text ??
-    payload.word ??
-    payload.content;
+    payload.word;
 
   const fullText =
     payload.textContent ??
@@ -91,6 +89,17 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     Boolean(payload.isFinal) ||
     Boolean(payload.completed);
 
+  const isStreamingPayload = Boolean(
+    payload.token_chunk ??
+    payload.delta ??
+    payload.token ??
+    payload.chunk ??
+    payload.word,
+  );
+  const hasCompleteContent =
+    !isStreamingPayload && Boolean(fullText || payload.content);
+  const isFinalComplete = hasExplicitFinal || hasCompleteContent;
+
   const resolvedChatId =
     payload.chatId ??
     (typeof payload.chat === "object" && payload.chat !== null
@@ -102,7 +111,8 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     chatId: resolvedChatId,
     text,
     isChunk,
-    isFinal: hasExplicitFinal || (!isChunk && text.trim().length > 0),
+    isFinal: isFinalComplete,
+    // isFinal: hasExplicitFinal || (!isChunk && text.trim().length > 0),
     sessionId: payload.sessionId,
     timestamp: payload.createdAt ?? payload.timestamp,
   };
@@ -221,12 +231,13 @@ export function useChatSocket(chatId: string) {
       setSocketError("A chat connection error occurred.");
     });
 
-    socket.on("chat_action", (payload: Record<string, unknown>) => {
+    const handleChatAction = (payload: Record<string, unknown>) => {
       if (payload?.action === "typing") {
-        // Fire typing callbacks here if we want a "orochimaru is typing" indicator
-        // For now, ignore — the streaming placeholder already shows "Typing…"
+        // placeholder for typing indicator if needed later
       }
-    });
+    };
+
+    socket.on("chat_action", handleChatAction);
 
     socket.on("token_chunk", handleMessage);
     socket.on("stream_end", handleMessage);
@@ -241,7 +252,7 @@ export function useChatSocket(chatId: string) {
       clearTimeout(connectingTimer);
       clearReconnectTimer();
 
-      thisSocket.off("chat_action", handleMessage);
+      thisSocket.off("chat_action", handleChatAction);
       socket.off("token_chunk", handleMessage);
       socket.off("stream_end", handleMessage);
       socket.off("new_system_msg", handleMessage);
@@ -262,7 +273,7 @@ export function useChatSocket(chatId: string) {
   }, [chatId, hasHydrated]);
 
   const sendMessage = useCallback(
-    (textContent: string, sessionId?: string) => {
+    (textContent: string) => {
       const socket = socketRef.current;
       const activeUserId = userIdRef.current;
 
@@ -274,18 +285,11 @@ export function useChatSocket(chatId: string) {
         throw new Error("Chat socket is not connected.");
       }
 
-      const storedSessionId =
-        sessionId ??
-        (typeof window !== "undefined"
-          ? localStorage.getItem(`chat-session:${chatId}`)
-          : null);
-
       socket.emit("send_msg", {
         chatId,
         contentType: "TEXT",
         senderId: activeUserId,
         textContent,
-        ...(storedSessionId ? { sessionId: storedSessionId } : {}),
       });
     },
     [chatId],
