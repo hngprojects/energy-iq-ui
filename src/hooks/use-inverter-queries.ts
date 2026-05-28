@@ -24,6 +24,9 @@ export const useInverterQueries = () => {
         queryClient.invalidateQueries({
           queryKey: ["user-inverters", user?.id],
         });
+        queryClient.invalidateQueries({
+          queryKey: ["onboarding-status", user?.id],
+        });
 
         toast.success("Inverter connected successfully!");
         onSuccess?.();
@@ -90,3 +93,4 @@ export const useInverterQueries = () => {
     usePowerConsumption,
   };
 };
+
