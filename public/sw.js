@@ -12,15 +12,23 @@ const STATIC_ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) =>
+    caches.open(CACHE_NAME).then((cache) => {
+      const REQUIRED_ASSETS = ["/offline.html"];
+      const OPTIONAL_ASSETS = STATIC_ASSETS.filter(
+        (asset) => !REQUIRED_ASSETS.includes(asset),
+      );
+
+      return Promise.all([
+        ...REQUIRED_ASSETS.map((asset) =>
+          cache.add(new Request(asset, { cache: "reload" })),
+        ),
         Promise.allSettled(
-          STATIC_ASSETS.map((asset) =>
+          OPTIONAL_ASSETS.map((asset) =>
             cache.add(new Request(asset, { cache: "reload" })),
           ),
         ),
-      ),
+      ]);
+    }),
   );
   self.skipWaiting();
 });

@@ -13,8 +13,11 @@ export function ServiceWorkerRegister() {
           .catch((err) => console.error("SW registration failed:", err));
       };
 
-      window.addEventListener("load", registerServiceWorker);
-
+      if (document.readyState === "complete") {
+        registerServiceWorker();
+      } else {
+        window.addEventListener("load", registerServiceWorker);
+      }
       return () => {
         window.removeEventListener("load", registerServiceWorker);
       };
