@@ -1,7 +1,10 @@
-const CACHE_NAME = "energy-iq-v1";
+const CACHE_NAME = "energy-iq-v2";
 const STATIC_ASSETS = [
   "/offline.html",
   "/manifest.json",
+  "/favicon.svg",
+  "/favicon-16x16.png",
+  "/favicon-32x32.png",
   "/icons/android-chrome-192x192.png",
   "/icons/android-chrome-512x512.png",
   "/icons/apple-touch-icon.png",
@@ -9,7 +12,15 @@ const STATIC_ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        Promise.allSettled(
+          STATIC_ASSETS.map((asset) =>
+            cache.add(new Request(asset, { cache: "reload" })),
+          ),
+        ),
+      ),
   );
   self.skipWaiting();
 });
@@ -20,9 +31,9 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-        )
-      )
+          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -46,7 +57,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      })
+      }),
     );
     return;
   }
@@ -54,7 +65,7 @@ self.addEventListener("fetch", (event) => {
   // Navigation requests — network first, fall back to offline page
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/offline.html"))
+      fetch(request).catch(() => caches.match("/offline.html")),
     );
     return;
   }
@@ -75,7 +86,7 @@ self.addEventListener("fetch", (event) => {
             }
             return response;
           })
-          .catch(() => caches.match(request))
-    )
+          .catch(() => caches.match(request)),
+    ),
   );
 });
