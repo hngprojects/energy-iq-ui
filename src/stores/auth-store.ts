@@ -35,6 +35,21 @@ interface AuthState {
   setHasHydrated: (value: boolean) => void;
 }
 
+function normalizeUser(user: User | null): User | null {
+  if (!user) return null;
+  const rawUser = user as unknown as Record<string, unknown>;
+  if ("AiLanguage" in rawUser && typeof rawUser.AiLanguage === "string") {
+    const normalized: User = {
+      ...user,
+      aiLanguage: user.aiLanguage ?? rawUser.AiLanguage,
+    };
+    const cleaned = { ...normalized } as unknown as Record<string, unknown>;
+    delete cleaned.AiLanguage;
+    return cleaned as unknown as User;
+  }
+  return user;
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -55,14 +70,14 @@ export const useAuthStore = create<AuthState>()(
         }
         setSessionCookie(rememberMe);
         set({
-          user,
+          user: normalizeUser(user),
           token,
           refreshToken,
           isAuthenticated: true,
           tempEmail: null,
         });
       },
-      setUser: (user) => set({ user }),
+      setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
       setHasHydrated: (value) => set({ _hasHydrated: value }),
       logout: () => {
@@ -91,6 +106,9 @@ export const useAuthStore = create<AuthState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (typeof window === "undefined" || !state) return;
+        if (state.user) {
+          state.user = normalizeUser(state.user);
+        }
         const rememberMe = localStorage.getItem("remember_me") === "1";
         const sessionActive = sessionStorage.getItem("session_active") === "1";
 
