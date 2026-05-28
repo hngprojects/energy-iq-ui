@@ -13,7 +13,7 @@ export function LanguageToggle() {
   const [isUpdating, setIsUpdating] = React.useState(false);
 
   const currentLanguage = React.useMemo(() => {
-    const rawLang = user?.aiLanguage ?? user?.AiLanguage;
+    const rawLang = user?.aiLanguage;
     if (rawLang) {
       const normalized = rawLang.toLowerCase();
       if (normalized === "pidgin" || normalized === "english") {
@@ -32,7 +32,6 @@ export function LanguageToggle() {
 
     setUser({
       ...user,
-      AiLanguage: newLang,
       aiLanguage: newLang,
     });
 

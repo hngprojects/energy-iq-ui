@@ -11,7 +11,6 @@ export interface User {
   businessType?: string;
   state?: string;
   city?: string;
-  AiLanguage?: string;
   aiLanguage?: string;
 }
 

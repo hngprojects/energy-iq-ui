@@ -43,7 +43,7 @@ export function ProfilePageClient() {
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
 
   const { setUser } = useAuthStore();
-  const resolvedLang = (user?.aiLanguage ?? user?.AiLanguage ?? "").toLowerCase();
+  const resolvedLang = (user?.aiLanguage ?? "").toLowerCase();
   const initialLang =
     resolvedLang === "pidgin" || resolvedLang === "english" ? resolvedLang : "";
   const [aiLanguage, setAiLanguage] = React.useState(initialLang);
@@ -62,7 +62,6 @@ export function ProfilePageClient() {
         setUser({
           ...user,
           aiLanguage,
-          AiLanguage: aiLanguage,
           ...updated,
         });
       }
