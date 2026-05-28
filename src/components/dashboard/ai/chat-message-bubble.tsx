@@ -56,7 +56,12 @@ export function ChatMessageBubble({
         <div className="flex flex-col gap-1">
           <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
             {message.isStreaming && !message.failed ? (
-              <p className="mb-2 text-xs text-muted-foreground">Typing…</p>
+              <div className="mb-2 flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Typing</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+              </div>
             ) : null}
             {message.failed && message.error ? (
               <p className="mb-2 text-sm text-destructive">{message.error}</p>
