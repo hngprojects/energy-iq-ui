@@ -43,7 +43,7 @@ export function ProfilePageClient() {
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
 
   const { setUser } = useAuthStore();
-  const resolvedLang = (user?.AiLanguage ?? user?.aiLanguage ?? "").toLowerCase();
+  const resolvedLang = (user?.aiLanguage ?? user?.AiLanguage ?? "").toLowerCase();
   const initialLang =
     resolvedLang === "pidgin" || resolvedLang === "english" ? resolvedLang : "";
   const [aiLanguage, setAiLanguage] = React.useState(initialLang);
@@ -61,8 +61,8 @@ export function ProfilePageClient() {
       if (user) {
         setUser({
           ...user,
-          AiLanguage: aiLanguage,
           aiLanguage,
+          AiLanguage: aiLanguage,
           ...updated,
         });
       }
@@ -411,8 +411,13 @@ export function ProfilePageClient() {
                   : ""
               }
               onChange={(val) => {
-                const apiValue = val === "English" ? "english" : "pidgin";
-                setAiLanguage(apiValue);
+                if (val === "English") {
+                  setAiLanguage("english");
+                } else if (val === "Nigerian Pidgin") {
+                  setAiLanguage("pidgin");
+                } else {
+                  setAiLanguage("");
+                }
               }}
               options={["English", "Nigerian Pidgin"]}
               placeholder="Select language (default: auto-detect)"
