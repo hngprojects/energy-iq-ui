@@ -118,8 +118,9 @@ export default function NewChatPage() {
         saveLocalChatTitle(getChatActionsStorageKey(userId), chat.id, title);
       }
 
+      const pendingKey = `pending-chat-message:${chat.id}`;
       sessionStorage.setItem(
-        `pending-chat-message:${chat.id}`,
+        pendingKey,
         JSON.stringify({
           content: cleanText,
           timestamp: new Date().toISOString(),
