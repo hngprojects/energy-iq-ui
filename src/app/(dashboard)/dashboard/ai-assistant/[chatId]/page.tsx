@@ -36,6 +36,7 @@ import { getUserInitials } from "@/lib/user-initials";
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
 }
+
 function formatChatHeaderDateTime(chatInfoDate?: string) {
   const rawDate = chatInfoDate ?? new Date().toISOString();
   const date = new Date(rawDate);
@@ -72,6 +73,41 @@ function formatChatHeaderDateTime(chatInfoDate?: string) {
     .toLowerCase();
   return `${dateLabel}, ${timeLabel}`;
 }
+
+interface ParseResult {
+  cards: AiResponseCard[];
+  summary: string;
+}
+
+function parseAlertCards(raw: string): ParseResult | null {
+  let parsed: Record<string, unknown>[];
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+  const cards: AiResponseCard[] = parsed.map((item) => ({
+    type: "alert" as AiResponseCardType,
+    headline: String(item.type || item.message || "Alert")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()),
+    description: String(item.message || ""),
+    severity: (String(item.severity || "").toLowerCase() === "critical"
+      ? "critical"
+      : String(item.severity || "").toLowerCase() === "warning"
+        ? "warning"
+        : "info") as "critical" | "warning" | "info",
+    dataPoint: String(item.type || ""),
+  }));
+
+  return {
+    cards,
+    summary: `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`,
+  };
+}
+
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -165,7 +201,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     streamingMessageIdRef.current = null;
     clearSendingTimeout();
     setSending(false);
-    processedSocketIdsRef.current.clear(); // ADD THIS
+    processedSocketIdsRef.current.clear();
   }, [chatId, clearSendingTimeout]);
 
   useEffect(() => {
@@ -184,10 +220,16 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     return subscribeToSystemMessages((incoming) => {
       const isGeneratedId =
         typeof incoming.id === "string" && incoming.id.startsWith("socket-");
-      const dedupKey =
-        incoming.id && !isGeneratedId
-          ? incoming.id
-          : `${incoming.chatId || chatId}:${incoming.text}`;
+
+      let dedupKey: string | undefined;
+      if (incoming.isChunk) {
+        dedupKey = incoming.id;
+      } else if (incoming.id && !isGeneratedId) {
+        dedupKey = incoming.id;
+      } else {
+        dedupKey = `${incoming.chatId || chatId}:${incoming.text}`;
+      }
+
       if (dedupKey && processedSocketIdsRef.current.has(dedupKey)) return;
       if (dedupKey) processedSocketIdsRef.current.add(dedupKey);
 
@@ -205,33 +247,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         incoming.text.trim().startsWith("[")
       ) {
         const rawText = incoming.text;
-        let parsedCards: AiResponseCard[] | undefined;
-        let parsedContent = rawText;
-
+        let result: ParseResult | null = null;
         try {
-          const parsed = JSON.parse(rawText);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            parsedCards = parsed.map((item: Record<string, unknown>) => ({
-              type: "alert" as AiResponseCardType,
-              headline: String(item.type || item.message || "Alert")
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase()),
-              description: String(item.message || ""),
-              severity: (String(item.severity || "").toLowerCase() ===
-              "critical"
-                ? "critical"
-                : String(item.severity || "").toLowerCase() === "warning"
-                  ? "warning"
-                  : "info") as "critical" | "warning" | "info",
-              dataPoint: String(item.type || ""),
-            }));
-            parsedContent = `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
-          }
+          result = parseAlertCards(rawText);
         } catch {
-          // Not valid JSON — fall through to word-by-word below
+          // not valid JSON — fall through
         }
 
-        if (parsedCards && parsedCards.length > 0) {
+        if (result) {
+          const { cards: parsedCards, summary: parsedContent } = result;
           setMessages((prev) => {
             const currentMessage = prev.find((m) => m.id === activeStreamingId);
             if (!currentMessage) return prev;
@@ -260,54 +284,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           return;
         }
       }
-
-      /* // === Word-by-word streaming (only for human-readable text) ===
-      if (
-        activeStreamingId &&
-        incoming.isChunk &&
-        incoming.text.trim() &&
-        incoming.text.includes(" ") &&
-        !incoming.text.trim().startsWith("[")
-      ) {
-        const words = incoming.text.split(" ");
-        let wordIndex = 0;
-
-        const addNextWord = () => {
-          if (wordIndex < words.length) {
-            setMessages((prev) => {
-              return prev.map((message) => {
-                if (message.id !== activeStreamingId) return message;
-                const nextContent = `${message.content}${wordIndex > 0 ? " " : ""}${words[wordIndex]}`;
-                const isLastWord = wordIndex === words.length - 1;
-                return {
-                  ...message,
-                  content: nextContent,
-                  isStreaming: !isLastWord,
-                  timestamp: formatMessageTime(incoming.timestamp),
-                };
-              });
-            });
-
-            wordIndex++;
-            if (wordIndex < words.length) {
-              setTimeout(addNextWord, 60);
-            } else {
-              streamingMessageIdRef.current = null;
-              setSending(false);
-              clearSendingTimeout();
-              if (incoming.sessionId) {
-                localStorage.setItem(
-                  `chat-session:${chatId}`,
-                  incoming.sessionId,
-                );
-              }
-              return;
-            }
-          }
-        };
-        addNextWord();
-        return;
-      } */
 
       setMessages((prev) => {
         if (!activeStreamingId) {
@@ -382,24 +358,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             let cards = existingCards;
 
             try {
-              const parsed = JSON.parse(rawContent);
-              if (Array.isArray(parsed) && parsed.length > 0) {
+              const r = parseAlertCards(rawContent);
+              if (r) {
                 const mergedCards = [...existingCards];
-                for (const item of parsed) {
-                  const card = {
-                    type: "alert" as AiResponseCardType,
-                    headline: String(item.type || item.message || "Alert")
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase()),
-                    description: String(item.message || ""),
-                    severity: (String(item.severity || "").toLowerCase() ===
-                    "critical"
-                      ? "critical"
-                      : String(item.severity || "").toLowerCase() === "warning"
-                        ? "warning"
-                        : "info") as "critical" | "warning" | "info",
-                    dataPoint: String(item.type || ""),
-                  };
+                for (const card of r.cards) {
                   const isDuplicate = mergedCards.some(
                     (c) => c.description === card.description,
                   );
@@ -410,8 +372,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   existingCards.length > 0
                     ? (message.content || "").startsWith("Found ")
                       ? message.content
-                      : parsedContent
-                    : `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
+                      : r.summary
+                    : r.summary;
               }
             } catch {
               // Not JSON — keep raw text as-is
@@ -442,27 +404,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
           // First chunk might be JSON data dump — parse into cards
           if (rawText.trim().startsWith("[")) {
-            try {
-              const parsed = JSON.parse(rawText);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                cards = parsed.map((item: Record<string, unknown>) => ({
-                  type: "alert" as AiResponseCardType,
-                  headline: String(item.type || item.message || "Alert")
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase()),
-                  description: String(item.message || ""),
-                  severity: (String(item.severity || "").toLowerCase() ===
-                  "critical"
-                    ? "critical"
-                    : String(item.severity || "").toLowerCase() === "warning"
-                      ? "warning"
-                      : "info") as "critical" | "warning" | "info",
-                  dataPoint: String(item.type || ""),
-                }));
-                appendContent = `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
-              }
-            } catch {
-              appendContent = rawText;
+            const r = parseAlertCards(rawText);
+            if (r) {
+              cards = r.cards;
+              appendContent = r.summary;
             }
           }
 

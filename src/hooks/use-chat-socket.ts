@@ -55,7 +55,7 @@ function withBearer(token: string) {
 function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
   if (typeof payload === "string") {
     return {
-      id: `socket-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: `socket-${Date.now()}-${crypto.randomUUID()}`,
       text: payload,
       isChunk: true,
       isFinal: false,
@@ -89,13 +89,8 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
     Boolean(payload.isFinal) ||
     Boolean(payload.completed);
 
-  const isStreamingPayload = Boolean(
-    payload.token_chunk ??
-    payload.delta ??
-    payload.token ??
-    payload.chunk ??
-    payload.word,
-  );
+  const isStreamingPayload = Boolean(chunk);
+
   const hasCompleteContent =
     !isStreamingPayload && Boolean(fullText || payload.content);
   const isFinalComplete = hasExplicitFinal || hasCompleteContent;
@@ -107,9 +102,7 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
       : undefined);
 
   return {
-    id:
-      payload.id ??
-      `socket-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id: payload.id ?? `socket-${Date.now()}-${crypto.randomUUID()}`,
     chatId: resolvedChatId,
     text,
     isChunk,
@@ -143,12 +136,12 @@ export function useChatSocket(chatId: string) {
   useEffect(() => {
     const socketUrl = getSocketUrl();
 
-    if (!hasHydrated) return;
+    if (!hasHydrated || !userId || !token) return;
 
-    const activeUserId = userIdRef.current;
-    const activeToken = tokenRef.current;
+    const activeUserId = userId;
+    const activeToken = token;
 
-    if (!socketUrl || !activeUserId || !activeToken) {
+    if (!socketUrl) {
       const timer = setTimeout(() => {
         setConnecting(false);
         setSocketError("Chat connection is missing authentication details.");
@@ -239,24 +232,26 @@ export function useChatSocket(chatId: string) {
       }
     };
 
-    socket.on("chat_action", handleChatAction);
-
-    socket.on("token_chunk", (payload: IncomingPayload) => {
+    const handleTokenChunk = (payload: IncomingPayload) => {
       const message = normalizeIncoming(payload);
-      // token_chunk is ALWAYS a streaming chunk by definition
       message.isChunk = true;
       message.isFinal = false;
       if (message.chatId && message.chatId !== chatId) return;
       callbacksRef.current.forEach((callback) => callback(message));
-    });
-    socket.on("stream_end", (payload: IncomingPayload) => {
+    };
+
+    const handleStreamEnd = (payload: IncomingPayload) => {
       const message = normalizeIncoming(payload);
-      // stream_end marks the end of streaming
       message.isFinal = true;
       message.isChunk = false;
       if (message.chatId && message.chatId !== chatId) return;
       callbacksRef.current.forEach((callback) => callback(message));
-    });
+    };
+
+    socket.on("chat_action", handleChatAction);
+
+    socket.on("token_chunk", handleTokenChunk);
+    socket.on("stream_end", handleStreamEnd);
     socket.on("new_system_msg", handleMessage);
     socket.on("agent_msg", handleMessage);
     socket.on("receive_msg", handleMessage);
@@ -269,8 +264,8 @@ export function useChatSocket(chatId: string) {
       clearReconnectTimer();
 
       thisSocket.off("chat_action", handleChatAction);
-      socket.off("token_chunk", handleMessage);
-      socket.off("stream_end", handleMessage);
+      thisSocket.off("token_chunk", handleTokenChunk);
+      thisSocket.off("stream_end", handleStreamEnd);
       socket.off("new_system_msg", handleMessage);
       socket.off("agent_msg", handleMessage);
       socket.off("receive_msg", handleMessage);
@@ -286,7 +281,7 @@ export function useChatSocket(chatId: string) {
       setConnecting(false);
       setSocketError(null);
     };
-  }, [chatId, hasHydrated]);
+  }, [chatId, hasHydrated, userId, token]);
 
   const sendMessage = useCallback(
     (textContent: string) => {
