@@ -55,7 +55,7 @@ function withBearer(token: string) {
 function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
   if (typeof payload === "string") {
     return {
-      id: `socket-${Date.now()}`,
+      id: `socket-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       text: payload,
       isChunk: true,
       isFinal: false,
@@ -107,7 +107,9 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
       : undefined);
 
   return {
-    id: payload.id ?? `socket-${Date.now()}`,
+    id:
+      payload.id ??
+      `socket-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     chatId: resolvedChatId,
     text,
     isChunk,
@@ -239,8 +241,22 @@ export function useChatSocket(chatId: string) {
 
     socket.on("chat_action", handleChatAction);
 
-    socket.on("token_chunk", handleMessage);
-    socket.on("stream_end", handleMessage);
+    socket.on("token_chunk", (payload: IncomingPayload) => {
+      const message = normalizeIncoming(payload);
+      // token_chunk is ALWAYS a streaming chunk by definition
+      message.isChunk = true;
+      message.isFinal = false;
+      if (message.chatId && message.chatId !== chatId) return;
+      callbacksRef.current.forEach((callback) => callback(message));
+    });
+    socket.on("stream_end", (payload: IncomingPayload) => {
+      const message = normalizeIncoming(payload);
+      // stream_end marks the end of streaming
+      message.isFinal = true;
+      message.isChunk = false;
+      if (message.chatId && message.chatId !== chatId) return;
+      callbacksRef.current.forEach((callback) => callback(message));
+    });
     socket.on("new_system_msg", handleMessage);
     socket.on("agent_msg", handleMessage);
     socket.on("receive_msg", handleMessage);

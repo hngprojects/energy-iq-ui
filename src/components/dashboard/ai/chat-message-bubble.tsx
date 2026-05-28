@@ -63,7 +63,7 @@ export function ChatMessageBubble({
             ) : null}
             {message.content ? (
               <p className="wrap-break-word whitespace-pre-wrap text-sm text-foreground">
-                {message.content}
+                {String(message.content)}
               </p>
             ) : null}
             {message.alertCard ? (

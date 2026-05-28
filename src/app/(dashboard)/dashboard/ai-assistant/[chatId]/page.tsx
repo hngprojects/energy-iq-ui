@@ -197,12 +197,76 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
       const isCompleteMessage = incoming.isFinal;
 
-      // If it's a chunk, add word-by-word streaming delay
+      // === JSON data dump handler (runs BEFORE word-by-word) ===
+      if (
+        incoming.isChunk &&
+        incoming.text &&
+        incoming.text.trim().startsWith("[")
+      ) {
+        const rawText = incoming.text;
+        let parsedCards: AiResponseCard[] | undefined;
+        let parsedContent = rawText;
+
+        try {
+          const parsed = JSON.parse(rawText);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            parsedCards = parsed.map((item: Record<string, unknown>) => ({
+              type: "alert" as AiResponseCardType,
+              headline: String(item.type || item.message || "Alert")
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+              description: String(item.message || ""),
+              severity: (String(item.severity || "").toLowerCase() ===
+              "critical"
+                ? "critical"
+                : String(item.severity || "").toLowerCase() === "warning"
+                  ? "warning"
+                  : "info") as "critical" | "warning" | "info",
+              dataPoint: String(item.type || ""),
+            }));
+            parsedContent = `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
+          }
+        } catch {
+          // Not valid JSON — fall through to word-by-word below
+        }
+
+        if (parsedCards && parsedCards.length > 0) {
+          setMessages((prev) => {
+            const currentMessage = prev.find((m) => m.id === activeStreamingId);
+            if (!currentMessage) return prev;
+            const existingCards = currentMessage.cards || [];
+            const mergedCards = [...existingCards];
+            for (const card of parsedCards) {
+              const isDuplicate = mergedCards.some(
+                (c) => c.description === card.description,
+              );
+              if (!isDuplicate) mergedCards.push(card);
+            }
+            const hasHumanText =
+              currentMessage.content &&
+              !currentMessage.content.startsWith("Found ");
+            return prev.map((m) =>
+              m.id === activeStreamingId
+                ? {
+                    ...m,
+                    content: hasHumanText ? m.content : parsedContent,
+                    cards: mergedCards,
+                    timestamp: formatMessageTime(incoming.timestamp),
+                  }
+                : m,
+            );
+          });
+          return;
+        }
+      }
+
+      /* // === Word-by-word streaming (only for human-readable text) ===
       if (
         activeStreamingId &&
         incoming.isChunk &&
         incoming.text.trim() &&
-        incoming.text.includes(" ")
+        incoming.text.includes(" ") &&
+        !incoming.text.trim().startsWith("[")
       ) {
         const words = incoming.text.split(" ");
         let wordIndex = 0;
@@ -227,7 +291,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             if (wordIndex < words.length) {
               setTimeout(addNextWord, 60);
             } else {
-              // All words displayed — mark complete
               streamingMessageIdRef.current = null;
               setSending(false);
               clearSendingTimeout();
@@ -243,11 +306,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         };
         addNextWord();
         return;
-      }
+      } */
 
       setMessages((prev) => {
         if (!activeStreamingId) {
-          // Try to update the last assistant message first (handles late arrivals)
+          if (incoming.isChunk) return prev; // Try to update the last assistant message first (handles late arrivals)
           const lastAssistantIdx = [...prev]
             .reverse()
             .findIndex((m) => m.role === "assistant" || m.role === "ai");
@@ -293,32 +356,47 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
           if (isCompleteMessage) {
             const rawContent = incoming.text || message.content;
-
+            const existingCards = message.cards || [];
             let parsedContent = rawContent;
-            let cards: AiResponseCard[] | undefined;
+            let cards = existingCards;
 
             try {
               const parsed = JSON.parse(rawContent);
               if (Array.isArray(parsed) && parsed.length > 0) {
-                cards = parsed.map((item: Record<string, unknown>) => ({
-                  type: "alert" as AiResponseCardType,
-                  headline: String(item.message || item.type || ""),
-                  description: String(item.message || ""),
-                  severity: (String(item.severity || "").toLowerCase() ===
-                  "critical"
-                    ? "critical"
-                    : String(item.severity || "").toLowerCase() === "warning"
-                      ? "warning"
-                      : "info") as "critical" | "warning" | "info",
-                  dataPoint: String(item.type || ""),
-                }));
-                parsedContent = `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
+                const mergedCards = [...existingCards];
+                for (const item of parsed) {
+                  const card = {
+                    type: "alert" as AiResponseCardType,
+                    headline: String(item.type || item.message || "Alert")
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase()),
+                    description: String(item.message || ""),
+                    severity: (String(item.severity || "").toLowerCase() ===
+                    "critical"
+                      ? "critical"
+                      : String(item.severity || "").toLowerCase() === "warning"
+                        ? "warning"
+                        : "info") as "critical" | "warning" | "info",
+                    dataPoint: String(item.type || ""),
+                  };
+                  const isDuplicate = mergedCards.some(
+                    (c) => c.description === card.description,
+                  );
+                  if (!isDuplicate) mergedCards.push(card);
+                }
+                cards = mergedCards;
+                parsedContent =
+                  existingCards.length > 0
+                    ? (message.content || "").startsWith("Found ")
+                      ? message.content
+                      : parsedContent
+                    : `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
               }
             } catch {
               // Not JSON — keep raw text as-is
             }
 
-            return parsedContent.trim() || cards
+            return parsedContent.trim() || cards.length > 0
               ? {
                   ...message,
                   content: parsedContent,
@@ -337,13 +415,50 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           }
 
           // Non-final: keep streaming
-          const nextContent = incoming.isChunk
-            ? `${message.content}${incoming.text}`
-            : message.content;
+          const rawText = incoming.text || "";
+          let cards = message.cards;
+          let appendContent = rawText;
+
+          // First chunk might be JSON data dump — parse into cards
+          if (rawText.trim().startsWith("[")) {
+            try {
+              const parsed = JSON.parse(rawText);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                cards = parsed.map((item: Record<string, unknown>) => ({
+                  type: "alert" as AiResponseCardType,
+                  headline: String(item.type || item.message || "Alert")
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase()),
+                  description: String(item.message || ""),
+                  severity: (String(item.severity || "").toLowerCase() ===
+                  "critical"
+                    ? "critical"
+                    : String(item.severity || "").toLowerCase() === "warning"
+                      ? "warning"
+                      : "info") as "critical" | "warning" | "info",
+                  dataPoint: String(item.type || ""),
+                }));
+                appendContent = `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`;
+              }
+            } catch {
+              appendContent = rawText;
+            }
+          }
+
+          const currentContent = message.content || "";
+          const needsSpace =
+            currentContent.length > 0 &&
+            !currentContent.endsWith(" ") &&
+            !rawText.startsWith(" ");
+          const nextContent =
+            incoming.isChunk && appendContent === rawText
+              ? `${currentContent}${needsSpace ? " " : ""}${rawText}`
+              : appendContent;
 
           return {
             ...message,
             content: nextContent,
+            cards,
             isStreaming: true,
             timestamp: formatMessageTime(incoming.timestamp),
           };
