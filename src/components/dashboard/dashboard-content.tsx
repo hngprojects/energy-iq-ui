@@ -149,7 +149,7 @@ export function DashboardContent() {
 
   const chartData: ChartRow[] = Array.isArray(energyUsage?.data)
     ? energyUsage.data.map((p) => ({
-        day: formatChartLabel(p?.date, period),
+        day: p?.date ? formatChartLabel(p.date, period) : "",
         generated: p?.solarKwh ?? 0,
         used: p?.avgLoadKw ?? 0,
       }))
