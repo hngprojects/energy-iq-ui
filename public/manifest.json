@@ -1,18 +1,23 @@
 {
+  "id": "/",
   "name": "Energy IQ",
-  "short_name": "Energy IQ",
+  "short_name": "EnergyIQ",
   "description": "Energy IQ is a smart energy monitoring platform for tracking usage, optimizing power consumption, and improving energy efficiency.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#FFFFFF",
-  "theme_color": "#000000",
+  "background_color": "#f9fafb",
+  "theme_color": "#f5a623",
+  "categories": ["utilities", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/android-chrome-512x512.png",
@@ -27,4 +32,3 @@
     }
   ]
 }
-
