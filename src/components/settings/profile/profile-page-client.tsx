@@ -13,6 +13,9 @@ import { SelectField } from "@/components/settings/select-field";
 import { PhotoUploadDialog } from "./photo-upload-dialog";
 import { PhotoSuccessDialog } from "./photo-success-dialog";
 import { ProfileUpdateRequest } from "@/types/profile";
+import { ProfileService } from "@/services/profile-service";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   BUSINESS_TYPES,
   NIGERIAN_STATES,
@@ -38,6 +41,37 @@ export function ProfilePageClient() {
   const [profileSaved, setProfileSaved] = React.useState(false);
   const [photoDialogOpen, setPhotoDialogOpen] = React.useState(false);
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
+
+  const { setUser } = useAuthStore();
+  const resolvedLang = (user?.aiLanguage ?? "").toLowerCase();
+  const initialLang =
+    resolvedLang === "pidgin" || resolvedLang === "english" ? resolvedLang : "";
+  const [aiLanguage, setAiLanguage] = React.useState(initialLang);
+  const [langSaving, setLangSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setAiLanguage(initialLang);
+  }, [initialLang]);
+
+  const handleLanguageSave = async () => {
+    if (!aiLanguage || langSaving) return;
+    setLangSaving(true);
+    try {
+      const updated = await ProfileService.updateProfile({ aiLanguage });
+      if (user) {
+        setUser({
+          ...user,
+          aiLanguage,
+          ...updated,
+        });
+      }
+      toast.success("AI Preferred Language updated successfully", { duration: 4000 });
+    } catch {
+      toast.error("Failed to save language preference. Please try again.");
+    } finally {
+      setLangSaving(false);
+    }
+  };
 
   const {
     control,
@@ -351,6 +385,65 @@ export function ProfilePageClient() {
         </form>
       </div>
 
+      {/* ── AI Preferences ─────────────────────────────────────── */}
+      <div className="rounded-xl border border-border bg-white p-6">
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-dark-text">
+            AI Preferences
+          </h2>
+          <p className="mt-0.5 text-sm text-[#5D5C5D]">
+            Choose the language EnergyIQ AI responds in.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="w-full max-w-xs">
+            <label className="mb-1.5 block text-sm font-medium text-dark-text">
+              Response language
+            </label>
+            <SelectField
+              value={
+                aiLanguage === "english"
+                  ? "English"
+                  : aiLanguage === "pidgin"
+                  ? "Nigerian Pidgin"
+                  : ""
+              }
+              onChange={(val) => {
+                if (val === "English") {
+                  setAiLanguage("english");
+                } else if (val === "Nigerian Pidgin") {
+                  setAiLanguage("pidgin");
+                } else {
+                  setAiLanguage("");
+                }
+              }}
+              options={["English", "Nigerian Pidgin"]}
+              placeholder="Select language (default: auto-detect)"
+            />
+          </div>
+
+          <Button
+            type="button"
+            disabled={!aiLanguage || langSaving || initialLang === aiLanguage}
+            onClick={() => void handleLanguageSave()}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto hover:text-white"
+          >
+            {langSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving
+              </>
+            ) : (
+              "Save Preference"
+            )}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-[#5D5C5D]">
+          If not set, the AI detects the language from each message automatically.
+        </p>
+      </div>
+
       <PhotoUploadDialog
         open={photoDialogOpen}
         onOpenChange={setPhotoDialogOpen}
@@ -364,4 +457,3 @@ export function ProfilePageClient() {
     </div>
   );
 }
-

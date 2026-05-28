@@ -5,8 +5,14 @@ import { AlertTriangle, Battery, FileText, Sun } from "lucide-react";
 import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { Button } from "@/components/ui/button";
+import {
+  getChatActionsStorageKey,
+  loadStoredChatActions,
+  saveStoredChatActions,
+} from "@/lib/chat-actions-storage";
+import type { StoredChatActions } from "@/lib/chat-actions-storage";
 import { cn } from "@/lib/utils";
-import { ChatSession } from "@/types/chat";
+import type { ChatSession } from "@/types/chat";
 
 type FilterType = "All" | "Solar" | "Alerts" | "Reports";
 type TagType = "Solar" | "Alert" | "Report";
@@ -22,60 +28,11 @@ interface ChatGroup {
   chats: ChatSession[];
 }
 
-interface StoredChatActions {
-  deletedIds: string[];
-  archivedIds: string[];
-  pinnedIds: string[];
-  renamedTitles: Record<string, string>;
-}
-
-const CHAT_ACTIONS_STORAGE_KEY = "energyiq-ai-chat-actions";
-
-const EMPTY_ACTIONS: StoredChatActions = {
-  deletedIds: [],
-  archivedIds: [],
-  pinnedIds: [],
-  renamedTitles: {},
-};
-
 const TAG_STYLES: Record<TagType, string> = {
   Solar: "bg-success-bg text-chart-battery border border-chart-battery/20",
   Alert: "bg-danger-bg text-danger border border-danger/20",
   Report: "bg-muted text-muted-foreground border border-border",
 };
-
-function getChatActionsStorageKey(userId: string): string {
-  return `${CHAT_ACTIONS_STORAGE_KEY}:${userId}`;
-}
-
-function loadStoredActions(storageKey: string): StoredChatActions {
-  if (typeof window === "undefined") return EMPTY_ACTIONS;
-  try {
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) return EMPTY_ACTIONS;
-    const parsed = JSON.parse(raw) as Partial<StoredChatActions>;
-    return {
-      deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
-      archivedIds: Array.isArray(parsed.archivedIds) ? parsed.archivedIds : [],
-      pinnedIds: Array.isArray(parsed.pinnedIds) ? parsed.pinnedIds : [],
-      renamedTitles:
-        parsed.renamedTitles && typeof parsed.renamedTitles === "object"
-          ? parsed.renamedTitles
-          : {},
-    };
-  } catch {
-    return EMPTY_ACTIONS;
-  }
-}
-
-function saveStoredActions(storageKey: string, actions: StoredChatActions) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(storageKey, JSON.stringify(actions));
-  } catch {
-    // Keep UI state in memory when persistence is unavailable.
-  }
-}
 
 function getChatDate(chat: ChatSession) {
   const value = chat.updatedAt ?? chat.createdAt ?? chat.dateLabel;
@@ -186,7 +143,7 @@ export function ChatHistoryList({
   const storageKey = getChatActionsStorageKey(userId);
 
   const [actions, setActions] = useState<StoredChatActions>(() =>
-    loadStoredActions(storageKey),
+    loadStoredChatActions(storageKey),
   );
 
   const updateActions = (
@@ -194,7 +151,7 @@ export function ChatHistoryList({
   ) => {
     setActions((prev) => {
       const next = updater(prev);
-      saveStoredActions(storageKey, next);
+      saveStoredChatActions(storageKey, next);
       return next;
     });
   };
