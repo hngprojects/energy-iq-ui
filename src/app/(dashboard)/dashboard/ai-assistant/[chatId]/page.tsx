@@ -135,7 +135,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             };
           }),
         );
-      }, 10_000);
+      }, 120_000);
     },
     [clearSendingTimeout, setMessages],
   );
@@ -184,6 +184,53 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         incoming.isFinal ||
         (!incoming.isChunk && incoming.text.trim().length > 0);
 
+      // If it's a chunk, add word-by-word streaming delay
+      if (
+        activeStreamingId &&
+        incoming.text.trim() &&
+        incoming.text.includes(" ")
+      ) {
+        const words = incoming.text.split(" ");
+        let wordIndex = 0;
+
+        const addNextWord = () => {
+          if (wordIndex < words.length) {
+            setMessages((prev) => {
+              return prev.map((message) => {
+                if (message.id !== activeStreamingId) return message;
+                const nextContent = `${message.content}${wordIndex > 0 ? " " : ""}${words[wordIndex]}`;
+                const isLastWord = wordIndex === words.length - 1;
+                return {
+                  ...message,
+                  content: nextContent,
+                  isStreaming: !isLastWord,
+                  timestamp: formatMessageTime(incoming.timestamp),
+                };
+              });
+            });
+
+            wordIndex++;
+            if (wordIndex < words.length) {
+              setTimeout(addNextWord, 60);
+            } else {
+              // All words displayed — mark complete
+              streamingMessageIdRef.current = null;
+              setSending(false);
+              clearSendingTimeout();
+              if (incoming.sessionId) {
+                localStorage.setItem(
+                  `chat-session:${chatId}`,
+                  incoming.sessionId,
+                );
+              }
+              return;
+            }
+          }
+        };
+        addNextWord();
+        return;
+      }
+
       setMessages((prev) => {
         if (!activeStreamingId) {
           // Try to update the last assistant message first (handles late arrivals)
@@ -230,21 +277,18 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return prev.map((message) => {
           if (message.id !== activeStreamingId) return message;
 
-          const nextContent = incoming.isChunk
-            ? `${message.content}${incoming.text}`
-            : incoming.text || message.content;
-
           if (isCompleteMessage) {
-            return nextContent.trim()
+            // incoming.text has the full response; message.content might be empty
+            const finalContent = incoming.text || message.content;
+            return finalContent.trim()
               ? {
                   ...message,
-                  content: nextContent,
+                  content: finalContent,
                   isStreaming: false,
                   timestamp: formatMessageTime(incoming.timestamp),
                 }
               : {
                   ...message,
-                  content: nextContent,
                   isStreaming: false,
                   failed: true,
                   error:
@@ -252,6 +296,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   timestamp: formatMessageTime(incoming.timestamp),
                 };
           }
+
+          // Non-final: keep streaming
+          const nextContent = incoming.isChunk
+            ? `${message.content}${incoming.text}`
+            : message.content;
 
           return {
             ...message,
@@ -273,49 +322,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       }
     });
   }, [chatId, clearSendingTimeout, setMessages, subscribeToSystemMessages]);
-
-  useEffect(() => {
-    if (!socketError) return;
-
-    const activeId = streamingMessageIdRef.current;
-    clearSendingTimeout();
-    setSending(false);
-    streamingMessageIdRef.current = null;
-
-    setMessages((prev) => {
-      const updated = activeId
-        ? prev.map((message) =>
-            message.id === activeId
-              ? {
-                  ...message,
-                  isStreaming: false,
-                  failed: true,
-                  error: "Connection lost. Check your internet and try again.",
-                }
-              : message,
-          )
-        : prev;
-
-      const lastMessage = updated[updated.length - 1];
-      if (
-        lastMessage?.role === "system" &&
-        lastMessage.content === socketError
-      ) {
-        return updated;
-      }
-
-      return [
-        ...updated,
-        {
-          id: `socket-error-${Date.now()}`,
-          role: "system" as const,
-          content: socketError,
-          timestamp: formatMessageTime(),
-          failed: true,
-        },
-      ];
-    });
-  }, [clearSendingTimeout, setMessages, socketError]);
 
   useEffect(() => {
     if (!socketError) return;

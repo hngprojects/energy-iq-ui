@@ -28,6 +28,8 @@ type IncomingPayload =
       timestamp?: string;
       token_chunk?: string;
       stream_end?: boolean;
+      text?: string;
+      word?: string;
     };
 
 interface NormalizedMessage {
@@ -61,13 +63,20 @@ function normalizeIncoming(payload: IncomingPayload): NormalizedMessage {
   }
 
   const chunk =
-    payload.token_chunk ?? payload.delta ?? payload.token ?? payload.chunk;
+    payload.token_chunk ??
+    payload.delta ??
+    payload.token ??
+    payload.chunk ??
+    payload.text ??
+    payload.word ??
+    payload.content;
 
   const fullText =
     payload.textContent ??
     payload.content ??
     payload.message ??
     payload.description ??
+    payload.text ??
     "";
 
   // Only treat as chunk when there is actual chunk text
@@ -192,6 +201,7 @@ export function useChatSocket(chatId: string) {
     });
 
     socket.on("connect_error", (error) => {
+      if (!socketRef.current) return;
       setConnected(false);
       setConnecting(false);
       setSocketError(error.message || "Unable to connect to chat.");
@@ -220,6 +230,10 @@ export function useChatSocket(chatId: string) {
 
     socket.on("token_chunk", handleMessage);
     socket.on("stream_end", handleMessage);
+    socket.on("new_system_msg", handleMessage);
+    socket.on("agent_msg", handleMessage);
+    socket.on("receive_msg", handleMessage);
+    socket.on("message", handleMessage);
 
     const thisSocket = socket;
 
@@ -228,10 +242,16 @@ export function useChatSocket(chatId: string) {
       clearReconnectTimer();
 
       thisSocket.off("chat_action", handleMessage);
-      thisSocket.off("token_chunk", handleMessage);
-      thisSocket.off("stream_end", handleMessage);
+      socket.off("token_chunk", handleMessage);
+      socket.off("stream_end", handleMessage);
+      socket.off("new_system_msg", handleMessage);
+      socket.off("agent_msg", handleMessage);
+      socket.off("receive_msg", handleMessage);
+      socket.off("message", handleMessage);
 
-      thisSocket.disconnect();
+      thisSocket.removeAllListeners();
+      thisSocket.close();
+
       if (socketRef.current === thisSocket) {
         socketRef.current = null;
       }
