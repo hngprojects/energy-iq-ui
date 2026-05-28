@@ -149,9 +149,9 @@ export function DashboardContent() {
 
   const chartData: ChartRow[] = Array.isArray(energyUsage?.data)
     ? energyUsage.data.map((p) => ({
-        day: formatChartLabel(p.date, period),
-        generated: p.solarKwh,
-        used: p.avgLoadKw,
+        day: p?.date ? formatChartLabel(p.date, period) : "",
+        generated: p?.solarKwh ?? 0,
+        used: p?.avgLoadKw ?? 0,
       }))
     : d.weekly;
 
@@ -181,7 +181,7 @@ export function DashboardContent() {
     ? `Updated ${formatDataAge(metrics.dataAgeSeconds)}`
     : undefined;
 
-  const runningSub = metrics
+  const runningSub = metrics?.currentReadings
     ? `Grid: ${metrics.currentReadings.gridVoltageV}V · Battery: ${metrics.currentReadings.batteryVoltageV}V`
     : undefined;
 
@@ -242,25 +242,25 @@ export function DashboardContent() {
           <MetricCard
             icon={Sun}
             label="Solar Input"
-            value={metrics?.currentReadings.solarKw ?? d.solar.value}
+            value={metrics?.currentReadings?.solarKw ?? d.solar.value}
             unit="kW"
             sub={solarSub}
             pill={
-              isOnline && (metrics?.currentReadings.solarKw ?? 0) > 0
+              isOnline && (metrics?.currentReadings?.solarKw ?? 0) > 0
                 ? "Generating"
                 : undefined
             }
           />
           <BatteryCard
             percent={
-              metrics?.currentReadings.batterySocPercent ?? d.battery.percent
+              metrics?.currentReadings?.batterySocPercent ?? d.battery.percent
             }
           />
           <MetricCard
             icon={Zap}
             iconClass="text-success-alt/70"
             label="Running now"
-            value={metrics?.currentReadings.loadKw ?? d.running.value}
+            value={metrics?.currentReadings?.loadKw ?? d.running.value}
             unit="kW"
             sub={runningSub}
             pill={
