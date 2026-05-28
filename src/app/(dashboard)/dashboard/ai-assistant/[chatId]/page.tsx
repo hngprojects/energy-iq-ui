@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AttachMenu } from "@/components/dashboard/ai/attach-menu";
 import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
+import { LanguageToggle } from "@/components/dashboard/ai/language-toggle";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -625,7 +626,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   return (
     <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
-      <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
+      <div className="flex shrink-0 items-center gap-2 md:gap-3 border-b border-border bg-card px-3 py-3 md:px-6 md:py-4 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -643,11 +644,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           <p className="truncate text-sm font-semibold text-foreground">
             {title}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {dateLabel} &nbsp;·&nbsp; {messages.length} messages
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <LanguageToggle />
           <Button
             variant="ghost"
             size="icon"

@@ -5,6 +5,7 @@ export interface ProfileUpdateRequest {
   businessType?: string;
   state?: string;
   city?: string;
+  aiLanguage?: string;
 }
 
 export interface ProfileUpdateResponse {
@@ -20,6 +21,8 @@ export interface ProfileUpdateResponse {
   businessType?: string;
   state?: string;
   city?: string;
+  AiLanguage?: string;
+  aiLanguage?: string;
 }
 
 export interface AvatarUploadResponse {
