@@ -30,6 +30,7 @@ interface ChatActionsMenuProps {
   chatId: string;
   title?: string;
   triggerClassName?: string;
+  isPinned?: boolean;
   onRename?: (chatId: string, title: string) => void;
   onPin?: (chatId: string) => void;
   onArchive?: (chatId: string) => void;
@@ -40,6 +41,7 @@ export function ChatActionsMenu({
   chatId,
   title,
   triggerClassName,
+  isPinned = false,
   onRename,
   onPin,
   onArchive,
@@ -151,7 +153,7 @@ export function ChatActionsMenu({
             className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
           >
             <Pin className="h-4 w-4" />
-            Pin Chat
+            {isPinned ? "Unpin Chat" : "Pin Chat"}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={(event) => {

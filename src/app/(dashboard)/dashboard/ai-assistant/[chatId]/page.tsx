@@ -825,6 +825,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           <ChatActionsMenu
             chatId={chatId}
             title={title}
+            isPinned={actions.pinnedIds.includes(chatId)}
             triggerClassName="h-9 w-9"
             onRename={(id, nextTitle) =>
               updateActions((prev) => ({

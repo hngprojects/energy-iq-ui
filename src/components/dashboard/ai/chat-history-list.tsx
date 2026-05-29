@@ -275,6 +275,7 @@ export function ChatHistoryList({
                           <ChatActionsMenu
                             chatId={chat.id}
                             title={chat.title}
+                            isPinned={actions.pinnedIds.includes(chat.id)}
                             onRename={(id, nextTitle) =>
                               updateActions((prev) => ({
                                 ...prev,
