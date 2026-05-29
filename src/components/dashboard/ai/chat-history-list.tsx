@@ -352,10 +352,15 @@ export function ChatHistoryList({
             </div>
           </div>
         ))}
-        {visibleChats.length === 0 ? (
+        {visibleChats.length === 0 && filter !== "Archived" ? (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">
             <AlertTriangle className="h-4 w-4" />
             No chats found.
+          </div>
+        ) : filter === "Archived" && visibleChats.length === 0 ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">
+            <AlertTriangle className="h-4 w-4" />
+            No archived chats.
           </div>
         ) : null}
       </div>
