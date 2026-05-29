@@ -83,9 +83,17 @@ export function ProfilePageClient() {
   });
 
   const onSubmit = (values: ProfileFormValues) => {
-    // We send all values (including empty strings) to the backend
-    // so that users can explicitly clear optional fields like business name.
-    updateProfile.mutate(values as ProfileUpdateRequest);
+    // Only send fields with non-empty values to avoid backend errors
+    const updatedFields: Partial<ProfileUpdateRequest> = {};
+    
+    if (values.firstName?.trim()) updatedFields.firstName = values.firstName.trim();
+    if (values.lastName?.trim()) updatedFields.lastName = values.lastName.trim();
+    if (values.businessName?.trim()) updatedFields.businessName = values.businessName.trim();
+    if (values.businessType?.trim()) updatedFields.businessType = values.businessType.trim();
+    if (values.state?.trim()) updatedFields.state = values.state.trim();
+    if (values.city?.trim()) updatedFields.city = values.city.trim();
+    
+    updateProfile.mutate(updatedFields as ProfileUpdateRequest);
   };
 
   const handleEdit = () => setIsEditing(true);
