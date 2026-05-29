@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Battery, FileText, Sun } from "lucide-react";
+import { AlertTriangle, Battery, Sun, MessageCircle } from "lucide-react";
 import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,9 @@ import type { StoredChatActions } from "@/lib/chat-actions-storage";
 import { cn } from "@/lib/utils";
 import type { ChatSession } from "@/types/chat";
 
-type FilterType = "All" | "Solar" | "Alerts" | "Reports";
+type FilterType = "All" | "Solar" | "Alerts" | "General";
 type ViewFilter = FilterType | "Archived";
-type TagType = "Solar" | "Alert" | "Report";
+type TagType = "Solar" | "Alert" | "General" | "Report";
 
 interface ChatHistoryListProps {
   history: ChatSession[];
@@ -32,7 +32,8 @@ interface ChatGroup {
 const TAG_STYLES: Record<TagType, string> = {
   Solar: "bg-success-bg text-success-alt border border-chart-battery",
   Alert: "bg-danger-bg text-danger border border-danger/20",
-  Report: "bg-muted text-muted-foreground border border-border",
+  General: "bg-blue-50 text-blue-700 border border-blue-200",
+  Report: "bg-green-50 text-green-700 border border-green-200",
 };
 
 function getChatDate(chat: ChatSession) {
@@ -91,9 +92,44 @@ function formatChatTimestamp(chat: ChatSession) {
 function getTag(chat: ChatSession): TagType {
   if (chat.tag) return chat.tag;
   const text = `${chat.title} ${chat.description ?? ""}`.toLowerCase();
-  if (text.includes("solar")) return "Solar";
-  if (text.includes("report")) return "Report";
-  return "Alert";
+
+  // Solar/PV related
+  if (
+    text.includes("solar") ||
+    text.includes("pv") ||
+    text.includes("panel") ||
+    text.includes("sun")
+  ) {
+    return "Solar";
+  }
+
+  // Report/analysis/performance related
+  if (
+    text.includes("report") ||
+    text.includes("analysis") ||
+    text.includes("performance") ||
+    text.includes("efficiency") ||
+    text.includes("summary") ||
+    text.includes("metric")
+  ) {
+    return "General";
+  }
+
+  // Alert/issue/error related
+  if (
+    text.includes("alert") ||
+    text.includes("error") ||
+    text.includes("warning") ||
+    text.includes("issue") ||
+    text.includes("problem") ||
+    text.includes("fault") ||
+    text.includes("fail")
+  ) {
+    return "Alert";
+  }
+
+  // Default to General
+  return "General";
 }
 
 function TagBadge({ tag }: { tag: TagType }) {
@@ -119,10 +155,10 @@ function RowIcon({ tag }: { tag: TagType }) {
       </div>
     );
   }
-  if (tag === "Report") {
+  if (tag === "General") {
     return (
       <div className={base}>
-        <FileText className="h-5 w-5 text-muted-foreground" />
+        <MessageCircle className="h-5 w-5 text-muted-foreground" />
       </div>
     );
   }
@@ -158,7 +194,11 @@ export function ChatHistoryList({
   };
 
   const visibleChats = useMemo(() => {
-    return history
+    const normalizedHistory = history.map((chat) => ({
+      ...chat,
+      title: actions.renamedTitles[chat.id] ?? chat.title,
+    }));
+    return normalizedHistory
       .filter((chat) => !actions.deletedIds.includes(chat.id))
       .filter((chat) => {
         if (filter === "Archived") return actions.archivedIds.includes(chat.id);
@@ -166,12 +206,8 @@ export function ChatHistoryList({
         if (filter === "All") return true;
         if (filter === "Solar") return getTag(chat) === "Solar";
         if (filter === "Alerts") return getTag(chat) === "Alert";
-        return getTag(chat) === "Report";
+        return getTag(chat) === "General";
       })
-      .map((chat) => ({
-        ...chat,
-        title: actions.renamedTitles[chat.id] ?? chat.title,
-      }))
       .sort((a, b) => {
         const aPinned = actions.pinnedIds.includes(a.id);
         const bPinned = actions.pinnedIds.includes(b.id);
@@ -204,7 +240,7 @@ export function ChatHistoryList({
     "All",
     "Solar",
     "Alerts",
-    "Reports",
+    "General",
     "Archived",
   ];
   if (!hasVisibleHistory) {
