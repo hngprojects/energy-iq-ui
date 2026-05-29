@@ -21,8 +21,8 @@ export default function DashboardLayout({
         <DashboardHeader />
         <main
           className={cn(
-            "bg-background mx-auto flex-1 overflow-auto max-w-7xl w-full",
-            !isChatDetailsPage && "px-6 py-6 lg:px-6 lg:py-6",
+            "bg-background mx-auto flex-1 overflow-auto w-full",
+            !isChatDetailsPage && "max-w-7xl px-6 py-6 lg:px-6 lg:py-6",
           )}
         >
           <OnboardingGuard>{children}</OnboardingGuard>

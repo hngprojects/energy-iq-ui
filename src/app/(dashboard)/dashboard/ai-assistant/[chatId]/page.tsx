@@ -865,7 +865,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           />
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
         <div className="mb-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs text-muted-foreground">Today</span>
@@ -922,7 +922,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         )}
         <div ref={bottomRef} />
       </div>
-      <div className="shrink-0 border-t border-border bg-card px-6 py-4">
+      <div className="fixed bottom-0 right-0 left-0 z-10 border-t border-border bg-card px-6 py-4 lg:left-60">
         <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
           <AttachMenu buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground" />
           <div className="flex min-h-8 flex-1 items-center">
@@ -987,3 +987,4 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
+
