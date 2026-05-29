@@ -56,19 +56,21 @@ export function ChatMessageBubble({
         <div className="flex flex-col gap-1">
           <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
             {message.isStreaming && !message.failed ? (
-              <p className="mb-2 text-xs text-muted-foreground">Typing…</p>
+              <div className="mb-2 flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Typing</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+              </div>
             ) : null}
-
             {message.failed && message.error ? (
               <p className="mb-2 text-sm text-destructive">{message.error}</p>
             ) : null}
-
             {message.content ? (
               <p className="wrap-break-word whitespace-pre-wrap text-sm text-foreground">
-                {message.content}
+                {String(message.content)}
               </p>
             ) : null}
-
             {message.alertCard ? (
               <AlertDetailsCard
                 severity={message.alertCard.severity}
@@ -77,6 +79,30 @@ export function ChatMessageBubble({
                 status={message.alertCard.status}
                 details={message.alertCard.details}
               />
+            ) : null}
+
+            {message.cards && message.cards.length > 0 ? (
+              <div className="mt-2 space-y-2">
+                {message.cards.map((card, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-lg border p-3 text-sm ${
+                      card.severity === "critical"
+                        ? "border-red-200 bg-red-50 text-red-800"
+                        : card.severity === "warning"
+                          ? "border-amber-200 bg-amber-50 text-amber-800"
+                          : "border-blue-200 bg-blue-50 text-blue-800"
+                    }`}
+                  >
+                    <p className="font-medium">{card.headline}</p>
+                    {card.description ? (
+                      <p className="mt-1 text-xs opacity-80">
+                        {card.description}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             ) : null}
 
             {message.failed && onRetry ? (
@@ -89,7 +115,6 @@ export function ChatMessageBubble({
                 Try again
               </Button>
             ) : null}
-
             <span className="mt-2 block text-xs text-muted-foreground">
               {message.timestamp}
             </span>

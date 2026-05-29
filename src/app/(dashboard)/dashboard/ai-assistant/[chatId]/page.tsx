@@ -12,12 +12,17 @@ import {
 } from "lucide-react";
 import { AttachMenu } from "@/components/dashboard/ai/attach-menu";
 import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
+import { LanguageToggle } from "@/components/dashboard/ai/language-toggle";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "@/types/chat";
+import type {
+  ChatMessage,
+  AiResponseCard,
+  AiResponseCardType,
+} from "@/types/chat";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import {
   getChatActionsStorageKey,
@@ -31,6 +36,7 @@ import { getUserInitials } from "@/lib/user-initials";
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
 }
+
 function formatChatHeaderDateTime(chatInfoDate?: string) {
   const rawDate = chatInfoDate ?? new Date().toISOString();
   const date = new Date(rawDate);
@@ -67,6 +73,41 @@ function formatChatHeaderDateTime(chatInfoDate?: string) {
     .toLowerCase();
   return `${dateLabel}, ${timeLabel}`;
 }
+
+interface ParseResult {
+  cards: AiResponseCard[];
+  summary: string;
+}
+
+function parseAlertCards(raw: string): ParseResult | null {
+  let parsed: Record<string, unknown>[];
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+  const cards: AiResponseCard[] = parsed.map((item) => ({
+    type: "alert" as AiResponseCardType,
+    headline: String(item.type || item.message || "Alert")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()),
+    description: String(item.message || ""),
+    severity: (String(item.severity || "").toLowerCase() === "critical"
+      ? "critical"
+      : String(item.severity || "").toLowerCase() === "warning"
+        ? "warning"
+        : "info") as "critical" | "warning" | "info",
+    dataPoint: String(item.type || ""),
+  }));
+
+  return {
+    cards,
+    summary: `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`,
+  };
+}
+
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -82,6 +123,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const pendingMessageSentRef = useRef(false);
   const userInitials = getUserInitials(user);
   const storageKey = getChatActionsStorageKey(userId);
+  const processedSocketIdsRef = useRef<Set<string>>(new Set());
 
   const [actions, setActions] = useState<StoredChatActions>(() =>
     loadStoredChatActions(storageKey),
@@ -97,7 +139,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     connecting,
     socketError,
     sendMessage,
-    // joinActiveChats,
+    joinActiveChats,
     subscribeToSystemMessages,
   } = useChatSocket(chatId);
 
@@ -115,20 +157,27 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         streamingMessageIdRef.current = null;
         setSending(false);
         setMessages((prev) =>
-          prev.map((message) =>
-            message.id === assistantMessageId
-              ? {
-                  ...message,
-                  role: "assistant" as const,
-                  content: message.content || "",
-                  error: "Response timed out. Please try again.",
-                  isStreaming: false,
-                  failed: true,
-                }
-              : message,
-          ),
+          prev.map((message) => {
+            if (message.id !== assistantMessageId) return message;
+            if (message.content?.trim()) {
+              return {
+                ...message,
+                isStreaming: false,
+                failed: false,
+                error: undefined,
+              };
+            }
+            return {
+              ...message,
+              role: "assistant" as const,
+              content: "",
+              error: "Response timed out. Please try again.",
+              isStreaming: false,
+              failed: true,
+            };
+          }),
         );
-      }, 10_000);
+      }, 120_000);
     },
     [clearSendingTimeout, setMessages],
   );
@@ -152,6 +201,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     streamingMessageIdRef.current = null;
     clearSendingTimeout();
     setSending(false);
+    processedSocketIdsRef.current.clear();
   }, [chatId, clearSendingTimeout]);
 
   useEffect(() => {
@@ -168,13 +218,120 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
+      const isGeneratedId =
+        typeof incoming.id === "string" && incoming.id.startsWith("socket-");
+
+      let dedupKey: string | undefined;
+      if (incoming.isChunk) {
+        dedupKey = incoming.id;
+      } else if (incoming.id && !isGeneratedId) {
+        dedupKey = incoming.id;
+      } else {
+        dedupKey = `${incoming.chatId || chatId}:${incoming.text}`;
+      }
+
+      if (dedupKey && processedSocketIdsRef.current.has(dedupKey)) return;
+      if (dedupKey) processedSocketIdsRef.current.add(dedupKey);
+
       if (!incoming.text && !incoming.isFinal && !streamingMessageIdRef.current)
         return;
 
       const activeStreamingId = streamingMessageIdRef.current;
 
+      const isCompleteMessage = incoming.isFinal;
+
+      // === JSON data dump handler (runs BEFORE word-by-word) ===
+      if (
+        incoming.isChunk &&
+        incoming.text &&
+        incoming.text.trim().startsWith("[")
+      ) {
+        const rawText = incoming.text;
+        let result: ParseResult | null = null;
+        try {
+          result = parseAlertCards(rawText);
+        } catch {
+          // not valid JSON — fall through
+        }
+
+        if (result) {
+          const { cards: parsedCards, summary: parsedContent } = result;
+          setMessages((prev) => {
+            const currentMessage = prev.find((m) => m.id === activeStreamingId);
+            if (!currentMessage) return prev;
+            const existingCards = currentMessage.cards || [];
+            const mergedCards = [...existingCards];
+            for (const card of parsedCards) {
+              const isDuplicate = mergedCards.some(
+                (c) => c.description === card.description,
+              );
+              if (!isDuplicate) mergedCards.push(card);
+            }
+            const hasHumanText =
+              currentMessage.content &&
+              !currentMessage.content.startsWith("Found ");
+            return prev.map((m) =>
+              m.id === activeStreamingId
+                ? {
+                    ...m,
+                    content: hasHumanText ? m.content : parsedContent,
+                    cards: mergedCards,
+                    timestamp: formatMessageTime(incoming.timestamp),
+                  }
+                : m,
+            );
+          });
+          return;
+        }
+      }
+
       setMessages((prev) => {
         if (!activeStreamingId) {
+          if (incoming.isChunk) return prev;
+
+          const lastAssistantIdx = [...prev]
+            .reverse()
+            .findIndex((m) => m.role === "assistant" || m.role === "ai");
+
+          if (lastAssistantIdx !== -1) {
+            const idx = prev.length - 1 - lastAssistantIdx;
+            const lastAssistant = prev[idx];
+
+            // Clean-text replacement: when new_system_msg arrives with
+            // complete text after streaming, replace streamed content
+            if (incoming.isFinal && incoming.text) {
+              return prev.map((m, i) =>
+                i === idx
+                  ? {
+                      ...m,
+                      content: incoming.text,
+                      isStreaming: false,
+                      failed: false,
+                      error: undefined,
+                      timestamp: formatMessageTime(incoming.timestamp),
+                    }
+                  : m,
+              );
+            }
+
+            // Only update if it's empty/failed
+            if (!lastAssistant.content?.trim() || lastAssistant.failed) {
+              return prev.map((m, i) =>
+                i === idx
+                  ? {
+                      ...m,
+                      content: incoming.text || m.content,
+                      isStreaming: false,
+                      failed: false,
+                      error: undefined,
+                      timestamp: formatMessageTime(incoming.timestamp),
+                    }
+                  : m,
+              );
+            }
+          }
+
+          // Otherwise create a new message
           const newMessageId = incoming.id || `assistant-${Date.now()}`;
           streamingMessageIdRef.current = incoming.isFinal
             ? null
@@ -194,21 +351,44 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return prev.map((message) => {
           if (message.id !== activeStreamingId) return message;
 
-          const nextContent = incoming.isChunk
-            ? `${message.content}${incoming.text}`
-            : incoming.text || message.content;
+          if (isCompleteMessage) {
+            const rawContent = incoming.text || message.content;
+            const existingCards = message.cards || [];
+            let parsedContent = rawContent;
+            let cards = existingCards;
 
-          if (incoming.isFinal) {
-            return nextContent.trim()
+            try {
+              const r = parseAlertCards(rawContent);
+              if (r) {
+                const mergedCards = [...existingCards];
+                for (const card of r.cards) {
+                  const isDuplicate = mergedCards.some(
+                    (c) => c.description === card.description,
+                  );
+                  if (!isDuplicate) mergedCards.push(card);
+                }
+                cards = mergedCards;
+                parsedContent =
+                  existingCards.length > 0
+                    ? (message.content || "").startsWith("Found ")
+                      ? message.content
+                      : r.summary
+                    : r.summary;
+              }
+            } catch {
+              // Not JSON — keep raw text as-is
+            }
+
+            return parsedContent.trim() || cards.length > 0
               ? {
                   ...message,
-                  content: nextContent,
+                  content: parsedContent,
+                  cards,
                   isStreaming: false,
                   timestamp: formatMessageTime(incoming.timestamp),
                 }
               : {
                   ...message,
-                  content: nextContent,
                   isStreaming: false,
                   failed: true,
                   error:
@@ -217,9 +397,34 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 };
           }
 
+          // Non-final: keep streaming
+          const rawText = incoming.text || "";
+          let cards = message.cards;
+          let appendContent = rawText;
+
+          // First chunk might be JSON data dump — parse into cards
+          if (rawText.trim().startsWith("[")) {
+            const r = parseAlertCards(rawText);
+            if (r) {
+              cards = r.cards;
+              appendContent = r.summary;
+            }
+          }
+
+          const currentContent = message.content || "";
+          const needsSpace =
+            currentContent.length > 0 &&
+            !currentContent.endsWith(" ") &&
+            !rawText.startsWith(" ");
+          const nextContent =
+            incoming.isChunk && appendContent === rawText
+              ? `${currentContent}${needsSpace ? " " : ""}${rawText}`
+              : appendContent;
+
           return {
             ...message,
             content: nextContent,
+            cards,
             isStreaming: true,
             timestamp: formatMessageTime(incoming.timestamp),
           };
@@ -230,56 +435,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         localStorage.setItem(`chat-session:${chatId}`, incoming.sessionId);
       }
 
-      if (incoming.isFinal) {
+      if (isCompleteMessage) {
         streamingMessageIdRef.current = null;
         setSending(false);
         clearSendingTimeout();
       }
     });
   }, [chatId, clearSendingTimeout, setMessages, subscribeToSystemMessages]);
-
-  useEffect(() => {
-    if (!socketError) return;
-
-    const activeId = streamingMessageIdRef.current;
-    clearSendingTimeout();
-    setSending(false);
-    streamingMessageIdRef.current = null;
-
-    setMessages((prev) => {
-      const updated = activeId
-        ? prev.map((message) =>
-            message.id === activeId
-              ? {
-                  ...message,
-                  isStreaming: false,
-                  failed: true,
-                  error: "Connection lost. Check your internet and try again.",
-                }
-              : message,
-          )
-        : prev;
-
-      const lastMessage = updated[updated.length - 1];
-      if (
-        lastMessage?.role === "system" &&
-        lastMessage.content === socketError
-      ) {
-        return updated;
-      }
-
-      return [
-        ...updated,
-        {
-          id: `socket-error-${Date.now()}`,
-          role: "system" as const,
-          content: socketError,
-          timestamp: formatMessageTime(),
-          failed: true,
-        },
-      ];
-    });
-  }, [clearSendingTimeout, setMessages, socketError]);
 
   useEffect(() => {
     if (!socketError) return;
@@ -313,12 +475,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   useEffect(() => {
     if (!connected) return;
+    if (loading) return;
     if (pendingMessageSentRef.current) return;
 
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
-
     if (!raw) return;
+
+    // Immediately remove from storage to prevent double-send on remount
+    sessionStorage.removeItem(key);
 
     let text = "";
     let timestamp: string | undefined;
@@ -332,27 +497,19 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       text = pending.content?.trim() ?? "";
       timestamp = pending.timestamp;
     } catch {
-      sessionStorage.removeItem(key);
       return;
     }
 
-    if (!text) {
-      sessionStorage.removeItem(key);
-      return;
-    }
+    if (!text) return;
 
     pendingMessageSentRef.current = true;
-    sessionStorage.removeItem(key);
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
 
     setMessages((prev) => {
       const alreadyExists = prev.some(
-        (message) =>
-          message.role === "user" &&
-          message.content.trim() === text &&
-          message.id === `pending-${chatId}`,
+        (message) => message.role === "user" && message.content.trim() === text,
       );
 
       return [
@@ -416,6 +573,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, [
     chatId,
     connected,
+    loading,
+    messages,
     sendMessage,
     setMessages,
     startSendingTimeout,
@@ -441,9 +600,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       minute: "2-digit",
     });
   };
-
-  const getSessionId = () =>
-    localStorage.getItem(`chat-session:${chatId}`) ?? undefined;
 
   const handleSend = async () => {
     const text = input.trim();
@@ -491,12 +647,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
 
+    sessionStorage.removeItem(`pending-chat-message:${chatId}`);
+
     try {
       lastUserMessageRef.current = text;
 
-      sendMessage(text, getSessionId());
+      sendMessage(text);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
+      joinActiveChats();
       streamingMessageIdRef.current = null;
       setSending(false);
 
@@ -556,9 +715,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     setSending(true);
     try {
-      sendMessage(text, getSessionId());
+      sendMessage(text);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
+      joinActiveChats();
       streamingMessageIdRef.current = null;
       setSending(false);
 
@@ -625,7 +785,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   return (
     <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
-      <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
+      <div className="flex shrink-0 items-center gap-2 md:gap-3 border-b border-border bg-card px-3 py-3 md:px-6 md:py-4 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -643,11 +803,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           <p className="truncate text-sm font-semibold text-foreground">
             {title}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {dateLabel} &nbsp;·&nbsp; {messages.length} messages
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <LanguageToggle />
           <Button
             variant="ghost"
             size="icon"

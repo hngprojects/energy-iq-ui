@@ -24,14 +24,20 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!_hasHydrated) return;
-    
+
     if (!isAuthenticated) {
       router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
-    
-    if (!isLoading && !isError && !isFullyOnboarded) {
-      router.replace("/onboarding");
+
+    if (!isLoading && !isError) {
+      // Check localStorage flag first before redirecting
+      const isStorageMarkedComplete =
+        user?.id && onboardingStorage.isCompleted(user.id);
+
+      if (!isFullyOnboarded && !isStorageMarkedComplete) {
+        router.replace("/onboarding");
+      }
     }
   }, [
     _hasHydrated,
@@ -39,6 +45,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     isLoading,
     isError,
     isFullyOnboarded,
+    user?.id,
     router,
     currentUrl,
   ]);
@@ -59,7 +66,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return null; // The useEffect will handle redirect
+    return null;
   }
 
   if (isLoading) {
@@ -81,7 +88,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isFullyOnboarded) return null;
+  if (!isFullyOnboarded) {
+    // If localStorage says completed but query says otherwise, still allow (avoid redirect loop)
+    const isStorageMarkedComplete =
+      user?.id && onboardingStorage.isCompleted(user.id);
+    if (!isStorageMarkedComplete) {
+      return null;
+    }
+  }
 
   return <>{children}</>;
 }
+
