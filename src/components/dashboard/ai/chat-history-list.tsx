@@ -30,7 +30,7 @@ interface ChatGroup {
 }
 
 const TAG_STYLES: Record<TagType, string> = {
-  Solar: "bg-success-bg text-chart-battery border border-chart-battery/20",
+  Solar: "bg-success-bg text-success-alt border border-chart-battery",
   Alert: "bg-danger-bg text-danger border border-danger/20",
   Report: "bg-muted text-muted-foreground border border-border",
 };
@@ -367,3 +367,4 @@ export function ChatHistoryList({
     </div>
   );
 }
+
