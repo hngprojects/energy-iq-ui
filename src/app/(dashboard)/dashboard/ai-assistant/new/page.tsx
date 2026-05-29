@@ -66,6 +66,7 @@ export default function NewChatPage() {
   const [error, setError] = useState<string | null>(null);
 
   const EXPAND_THRESHOLD = 40;
+  const MAX_CHARS = 2000;
 
   const handleStartConversation = async (text: string) => {
     const cleanText = text.trim();
@@ -198,7 +199,10 @@ export default function NewChatPage() {
               <Textarea
                 ref={textareaRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= MAX_CHARS)
+                    setInput(e.target.value);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything about your energy system"
                 rows={1}
@@ -213,6 +217,11 @@ export default function NewChatPage() {
                   setIsTextareaExpanded(el.scrollHeight > EXPAND_THRESHOLD);
                 }}
               />
+            </div>
+            <div className="flex justify-end">
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {input.length}/{MAX_CHARS}
+              </span>
             </div>
 
             <div className="mb-0.5 flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">

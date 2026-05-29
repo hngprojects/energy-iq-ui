@@ -134,6 +134,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   const lastUserMessageRef = useRef<string>("");
 
+  const MAX_CHARS = 3000;
+
   const {
     connected,
     connecting,
@@ -925,7 +927,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             <Textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value.length <= MAX_CHARS)
+                  setInput(e.target.value);
+              }}
               onKeyDown={handleKeyDown}
               onInput={handleTextareaInput}
               placeholder="Ask anything about your energy system"
@@ -935,6 +940,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 "focus-visible:ring-0",
               )}
             />
+          </div>
+          <div className="flex justify-end">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {input.length}/{MAX_CHARS}
+            </span>
           </div>
           <div className="mb-px flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">
             <Button
