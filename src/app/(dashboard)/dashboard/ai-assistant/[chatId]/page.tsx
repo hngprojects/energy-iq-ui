@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type {
   ChatMessage,
   AiResponseCard,
@@ -928,8 +929,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               ref={textareaRef}
               value={input}
               onChange={(e) => {
-                if (e.target.value.length <= MAX_CHARS)
-                  setInput(e.target.value);
+                const value = e.target.value;
+                if (value.length > MAX_CHARS) {
+                  toast.error(
+                    `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                  );
+                  setInput(value.slice(0, MAX_CHARS));
+                } else {
+                  setInput(value);
+                }
               }}
               onKeyDown={handleKeyDown}
               onInput={handleTextareaInput}

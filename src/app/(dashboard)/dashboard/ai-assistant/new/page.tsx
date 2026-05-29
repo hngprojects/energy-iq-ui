@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { chatService } from "@/services/chat-service";
+import { toast } from "sonner";
 import {
   clearChatCreateAttempt,
   createChatRecoveryToken,
@@ -66,7 +67,7 @@ export default function NewChatPage() {
   const [error, setError] = useState<string | null>(null);
 
   const EXPAND_THRESHOLD = 40;
-  const MAX_CHARS = 2000;
+  const MAX_CHARS = 3000;
 
   const handleStartConversation = async (text: string) => {
     const cleanText = text.trim();
@@ -200,8 +201,15 @@ export default function NewChatPage() {
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => {
-                  if (e.target.value.length <= MAX_CHARS)
-                    setInput(e.target.value);
+                  const value = e.target.value;
+                  if (value.length > MAX_CHARS) {
+                    toast.error(
+                      `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                    );
+                    setInput(value.slice(0, MAX_CHARS));
+                  } else {
+                    setInput(value);
+                  }
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything about your energy system"
