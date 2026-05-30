@@ -6,6 +6,7 @@ export interface ProfileUpdateRequest {
   state?: string;
   city?: string;
   aiLanguage?: string;
+  profileUrl?: string;
 }
 
 export interface ProfileUpdateResponse {

@@ -29,6 +29,7 @@ interface AuthState {
     refreshToken: string,
     rememberMe?: boolean,
   ) => void;
+  setTokens: (token: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   setTempEmail: (email: string | null) => void;
   logout: () => void;
@@ -77,6 +78,7 @@ export const useAuthStore = create<AuthState>()(
           tempEmail: null,
         });
       },
+      setTokens: (token, refreshToken) => set({ token, refreshToken }),
       setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
       setHasHydrated: (value) => set({ _hasHydrated: value }),
