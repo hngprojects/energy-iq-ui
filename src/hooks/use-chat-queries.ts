@@ -3,6 +3,10 @@ import { chatService } from "@/services/chat-service";
 import { useAuthStore } from "@/stores/auth-store";
 import { ChatMessage, ChatSession } from "@/types/chat";
 import { getUserInitials } from "@/lib/user-initials";
+import {
+  extractCardsFromApiMessage,
+  hydrateChatMessagesWithCards,
+} from "@/lib/chat-cards-storage";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -70,17 +74,28 @@ function normalizeChatMessage(
         ? "system"
         : "assistant";
 
+  const content =
+    getString(
+      message.content ??
+        message.textContent ??
+        message.text_content ??
+        message.message ??
+        message.text,
+    ) ?? "";
+
+  const cards =
+    role === "assistant"
+      ? extractCardsFromApiMessage(message)
+      : [];
+
+  const shouldTrimLongText =
+    cards.length > 0 && content.trim().length > 120;
+
   return {
     id: getString(message.id) ?? `message-${Date.now()}-${Math.random()}`,
     role,
-    content:
-      getString(
-        message.content ??
-          message.textContent ??
-          message.text_content ??
-          message.message ??
-          message.text,
-      ) ?? "",
+    content: shouldTrimLongText ? "" : content,
+    cards: cards.length > 0 ? cards : undefined,
     timestamp: formatMessageTime(
       getString(
         message.createdAt ??
@@ -125,13 +140,13 @@ export function useActiveChat(chatId: string) {
       if (requestSeq !== requestSeqRef.current) return;
 
       setChatInfo(info);
-      setMessages(
-        Array.isArray(msgs)
-          ? (msgs as unknown as Record<string, unknown>[]).map((message) =>
-              normalizeChatMessage(message, userId, userInitials),
-            )
-          : [],
-      );
+      const normalized = Array.isArray(msgs)
+        ? (msgs as unknown as Record<string, unknown>[]).map((message) =>
+            normalizeChatMessage(message, userId, userInitials),
+          )
+        : [];
+
+      setMessages(hydrateChatMessagesWithCards(chatId, normalized));
       setError(null);
     } catch (err) {
       if (requestSeq !== requestSeqRef.current) return;

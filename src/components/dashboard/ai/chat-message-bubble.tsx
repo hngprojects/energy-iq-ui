@@ -52,14 +52,12 @@ export function ChatMessageBubble({
 
   if (isAssistant) {
     const hasCards = Boolean(message.cards && message.cards.length > 0);
-    const showCardLoading =
-      Boolean(message.isStreaming) &&
-      !message.failed &&
-      !hasCards &&
-      !message.content?.trim();
+    const hidePlainText = hasCards || Boolean(message.awaitingCards);
 
-    const showStreamedText =
-      Boolean(message.content?.trim()) && !hasCards && !showCardLoading;
+    const showCardLoading =
+      !message.failed && !hasCards && Boolean(message.awaitingCards);
+
+    const showStreamedText = !hidePlainText && Boolean(message.content?.trim());
 
     return (
       <div className="flex w-full items-start justify-start gap-3">
@@ -86,18 +84,7 @@ export function ChatMessageBubble({
 
           {showCardLoading ? <AiResponseCardsLoading /> : null}
 
-          {message.isStreaming && !message.failed && !showCardLoading && !hasCards ? (
-            <div className="flex items-center gap-1.5 px-1">
-              <span className="text-xs text-muted-foreground">Typing</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
-            </div>
-          ) : null}
-
-          {hasCards ? (
-            <AiResponseCardsList cards={message.cards!} />
-          ) : null}
+          {hasCards ? <AiResponseCardsList cards={message.cards!} /> : null}
 
           {showStreamedText ? (
             <div className="rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
