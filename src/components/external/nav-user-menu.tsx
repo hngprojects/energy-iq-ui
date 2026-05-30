@@ -29,6 +29,7 @@ export function UserAvatar({ user, className }: UserAvatarProps) {
           src={user.profilePhoto}
           alt={`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Profile photo"}
           fill
+          sizes="2.5rem"
           className="object-cover"
         />
       </div>

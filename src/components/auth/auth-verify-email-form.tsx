@@ -31,7 +31,7 @@ export function AuthVerifyEmailForm() {
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(119);
+  const [timeLeft, setTimeLeft] = useState(299);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -61,7 +61,7 @@ export function AuthVerifyEmailForm() {
       { email },
       {
         onSuccess: () => {
-          setTimeLeft(119);
+          setTimeLeft(299);
         },
       },
     );
