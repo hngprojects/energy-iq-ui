@@ -1,8 +1,12 @@
 import { apiFetch } from "@/lib/api/client";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { ProfileUpdateRequest, ProfileUpdateResponse } from "@/types/profile";
+import { ProfileUpdateRequest, ProfileUpdateResponse, PersonalSettings } from "@/types/profile";
 
 export const ProfileService = {
+  getProfile: async () => {
+    return apiFetch<PersonalSettings>("/users/settings/personal", { method: "GET" }, true);
+  },
+
   updateProfile: async (data: ProfileUpdateRequest) => {
     return apiFetch<ProfileUpdateResponse>("/users/settings/personal", { method: "PATCH", data }, true);
   },
