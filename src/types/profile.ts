@@ -25,20 +25,6 @@ export interface ProfileUpdateResponse {
   aiLanguage?: string;
 }
 
-export interface PersonalSettings {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  profileUrl: string | null;
-  businessName: string | null;
-  businessType: string | null;
-  state: string | null;
-  city: string | null;
-  smsNotification: boolean;
-  whatsappAlerts: boolean;
-  emailAlerts: boolean;
-  criticalAlerts: boolean;
-  AiLanguage: string;
-  aiLanguage?: string;
-  chatCardsEnabled: boolean;
+export interface AvatarUploadResponse {
+  profilePhoto: string;
 }
