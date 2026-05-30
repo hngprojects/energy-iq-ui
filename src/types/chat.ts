@@ -22,7 +22,7 @@ export interface AiResponseCard {
   severity?: "critical" | "warning" | "info";
   dataPoint?: string;
   actionLabel?: string;
-  cards?: AiResponseCard[];
+  actionHref?: string;
 }
 
 export interface ChatMessage {
