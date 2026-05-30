@@ -33,6 +33,8 @@ export interface ChatMessage {
   alertCard?: AlertCard;
   userInitials?: string;
   isStreaming?: boolean;
+  /** True while waiting for structured cards after stream chunks (hides plain text). */
+  awaitingCards?: boolean;
   error?: string;
   failed?: boolean;
   cards?: AiResponseCard[];

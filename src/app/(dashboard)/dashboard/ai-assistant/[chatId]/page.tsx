@@ -37,6 +37,10 @@ import {
   mergeAiResponseCards,
   normalizeBackendCards,
 } from "@/lib/chat-cards";
+import {
+  linkChatMessageCards,
+  saveChatMessageCards,
+} from "@/lib/chat-cards-storage";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
@@ -136,6 +140,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardsWaitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownLimitToastRef = useRef(false);
 
   const activeStreamingId = streamingMessageIdRef.current;
@@ -162,6 +167,30 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   }, []);
 
+  const clearCardsWaitTimeout = useCallback(() => {
+    if (cardsWaitTimeoutRef.current) {
+      clearTimeout(cardsWaitTimeoutRef.current);
+      cardsWaitTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleCardsWaitFallback = useCallback(
+    (messageId: string) => {
+      clearCardsWaitTimeout();
+      cardsWaitTimeoutRef.current = setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === messageId && message.awaitingCards
+              ? { ...message, awaitingCards: false, isStreaming: false }
+              : message,
+          ),
+        );
+        cardsWaitTimeoutRef.current = null;
+      }, 4000);
+    },
+    [clearCardsWaitTimeout, setMessages],
+  );
+
   const startSendingTimeout = useCallback(
     (assistantMessageId: string) => {
       clearSendingTimeout();
@@ -175,6 +204,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               return {
                 ...message,
                 isStreaming: false,
+                awaitingCards: false,
                 failed: false,
                 error: undefined,
               };
@@ -212,9 +242,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     pendingMessageSentRef.current = false;
     streamingMessageIdRef.current = null;
     clearSendingTimeout();
+    clearCardsWaitTimeout();
     setSending(false);
     processedSocketIdsRef.current.clear();
-  }, [chatId, clearSendingTimeout]);
+  }, [chatId, clearCardsWaitTimeout, clearSendingTimeout]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -225,8 +256,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, []);
 
   useEffect(() => {
-    return () => clearSendingTimeout();
-  }, [clearSendingTimeout]);
+    return () => {
+      clearSendingTimeout();
+      clearCardsWaitTimeout();
+    };
+  }, [clearCardsWaitTimeout, clearSendingTimeout]);
 
   useEffect(() => {
     if (!socketError || !activeStreamingId) return;
@@ -303,12 +337,19 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             const hasHumanText =
               currentMessage.content &&
               !currentMessage.content.startsWith("Found ");
+            const hasStructuredCards = mergedCards.length > 0;
             return prev.map((m) =>
               m.id === activeStreamingId
                 ? {
                     ...m,
-                    content: hasHumanText ? m.content : parsedContent,
+                    content: hasStructuredCards
+                      ? hasHumanText
+                        ? m.content
+                        : ""
+                      : parsedContent,
                     cards: mergedCards,
+                    isStreaming: !hasStructuredCards,
+                    awaitingCards: !hasStructuredCards,
                     timestamp: formatMessageTime(incoming.timestamp),
                   }
                 : m,
@@ -333,12 +374,44 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             // Clean-text replacement: when new_system_msg arrives with
             // complete text after streaming, replace streamed content
             if (incoming.isFinal && incoming.text) {
+              const lastAssistant = prev[idx];
+              const realId =
+                incoming.id &&
+                !incoming.id.startsWith("socket-") &&
+                !incoming.id.startsWith("assistant-stream")
+                  ? incoming.id
+                  : lastAssistant.id;
+
+              if (realId !== lastAssistant.id) {
+                linkChatMessageCards(chatId, lastAssistant.id, realId);
+              }
+
+              if (lastAssistant.cards?.length) {
+                saveChatMessageCards(chatId, {
+                  messageId: realId,
+                  userPrompt: lastUserMessageRef.current,
+                  cards: lastAssistant.cards,
+                });
+              }
+
+              const hasCards = Boolean(lastAssistant.cards?.length);
+              const waitingForCards =
+                !hasCards && incoming.text.trim().length > 0;
+
+              if (waitingForCards) {
+                scheduleCardsWaitFallback(realId);
+              } else {
+                clearCardsWaitTimeout();
+              }
+
               return prev.map((m, i) =>
                 i === idx
                   ? {
                       ...m,
-                      content: incoming.text,
+                      id: realId,
+                      content: hasCards ? "" : incoming.text,
                       isStreaming: false,
+                      awaitingCards: waitingForCards,
                       failed: false,
                       error: undefined,
                       timestamp: formatMessageTime(incoming.timestamp),
@@ -412,12 +485,42 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               // Not JSON — keep raw text as-is
             }
 
+            const realId =
+              incoming.id &&
+              !incoming.id.startsWith("socket-") &&
+              !incoming.id.startsWith("assistant-stream")
+                ? incoming.id
+                : message.id;
+
+            if (realId !== message.id) {
+              linkChatMessageCards(chatId, message.id, realId);
+            }
+
+            if (cards.length > 0) {
+              saveChatMessageCards(chatId, {
+                messageId: realId,
+                userPrompt: lastUserMessageRef.current,
+                cards,
+              });
+            }
+
+            const waitingForCards =
+              cards.length === 0 && parsedContent.trim().length > 0;
+
+            if (waitingForCards) {
+              scheduleCardsWaitFallback(realId);
+            } else {
+              clearCardsWaitTimeout();
+            }
+
             return parsedContent.trim() || cards.length > 0
               ? {
                   ...message,
-                  content: parsedContent,
+                  id: realId,
+                  content: cards.length > 0 ? "" : parsedContent,
                   cards,
                   isStreaming: false,
+                  awaitingCards: waitingForCards,
                   timestamp: formatMessageTime(incoming.timestamp),
                 }
               : {
@@ -435,7 +538,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           let cards = message.cards;
           let appendContent = rawText;
 
-          // First chunk might be JSON data dump — parse into cards
           if (rawText.trim().startsWith("[")) {
             const r = parseAlertCards(rawText);
             if (r) {
@@ -454,11 +556,14 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               ? `${currentContent}${needsSpace ? " " : ""}${rawText}`
               : appendContent;
 
+          const hasStructuredCards = Boolean(cards && cards.length > 0);
+
           return {
             ...message,
             content: nextContent,
             cards,
-            isStreaming: true,
+            isStreaming: !hasStructuredCards,
+            awaitingCards: !hasStructuredCards,
             timestamp: formatMessageTime(incoming.timestamp),
           };
         });
@@ -474,14 +579,24 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         clearSendingTimeout();
       }
     });
-  }, [chatId, clearSendingTimeout, setMessages, subscribeToSystemMessages]);
+  }, [
+    chatId,
+    clearCardsWaitTimeout,
+    clearSendingTimeout,
+    scheduleCardsWaitFallback,
+    setMessages,
+    subscribeToSystemMessages,
+  ]);
 
   useEffect(() => {
     return subscribeToCards((payload) => {
       const normalizedCards = normalizeBackendCards(payload.cards);
       if (normalizedCards.length === 0) return;
 
+      clearCardsWaitTimeout();
+
       const activeStreamingId = streamingMessageIdRef.current;
+      const userPrompt = lastUserMessageRef.current;
 
       setMessages((prev) => {
         const targetId =
@@ -490,10 +605,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
         if (!targetId) return prev;
 
-        return prev.map((message) => {
+        let mergedCards: AiResponseCard[] = [];
+
+        const next = prev.map((message) => {
           if (message.id !== targetId) return message;
 
-          const mergedCards = mergeAiResponseCards(
+          mergedCards = mergeAiResponseCards(
             message.cards ?? [],
             normalizedCards,
           );
@@ -501,18 +618,30 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           return {
             ...message,
             cards: mergedCards,
+            content: "",
             isStreaming: false,
+            awaitingCards: false,
             failed: false,
             error: undefined,
           };
         });
+
+        if (mergedCards.length > 0) {
+          saveChatMessageCards(chatId, {
+            messageId: targetId,
+            userPrompt,
+            cards: mergedCards,
+          });
+        }
+
+        return next;
       });
 
       streamingMessageIdRef.current = null;
       setSending(false);
       clearSendingTimeout();
     });
-  }, [clearSendingTimeout, setMessages, subscribeToCards]);
+  }, [chatId, clearCardsWaitTimeout, clearSendingTimeout, setMessages, subscribeToCards]);
 
   useEffect(() => {
     if (!socketError) return;
@@ -606,6 +735,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           content: "",
           timestamp: formatMessageTime(),
           isStreaming: true,
+          awaitingCards: true,
         },
       ];
     });
@@ -718,6 +848,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       content: "",
       timestamp: formatMessageTime(),
       isStreaming: true,
+      awaitingCards: true,
     };
 
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
@@ -784,6 +915,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         content: "",
         timestamp: formatMessageTime(),
         isStreaming: true,
+        awaitingCards: true,
       },
     ]);
 
@@ -803,6 +935,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 ...message,
                 role: "assistant" as const,
                 content: "",
+                awaitingCards: false,
                 error:
                   error instanceof Error
                     ? error.message

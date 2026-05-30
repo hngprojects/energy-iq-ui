@@ -21,50 +21,68 @@ interface AiResponseCardProps {
 
 const cardStyles: Record<
   AiResponseCardType,
-  { border: string; bg: string; icon: string; Icon: LucideIcon; label: string }
+  {
+    border: string;
+    bg: string;
+    icon: string;
+    label: string;
+    Icon: LucideIcon;
+    labelText: string;
+  }
 > = {
   summary: {
-    border: "border-slate-200",
+    border: "border-slate-300",
     bg: "bg-slate-50",
-    icon: "text-slate-600",
+    icon: "text-slate-700",
+    label: "text-slate-800",
     Icon: ListChecks,
-    label: "Summary",
+    labelText: "Summary",
   },
   insight: {
-    border: "border-violet-200",
+    border: "border-violet-300",
     bg: "bg-violet-50",
-    icon: "text-violet-600",
+    icon: "text-violet-800",
+    label: "text-violet-900",
     Icon: Lightbulb,
-    label: "Insight",
+    labelText: "Insight",
   },
   anomaly: {
-    border: "border-amber-200",
+    border: "border-amber-400",
     bg: "bg-amber-50",
-    icon: "text-amber-700",
+    icon: "text-amber-900",
+    label: "text-amber-950",
     Icon: AlertTriangle,
-    label: "Anomaly",
+    labelText: "Anomaly",
   },
   recommendation: {
-    border: "border-emerald-200",
+    border: "border-emerald-300",
     bg: "bg-emerald-50",
-    icon: "text-emerald-700",
+    icon: "text-emerald-800",
+    label: "text-emerald-900",
     Icon: Zap,
-    label: "Recommendation",
+    labelText: "Recommendation",
   },
   alert: {
-    border: "border-red-200",
+    border: "border-red-300",
     bg: "bg-red-50",
-    icon: "text-red-700",
+    icon: "text-red-800",
+    label: "text-red-900",
     Icon: AlertTriangle,
-    label: "Alert",
+    labelText: "Alert",
   },
 };
 
 const severityBadgeStyles = {
-  critical: "bg-red-100 text-red-800",
-  warning: "bg-amber-100 text-amber-800",
-  info: "bg-blue-100 text-blue-800",
+  critical: "bg-red-700 text-white ring-1 ring-red-800",
+  warning: "bg-amber-900 text-white ring-1 ring-amber-950",
+  info: "bg-slate-700 text-white ring-1 ring-slate-800",
 };
+
+function resolveSeverity(card: AiResponseCard) {
+  if (card.severity) return card.severity;
+  if (card.type === "anomaly" || card.type === "alert") return "warning";
+  return undefined;
+}
 
 export function AiResponseCardView({
   card,
@@ -73,6 +91,7 @@ export function AiResponseCardView({
 }: AiResponseCardProps) {
   const config = cardStyles[card.type] ?? cardStyles.insight;
   const Icon = config.Icon;
+  const severity = resolveSeverity(card);
 
   return (
     <article
@@ -88,34 +107,39 @@ export function AiResponseCardView({
         <div className="flex min-w-0 items-start gap-2">
           <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", config.icon)} />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {config.label}
+            <p
+              className={cn(
+                "text-[11px] font-bold uppercase tracking-wide",
+                config.label,
+              )}
+            >
+              {config.labelText}
             </p>
-            <h3 className="text-sm font-semibold leading-snug text-foreground">
+            <h3 className="text-sm font-semibold leading-snug text-slate-900">
               {card.headline}
             </h3>
           </div>
         </div>
-        {card.severity ? (
+        {severity ? (
           <span
             className={cn(
-              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
-              severityBadgeStyles[card.severity],
+              "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold capitalize",
+              severityBadgeStyles[severity],
             )}
           >
-            {card.severity}
+            {severity}
           </span>
         ) : null}
       </div>
 
       {card.dataPoint ? (
-        <p className="mb-2 text-xs font-medium text-foreground/80">
+        <p className="mb-2 text-xs font-semibold text-slate-800">
           {card.dataPoint}
         </p>
       ) : null}
 
       {card.description ? (
-        <p className="max-h-48 overflow-y-auto text-sm leading-relaxed text-foreground/90 wrap-break-word whitespace-pre-wrap">
+        <p className="max-h-48 overflow-y-auto text-sm leading-relaxed text-slate-800 wrap-break-word whitespace-pre-wrap">
           {card.description}
         </p>
       ) : null}
@@ -125,7 +149,7 @@ export function AiResponseCardView({
           type="button"
           variant="outline"
           size="sm"
-          className="mt-3 h-8 border-foreground/15 bg-white/80 text-xs"
+          className="mt-3 h-8 border-slate-300 bg-white text-xs text-slate-900 hover:bg-slate-50"
           onClick={() => {
             if (card.actionHref) {
               window.open(card.actionHref, "_blank", "noopener,noreferrer");
