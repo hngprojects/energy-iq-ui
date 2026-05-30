@@ -152,16 +152,17 @@ export async function apiFetch<TResponse>(
                     refreshToken: newRefreshToken,
                   } = data;
 
-                  const user = useAuthStore.getState().user;
-                  if (user && newToken && newRefreshToken) {
-                    useAuthStore
-                      .getState()
-                      .setAuth(
-                        user,
-                        newToken,
-                        newRefreshToken,
-                        localStorage.getItem("remember_me") === "1",
-                      );
+                  if (newToken && newRefreshToken) {
+                    const { user, setAuth, setTokens } =
+                      useAuthStore.getState();
+                    const rememberMe =
+                      localStorage.getItem("remember_me") === "1";
+
+                    if (user) {
+                      setAuth(user, newToken, newRefreshToken, rememberMe);
+                    } else {
+                      setTokens(newToken, newRefreshToken);
+                    }
                   }
                   return data;
                 })

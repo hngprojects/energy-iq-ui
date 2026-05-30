@@ -9,6 +9,7 @@ import { Pencil, Check, Loader2, Upload } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileQueries } from "@/hooks/use-profile-queries";
+import { useCurrentUserSync } from "@/hooks/use-current-user-sync";
 import { SelectField } from "@/components/settings/select-field";
 import { PhotoUploadDialog } from "./photo-upload-dialog";
 import { PhotoSuccessDialog } from "./photo-success-dialog";
@@ -36,6 +37,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export function ProfilePageClient() {
   const { user } = useAuthStore();
   const { useUpdateProfile } = useProfileQueries();
+  const { isLoading: isSyncingUser } = useCurrentUserSync();
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [profileSaved, setProfileSaved] = React.useState(false);
@@ -148,6 +150,30 @@ export function ProfilePageClient() {
     ? "User Profile"
     : "Personal and Business Information.";
   const hasPhoto = !!user?.profilePhoto;
+
+  if (isSyncingUser && !user) {
+    return (
+      <div className="space-y-4">
+        <div className="mb-6">
+          <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
+          <div className="mt-2 h-4 w-72 animate-pulse rounded-lg bg-muted/70" />
+        </div>
+        <div className="rounded-xl border border-border bg-white p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 animate-pulse rounded-full bg-muted" />
+            <div className="h-10 w-36 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-white p-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="h-14 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

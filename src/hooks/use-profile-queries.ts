@@ -14,7 +14,12 @@ export const useProfileQueries = () => {
     useMutation({
       mutationFn: (data: ProfileUpdateRequest) => ProfileService.updateProfile(data),
       onSuccess: (data) => {
-        setUser(data);
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+          setUser({ ...currentUser, ...data });
+        } else {
+          setUser(data);
+        }
         toast.success("Profile updated successfully", { duration: 4000 });
         onSuccess?.();
       },
