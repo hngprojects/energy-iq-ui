@@ -16,7 +16,9 @@ import { LanguageToggle } from "@/components/dashboard/ai/language-toggle";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useActiveChat } from "@/hooks/use-chat-queries";
+import { blockClick, blockKeyPress } from "@/lib/block-interaction";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type {
@@ -1020,16 +1022,19 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <LanguageToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Download (coming soon)"
-              aria-label="Download"
-              disabled
-              className="h-9 w-9 text-muted-foreground hover:bg-muted"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            <Tooltip content="Download (coming soon)" side="bottom" align="end">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Download"
+                aria-disabled="true"
+                onClick={blockClick}
+                onKeyDown={blockKeyPress}
+                className="h-9 w-9 text-muted-foreground hover:bg-muted cursor-not-allowed opacity-50"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </Tooltip>
             <ChatActionsMenu
               chatId={chatId}
               title={title}
@@ -1135,7 +1140,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
       <div className="fixed bottom-0 right-0 left-0 z-10 border-t border-border bg-card px-6 py-4 lg:left-60">
         <div className="max-w-7xl mx-auto w-full flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
-          <AttachMenu buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground" />
+          <AttachMenu
+            comingSoon
+            comingSoonLabel="Attachments (coming soon)"
+            buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+          />
           <div className="flex min-h-8 flex-1 items-center">
             <Textarea
               ref={textareaRef}
@@ -1171,16 +1180,20 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             </span>
           </div>
           <div className="mb-px flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              title="Voice input"
-              aria-label="Toggle microphone"
-              className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
+            <Tooltip content="Voice input (coming soon)">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Toggle microphone"
+                aria-disabled="true"
+                onClick={blockClick}
+                onKeyDown={blockKeyPress}
+                className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground cursor-not-allowed opacity-50"
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            </Tooltip>
             <Button
               type="button"
               title="Send message"
@@ -1202,3 +1215,4 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
+
