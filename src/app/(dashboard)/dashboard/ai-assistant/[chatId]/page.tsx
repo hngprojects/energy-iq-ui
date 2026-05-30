@@ -141,6 +141,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     connected,
     connecting,
     socketError,
+    clearSocketError,
     sendMessage,
     joinActiveChats,
     subscribeToSystemMessages,
@@ -451,7 +452,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
-    if (!raw) return;
+    if (!raw) {
+      clearSocketError();
+      return;
+    }
 
     setMessages((prev) => {
       const hasPendingNotice = prev.some(
@@ -474,7 +478,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         },
       ];
     });
-  }, [chatId, setMessages, socketError]);
+    clearSocketError();
+  }, [chatId, setMessages, socketError, clearSocketError]);
 
   useEffect(() => {
     if (!connected) return;

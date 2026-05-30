@@ -132,6 +132,8 @@ export function useChatSocket(chatId: string) {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
   const [socketError, setSocketError] = useState<string | null>(null);
+  // Expose a method to clear socket errors after they have been handled
+  const clearSocketError = () => setSocketError(null);
 
   useEffect(() => {
     const socketUrl = getSocketUrl();
@@ -337,6 +339,7 @@ export function useChatSocket(chatId: string) {
     connected,
     connecting,
     socketError,
+    clearSocketError,
     sendMessage,
     joinActiveChats,
     subscribeToSystemMessages,
