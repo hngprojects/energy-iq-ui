@@ -6,6 +6,7 @@ import { ChatHistoryList } from "@/components/dashboard/ai/chat-history-list";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useChatHistory } from "@/hooks/use-chat-queries";
+import { blockClick, blockKeyPress } from "@/lib/block-interaction";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function AIAssistantPage() {
@@ -26,18 +27,6 @@ export default function AIAssistantPage() {
     console.debug("[AIAssistantPage] Failed to load chat history:", error);
   }
 
-  const blockClick = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const blockKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  };
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -55,7 +44,7 @@ export default function AIAssistantPage() {
               aria-disabled="true"
               onClick={blockClick}
               onKeyDown={blockKeyPress}
-              className="h-9 w-9 text-muted-foreground hover:bg-muted"
+              className="h-9 w-9 text-muted-foreground hover:bg-muted cursor-not-allowed opacity-50"
             >
               <History className="h-6 w-6" />
             </Button>
@@ -68,7 +57,7 @@ export default function AIAssistantPage() {
               aria-disabled="true"
               onClick={blockClick}
               onKeyDown={blockKeyPress}
-              className="h-9 w-9 text-muted-foreground hover:bg-muted"
+              className="h-9 w-9 text-muted-foreground hover:bg-muted cursor-not-allowed opacity-50"
             >
               <Download className="h-6 w-6" />
             </Button>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useActiveChat } from "@/hooks/use-chat-queries";
+import { blockClick, blockKeyPress } from "@/lib/block-interaction";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type {
@@ -960,18 +961,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
-  const blockClick = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const blockKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  };
-
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const el = e.currentTarget;
     el.style.height = "auto";
@@ -1041,7 +1030,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 aria-disabled="true"
                 onClick={blockClick}
                 onKeyDown={blockKeyPress}
-                className="h-9 w-9 text-muted-foreground hover:bg-muted"
+                className="h-9 w-9 text-muted-foreground hover:bg-muted cursor-not-allowed opacity-50"
               >
                 <Download className="h-4 w-4" />
               </Button>
@@ -1200,7 +1189,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 aria-disabled="true"
                 onClick={blockClick}
                 onKeyDown={blockKeyPress}
-                className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+                className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground cursor-not-allowed opacity-50"
               >
                 <Mic className="h-4 w-4" />
               </Button>

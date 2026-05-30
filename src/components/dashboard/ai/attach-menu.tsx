@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, Paperclip, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface AttachMenuProps {
   buttonClassName?: string;
@@ -63,7 +64,10 @@ export function AttachMenu({
               event.stopPropagation();
             }
           }}
-          className={buttonClassName}
+          className={cn(
+            buttonClassName,
+            comingSoon && "cursor-not-allowed opacity-50",
+          )}
         >
           <Plus className={iconSize} />
         </Button>

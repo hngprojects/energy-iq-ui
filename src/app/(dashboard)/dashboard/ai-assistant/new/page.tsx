@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { blockClick, blockKeyPress } from "@/lib/block-interaction";
 import { chatService } from "@/services/chat-service";
 import { toast } from "sonner";
 import {
@@ -152,18 +153,6 @@ export default function NewChatPage() {
     }
   };
 
-  const blockClick = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const blockKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  };
-
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
@@ -208,7 +197,7 @@ export default function NewChatPage() {
                 aria-disabled="true"
                 onClick={blockClick}
                 onKeyDown={blockKeyPress}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground cursor-not-allowed opacity-50"
               >
                 <Plus className="h-5 w-5" />
               </Button>
@@ -260,7 +249,7 @@ export default function NewChatPage() {
                   aria-disabled="true"
                   onClick={blockClick}
                   onKeyDown={blockKeyPress}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground cursor-not-allowed opacity-50"
                 >
                   <Mic className="h-4 w-4" />
                 </Button>
