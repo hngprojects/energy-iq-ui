@@ -134,6 +134,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownLimitToastRef = useRef(false);
 
+  const activeStreamingId = streamingMessageIdRef.current;
+
   const lastUserMessageRef = useRef<string>("");
 
   const MAX_CHARS = 3000;
@@ -142,6 +144,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     connected,
     connecting,
     socketError,
+    clearSocketError,
     sendMessage,
     joinActiveChats,
     subscribeToSystemMessages,
@@ -219,6 +222,27 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   useEffect(() => {
     return () => clearSendingTimeout();
   }, [clearSendingTimeout]);
+
+  useEffect(() => {
+    if (!socketError || !activeStreamingId) return;
+
+    streamingMessageIdRef.current = null;
+    setSending(false);
+    clearSendingTimeout();
+
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === activeStreamingId
+          ? {
+              ...message,
+              isStreaming: false,
+              failed: true,
+              error: socketError,
+            }
+          : message,
+      ),
+    );
+  }, [socketError, activeStreamingId, clearSendingTimeout, setMessages]);
 
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
@@ -452,7 +476,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
-    if (!raw) return;
+    if (!raw) {
+      clearSocketError();
+      return;
+    }
 
     setMessages((prev) => {
       const hasPendingNotice = prev.some(
@@ -475,7 +502,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         },
       ];
     });
-  }, [chatId, setMessages, socketError]);
+    clearSocketError();
+  }, [chatId, setMessages, socketError, clearSocketError]);
 
   useEffect(() => {
     if (!connected) return;
@@ -655,7 +683,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     try {
       lastUserMessageRef.current = text;
-
       sendMessage(text);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
@@ -996,4 +1023,3 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
-
