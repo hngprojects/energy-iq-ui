@@ -214,18 +214,46 @@ export function useChatSocket(chatId: string) {
       setSocketError(error.message || "Unable to connect to chat.");
     });
 
-    socket.on("error", (error) => {
+    socket.on("error", (error: unknown) => {
       if (typeof error === "string") {
         setSocketError(error);
         return;
       }
 
-      if (error && typeof error === "object" && "message" in error) {
-        setSocketError(String(error.message));
+      if (error && typeof error === "object") {
+        const obj = error as Record<string, unknown>;
+        // Match backend format: { code: string, message: string }
+        // const code = typeof obj.code === "string" ? obj.code : "";
+        const message =
+          typeof obj.message === "string"
+            ? obj.message
+            : typeof obj.code === "string"
+              ? obj.code
+              : "A chat connection error occurred.";
+        setSocketError(message);
         return;
       }
 
       setSocketError("A chat connection error occurred.");
+    });
+
+    socket.on("exception", (data: unknown) => {
+      if (typeof data === "string") {
+        setSocketError(data);
+        return;
+      }
+
+      if (data && typeof data === "object") {
+        const obj = data as Record<string, unknown>;
+        const message =
+          typeof obj.message === "string"
+            ? obj.message
+            : "An unexpected error occurred.";
+        setSocketError(message);
+        return;
+      }
+
+      setSocketError("An unexpected error occurred.");
     });
 
     const handleChatAction = (payload: Record<string, unknown>) => {
@@ -272,6 +300,9 @@ export function useChatSocket(chatId: string) {
       socket.off("agent_msg", handleMessage);
       socket.off("receive_msg", handleMessage);
       socket.off("message", handleMessage);
+
+      thisSocket.off("error");
+      thisSocket.off("exception");
 
       thisSocket.removeAllListeners();
       thisSocket.close();

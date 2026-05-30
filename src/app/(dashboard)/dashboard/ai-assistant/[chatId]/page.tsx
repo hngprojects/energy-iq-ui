@@ -134,6 +134,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownLimitToastRef = useRef(false);
 
+  const activeStreamingId = streamingMessageIdRef.current;
+
   const lastUserMessageRef = useRef<string>("");
 
   const MAX_CHARS = 3000;
@@ -220,6 +222,27 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   useEffect(() => {
     return () => clearSendingTimeout();
   }, [clearSendingTimeout]);
+
+  useEffect(() => {
+    if (!socketError || !activeStreamingId) return;
+
+    streamingMessageIdRef.current = null;
+    setSending(false);
+    clearSendingTimeout();
+
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === activeStreamingId
+          ? {
+              ...message,
+              isStreaming: false,
+              failed: true,
+              error: socketError,
+            }
+          : message,
+      ),
+    );
+  }, [socketError, activeStreamingId, clearSendingTimeout, setMessages]);
 
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
@@ -660,7 +683,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     try {
       lastUserMessageRef.current = text;
-
       sendMessage(text);
       startSendingTimeout(assistantMessageId);
     } catch (error) {
@@ -1001,4 +1023,3 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
-
