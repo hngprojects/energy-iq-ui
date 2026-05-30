@@ -165,7 +165,7 @@ export function SystemDeviceClient() {
           type="button"
           variant="secondary"
           onClick={() => setOpen(true)}
-          className="h-10 w-full rounded-[6px] bg-secondary text-white lg:w-auto"
+          className="h-11 w-full rounded-lg bg-secondary text-white lg:w-auto"
         >
           <Plus className="h-4 w-4" />
           Connect New Inverter
@@ -190,7 +190,7 @@ export function SystemDeviceClient() {
               </div>
 
               <span
-                className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${device.status.className}`}
+                className={`inline-flex w-fit items-center gap-1.5 place-self-start rounded-full px-3 py-1.5 text-xs font-medium lg:place-self-start lg:justify-self-end ${device.status.className}`}
               >
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${device.status.dotClassName}`}
@@ -213,13 +213,13 @@ export function SystemDeviceClient() {
             <div className="mt-7 grid grid-cols-2 gap-4 lg:flex lg:justify-end">
               <Button
                 variant="outline"
-                className="h-10 rounded-[6px] border-border"
+                className="h-11 rounded-lg border-border"
               >
                 Reconnect
               </Button>
               <Button
                 variant="outline"
-                className="h-10 rounded-[6px] border-border"
+                className="h-11 rounded-lg border-border"
               >
                 View Details
               </Button>
@@ -229,8 +229,8 @@ export function SystemDeviceClient() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-[#111827]/35 px-6 backdrop-blur-[2px]">
-          <div className="w-full max-w-[456px] rounded-[6px] bg-white p-6">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-dark-text/35 px-6 backdrop-blur-[2px]">
+          <div className="w-full max-w-114 rounded-[6px] bg-white p-6">
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="font-bold text-dark-text">
@@ -256,6 +256,7 @@ export function SystemDeviceClient() {
                   value={brand}
                   onChange={setBrand}
                   options={brandOptions}
+                  className="h-11 text-sm"
                 />
               </div>
               <div className="space-y-2">
@@ -264,6 +265,7 @@ export function SystemDeviceClient() {
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   placeholder="e.g 8"
+                  className="h-11 text-sm placeholder:text-sm"
                 />
               </div>
             </div>
@@ -274,6 +276,7 @@ export function SystemDeviceClient() {
                 value={serial}
                 onChange={(e) => setSerial(e.target.value)}
                 placeholder="e.g SN-SSK8KW-2026"
+                className="h-11 text-sm placeholder:text-sm"
               />
             </div>
 
@@ -283,22 +286,23 @@ export function SystemDeviceClient() {
                 type="password"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                placeholder="paste your access secure token"
+                placeholder="paste your secure access token"
                 autoComplete="off"
+                className="h-11 text-sm placeholder:text-sm"
               />
             </div>
 
             <div className="mt-6 flex justify-end gap-4">
               <Button
                 variant="outline"
-                className="h-10 rounded-[6px] border-border"
+                className="h-11 rounded-lg border-border"
                 onClick={() => setOpen(false)}
               >
                 Cancel
               </Button>
               <Button
                 variant="secondary"
-                className="h-10 w-full rounded-[6px] bg-secondary text-white lg:w-auto"
+                className="h-11 w-full rounded-lg bg-secondary text-white lg:w-auto"
                 onClick={handleSubmit}
                 disabled={connect.isPending}
               >
@@ -316,3 +320,4 @@ export function SystemDeviceClient() {
     </section>
   );
 }
+
