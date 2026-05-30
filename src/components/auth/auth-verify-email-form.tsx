@@ -14,6 +14,8 @@ import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { useAuthStore } from "@/stores/auth-store";
 
+const OTP_VALIDITY_SECONDS = 299;
+
 export function AuthVerifyEmailForm() {
   const router = useRouter();
   const tempEmail = useAuthStore((state) => state.tempEmail);
@@ -31,7 +33,7 @@ export function AuthVerifyEmailForm() {
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(299);
+  const [timeLeft, setTimeLeft] = useState(OTP_VALIDITY_SECONDS);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -61,7 +63,7 @@ export function AuthVerifyEmailForm() {
       { email },
       {
         onSuccess: () => {
-          setTimeLeft(299);
+          setTimeLeft(OTP_VALIDITY_SECONDS);
         },
       },
     );
