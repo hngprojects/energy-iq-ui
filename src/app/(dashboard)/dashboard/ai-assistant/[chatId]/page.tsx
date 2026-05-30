@@ -33,6 +33,10 @@ import {
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
 import { useAuthStore } from "@/stores/auth-store";
 import { getUserInitials } from "@/lib/user-initials";
+import {
+  mergeAiResponseCards,
+  normalizeBackendCards,
+} from "@/lib/chat-cards";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
@@ -148,6 +152,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     sendMessage,
     joinActiveChats,
     subscribeToSystemMessages,
+    subscribeToCards,
   } = useChatSocket(chatId);
 
   const clearSendingTimeout = useCallback(() => {
@@ -470,6 +475,44 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       }
     });
   }, [chatId, clearSendingTimeout, setMessages, subscribeToSystemMessages]);
+
+  useEffect(() => {
+    return subscribeToCards((payload) => {
+      const normalizedCards = normalizeBackendCards(payload.cards);
+      if (normalizedCards.length === 0) return;
+
+      const activeStreamingId = streamingMessageIdRef.current;
+
+      setMessages((prev) => {
+        const targetId =
+          activeStreamingId ??
+          [...prev].reverse().find((m) => m.role === "assistant")?.id;
+
+        if (!targetId) return prev;
+
+        return prev.map((message) => {
+          if (message.id !== targetId) return message;
+
+          const mergedCards = mergeAiResponseCards(
+            message.cards ?? [],
+            normalizedCards,
+          );
+
+          return {
+            ...message,
+            cards: mergedCards,
+            isStreaming: false,
+            failed: false,
+            error: undefined,
+          };
+        });
+      });
+
+      streamingMessageIdRef.current = null;
+      setSending(false);
+      clearSendingTimeout();
+    });
+  }, [clearSendingTimeout, setMessages, subscribeToCards]);
 
   useEffect(() => {
     if (!socketError) return;

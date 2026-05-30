@@ -4,6 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import type { Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/auth-store";
+import type { BackendAiCardPayload } from "@/lib/chat-cards";
+
+export interface CardsSocketPayload {
+  chatId?: string;
+  cards?: BackendAiCardPayload[];
+}
+
+type CardsCallback = (payload: CardsSocketPayload) => void;
 
 type IncomingPayload =
   | string
@@ -120,6 +128,7 @@ export function useChatSocket(chatId: string) {
 
   const socketRef = useRef<Socket | null>(null);
   const callbacksRef = useRef<Set<MessageCallback>>(new Set());
+  const cardsCallbacksRef = useRef<Set<CardsCallback>>(new Set());
   const tokenRef = useRef(token);
   const userIdRef = useRef(userId);
 
@@ -278,10 +287,17 @@ export function useChatSocket(chatId: string) {
       callbacksRef.current.forEach((callback) => callback(message));
     };
 
+    const handleCards = (payload: CardsSocketPayload) => {
+      if (payload.chatId && payload.chatId !== chatId) return;
+      if (!Array.isArray(payload.cards) || payload.cards.length === 0) return;
+      cardsCallbacksRef.current.forEach((callback) => callback(payload));
+    };
+
     socket.on("chat_action", handleChatAction);
 
     socket.on("token_chunk", handleTokenChunk);
     socket.on("stream_end", handleStreamEnd);
+    socket.on("cards", handleCards);
     socket.on("new_system_msg", handleMessage);
     socket.on("agent_msg", handleMessage);
     socket.on("receive_msg", handleMessage);
@@ -296,6 +312,7 @@ export function useChatSocket(chatId: string) {
       thisSocket.off("chat_action", handleChatAction);
       thisSocket.off("token_chunk", handleTokenChunk);
       thisSocket.off("stream_end", handleStreamEnd);
+      thisSocket.off("cards", handleCards);
       socket.off("new_system_msg", handleMessage);
       socket.off("agent_msg", handleMessage);
       socket.off("receive_msg", handleMessage);
@@ -366,6 +383,14 @@ export function useChatSocket(chatId: string) {
     };
   }, []);
 
+  const subscribeToCards = useCallback((callback: CardsCallback) => {
+    cardsCallbacksRef.current.add(callback);
+
+    return () => {
+      cardsCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
   return {
     connected,
     connecting,
@@ -374,5 +399,6 @@ export function useChatSocket(chatId: string) {
     sendMessage,
     joinActiveChats,
     subscribeToSystemMessages,
+    subscribeToCards,
   };
 }

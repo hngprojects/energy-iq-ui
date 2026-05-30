@@ -2,6 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertDetailsCard } from "./alert-details-card";
+import {
+  AiResponseCardsList,
+  AiResponseCardsLoading,
+} from "./ai-response-card";
 import { ChatMessage } from "@/types/chat";
 
 interface ChatMessageBubbleProps {
@@ -30,7 +34,7 @@ export function ChatMessageBubble({
     return (
       <div className="flex items-end justify-end gap-3">
         <div className="flex min-w-0 flex-col items-end gap-1">
-          <div className="max-w-sm wrap-break-word whitespace-pre-wrap rounded-2xl rounded-br-sm bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+          <div className="max-w-[min(100%,24rem)] wrap-break-word whitespace-pre-wrap rounded-2xl rounded-br-sm bg-secondary px-4 py-3 text-sm text-secondary-foreground">
             {message.content}
           </div>
 
@@ -47,78 +51,75 @@ export function ChatMessageBubble({
   }
 
   if (isAssistant) {
+    const hasCards = Boolean(message.cards && message.cards.length > 0);
+    const showCardLoading =
+      Boolean(message.isStreaming) &&
+      !message.failed &&
+      !hasCards &&
+      !message.content?.trim();
+
+    const showStreamedText =
+      Boolean(message.content?.trim()) && !hasCards && !showCardLoading;
+
     return (
-      <div className="flex w-full items-end justify-start gap-3">
+      <div className="flex w-full items-start justify-start gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           AI
         </div>
 
-        <div className="flex flex-col gap-1">
-          <div className="max-w-md rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
-            {message.isStreaming && !message.failed ? (
-              <div className="mb-2 flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Typing</span>
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
-              </div>
-            ) : null}
-            {message.failed && message.error ? (
-              <p className="mb-2 text-sm text-destructive">{message.error}</p>
-            ) : null}
-            {message.content ? (
+        <div className="flex min-w-0 max-w-full flex-1 flex-col gap-2 sm:max-w-2xl">
+          {message.failed && message.error ? (
+            <div className="rounded-2xl rounded-bl-sm border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <p className="text-sm text-destructive">{message.error}</p>
+              {onRetry ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => onRetry(message.id)}
+                >
+                  Try again
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {showCardLoading ? <AiResponseCardsLoading /> : null}
+
+          {message.isStreaming && !message.failed && !showCardLoading && !hasCards ? (
+            <div className="flex items-center gap-1.5 px-1">
+              <span className="text-xs text-muted-foreground">Typing</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+            </div>
+          ) : null}
+
+          {hasCards ? (
+            <AiResponseCardsList cards={message.cards!} />
+          ) : null}
+
+          {showStreamedText ? (
+            <div className="rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">
               <p className="wrap-break-word whitespace-pre-wrap text-sm text-foreground">
                 {String(message.content)}
               </p>
-            ) : null}
-            {message.alertCard ? (
-              <AlertDetailsCard
-                severity={message.alertCard.severity}
-                title={message.alertCard.title}
-                triggeredAt={message.alertCard.triggeredAt}
-                status={message.alertCard.status}
-                details={message.alertCard.details}
-              />
-            ) : null}
+            </div>
+          ) : null}
 
-            {message.cards && message.cards.length > 0 ? (
-              <div className="mt-2 space-y-2">
-                {message.cards.map((card, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-lg border p-3 text-sm ${
-                      card.severity === "critical"
-                        ? "border-red-200 bg-red-50 text-red-800"
-                        : card.severity === "warning"
-                          ? "border-amber-200 bg-amber-50 text-amber-800"
-                          : "border-blue-200 bg-blue-50 text-blue-800"
-                    }`}
-                  >
-                    <p className="font-medium">{card.headline}</p>
-                    {card.description ? (
-                      <p className="mt-1 text-xs opacity-80">
-                        {card.description}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : null}
+          {message.alertCard ? (
+            <AlertDetailsCard
+              severity={message.alertCard.severity}
+              title={message.alertCard.title}
+              triggeredAt={message.alertCard.triggeredAt}
+              status={message.alertCard.status}
+              details={message.alertCard.details}
+            />
+          ) : null}
 
-            {message.failed && onRetry ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={() => onRetry(message.id)}
-              >
-                Try again
-              </Button>
-            ) : null}
-            <span className="mt-2 block text-xs text-muted-foreground">
-              {message.timestamp}
-            </span>
-          </div>
+          <span className="px-1 text-xs text-muted-foreground">
+            {message.timestamp}
+          </span>
         </div>
       </div>
     );
