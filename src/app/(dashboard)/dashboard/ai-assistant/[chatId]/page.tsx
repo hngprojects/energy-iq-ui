@@ -132,6 +132,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasShownLimitToastRef = useRef(false);
 
   const lastUserMessageRef = useRef<string>("");
 
@@ -793,84 +794,87 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   return (
     <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
-      <div className="flex shrink-0 items-center gap-2 md:gap-3 border-b border-border bg-card px-3 py-3 md:px-6 md:py-4 shadow-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Go back"
-          aria-label="Go back"
-          onClick={() => router.push("/dashboard/ai-assistant")}
-          className="h-8 w-8 text-muted-foreground hover:bg-muted"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
-          {renderHeaderIcon()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {title}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {dateLabel} &nbsp;·&nbsp; {messages.length} messages
-          </p>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <LanguageToggle />
+      <div className="border-b border-border bg-card px-3 py-3 md:px-6 md:py-4 shadow-sm">
+        <div className="max-w-7xl mx-auto w-full flex shrink-0 items-center gap-2 md:gap-3 ">
           <Button
             variant="ghost"
             size="icon"
-            title="Download (coming soon)"
-            aria-label="Download"
-            disabled
-            className="h-9 w-9 text-muted-foreground hover:bg-muted"
+            title="Go back"
+            aria-label="Go back"
+            onClick={() => router.push("/dashboard/ai-assistant")}
+            className="h-8 w-8 text-muted-foreground hover:bg-muted"
           >
-            <Download className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <ChatActionsMenu
-            chatId={chatId}
-            title={title}
-            isPinned={actions.pinnedIds.includes(chatId)}
-            triggerClassName="h-9 w-9"
-            onRename={(id, nextTitle) =>
-              updateActions((prev) => ({
-                ...prev,
-                renamedTitles: {
-                  ...prev.renamedTitles,
-                  [id]: nextTitle,
-                },
-              }))
-            }
-            onPin={(id) =>
-              updateActions((prev) => ({
-                ...prev,
-                pinnedIds: prev.pinnedIds.includes(id)
-                  ? prev.pinnedIds.filter((item) => item !== id)
-                  : [...prev.pinnedIds, id],
-              }))
-            }
-            onArchive={(id) => {
-              updateActions((prev) => ({
-                ...prev,
-                archivedIds: prev.archivedIds.includes(id)
-                  ? prev.archivedIds
-                  : [...prev.archivedIds, id],
-              }));
-              router.push("/dashboard/ai-assistant");
-            }}
-            onDelete={(id) => {
-              updateActions((prev) => ({
-                ...prev,
-                deletedIds: prev.deletedIds.includes(id)
-                  ? prev.deletedIds
-                  : [...prev.deletedIds, id],
-              }));
-              router.push("/dashboard/ai-assistant");
-            }}
-          />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+            {renderHeaderIcon()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {title}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {dateLabel} &nbsp;·&nbsp; {messages.length} messages
+            </p>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Download (coming soon)"
+              aria-label="Download"
+              disabled
+              className="h-9 w-9 text-muted-foreground hover:bg-muted"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <ChatActionsMenu
+              chatId={chatId}
+              title={title}
+              isPinned={actions.pinnedIds.includes(chatId)}
+              triggerClassName="h-9 w-9"
+              onRename={(id, nextTitle) =>
+                updateActions((prev) => ({
+                  ...prev,
+                  renamedTitles: {
+                    ...prev.renamedTitles,
+                    [id]: nextTitle,
+                  },
+                }))
+              }
+              onPin={(id) =>
+                updateActions((prev) => ({
+                  ...prev,
+                  pinnedIds: prev.pinnedIds.includes(id)
+                    ? prev.pinnedIds.filter((item) => item !== id)
+                    : [...prev.pinnedIds, id],
+                }))
+              }
+              onArchive={(id) => {
+                updateActions((prev) => ({
+                  ...prev,
+                  archivedIds: prev.archivedIds.includes(id)
+                    ? prev.archivedIds
+                    : [...prev.archivedIds, id],
+                }));
+                router.push("/dashboard/ai-assistant");
+              }}
+              onDelete={(id) => {
+                updateActions((prev) => ({
+                  ...prev,
+                  deletedIds: prev.deletedIds.includes(id)
+                    ? prev.deletedIds
+                    : [...prev.deletedIds, id],
+                }));
+                router.push("/dashboard/ai-assistant");
+              }}
+            />
+          </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
+
+      <div className="flex-1 overflow-y-auto px-6 py-6 pb-32 max-w-7xl mx-auto w-full">
         <div className="mb-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs text-muted-foreground">Today</span>
@@ -927,8 +931,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         )}
         <div ref={bottomRef} />
       </div>
+
       <div className="fixed bottom-0 right-0 left-0 z-10 border-t border-border bg-card px-6 py-4 lg:left-60">
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
+        <div className="max-w-7xl mx-auto w-full flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
           <AttachMenu buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground" />
           <div className="flex min-h-8 flex-1 items-center">
             <Textarea
@@ -937,11 +942,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               onChange={(e) => {
                 const value = e.target.value;
                 if (value.length > MAX_CHARS) {
-                  toast.error(
-                    `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
-                  );
+                  if (!hasShownLimitToastRef.current) {
+                    toast.error(
+                      `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                    );
+                    hasShownLimitToastRef.current = true;
+                  }
                   setInput(value.slice(0, MAX_CHARS));
                 } else {
+                  hasShownLimitToastRef.current = false;
                   setInput(value);
                 }
               }}

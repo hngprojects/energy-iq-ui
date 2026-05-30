@@ -5,6 +5,7 @@ import { DashboardSidebar } from "@/components/dashboard/layout/dashboard-sideba
 import { DashboardHeader } from "@/components/dashboard/layout/dashboard-header";
 import { OnboardingGuard } from "@/components/dashboard/onboarding-guard";
 import { cn } from "@/lib/utils";
+import { UserSync } from "@/components/dashboard/user-sync";
 
 export default function DashboardLayout({
   children,
@@ -12,10 +13,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isChatDetailsPage = pathname.includes("/ai-assistant/");
+  const isChatDetailsPage = /^\/dashboard\/ai-assistant\/[^/]+$/.test(pathname);
 
   return (
     <div className="bg-background flex min-h-screen max-w-full">
+      <UserSync />
       <DashboardSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader />
