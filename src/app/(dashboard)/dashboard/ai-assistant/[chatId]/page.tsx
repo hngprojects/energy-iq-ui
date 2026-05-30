@@ -141,7 +141,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const lastUserMessageRef = useRef<string>("");
 
   const MAX_CHARS = 3000;
-  const isComposerLocked = true;
 
   const {
     connected,
@@ -1019,57 +1018,33 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
           />
           <div className="flex min-h-8 flex-1 items-center">
-            <Tooltip
-              content="Message input (coming soon)"
-              wrapperClassName="w-full"
-              contentClassName="max-w-[240px] text-center"
-            >
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                readOnly={isComposerLocked}
-                aria-disabled={isComposerLocked}
-                onMouseDown={(event) => {
-                  if (isComposerLocked) blockClick(event);
-                }}
-                onFocus={(event) => {
-                  if (isComposerLocked) event.currentTarget.blur();
-                }}
-                onChange={(e) => {
-                  if (isComposerLocked) return;
-                  const value = e.target.value;
-                  if (value.length > MAX_CHARS) {
-                    if (!hasShownLimitToastRef.current) {
-                      toast.error(
-                        `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
-                      );
-                      hasShownLimitToastRef.current = true;
-                    }
-                    setInput(value.slice(0, MAX_CHARS));
-                  } else {
-                    hasShownLimitToastRef.current = false;
-                    setInput(value);
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length > MAX_CHARS) {
+                  if (!hasShownLimitToastRef.current) {
+                    toast.error(
+                      `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                    );
+                    hasShownLimitToastRef.current = true;
                   }
-                }}
-                onKeyDown={(event) => {
-                  if (isComposerLocked) {
-                    blockKeyPress(event);
-                    return;
-                  }
-                  handleKeyDown(event);
-                }}
-                onInput={(event) => {
-                  if (isComposerLocked) return;
-                  handleTextareaInput(event);
-                }}
-                placeholder="Ask anything about your energy system"
-                rows={1}
-                className={cn(
-                  "h-auto max-h-32 min-h-0 w-full resize-none border-0 bg-transparent p-0 py-1 text-sm leading-5 text-foreground shadow-none outline-none placeholder:text-muted-foreground",
-                  "focus-visible:ring-0",
-                )}
-              />
-            </Tooltip>
+                  setInput(value.slice(0, MAX_CHARS));
+                } else {
+                  hasShownLimitToastRef.current = false;
+                  setInput(value);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              onInput={handleTextareaInput}
+              placeholder="Ask anything about your energy system"
+              rows={1}
+              className={cn(
+                "h-auto max-h-32 min-h-0 w-full resize-none border-0 bg-transparent p-0 py-1 text-sm leading-5 text-foreground shadow-none outline-none placeholder:text-muted-foreground",
+                "focus-visible:ring-0",
+              )}
+            />
           </div>
           <div className="flex justify-end">
             <span className="text-xs text-muted-foreground tabular-nums">

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronDown, ChevronUp, Mic, Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { chatService } from "@/services/chat-service";
 import { toast } from "sonner";
@@ -151,6 +152,18 @@ export default function NewChatPage() {
     }
   };
 
+  const blockClick = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const blockKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
@@ -186,15 +199,20 @@ export default function NewChatPage() {
               isTextareaExpanded ? "items-end" : "items-center",
             )}
           >
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              title="Attach"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
+            <Tooltip content="Attachments (coming soon)" align="start">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Attach"
+                aria-disabled="true"
+                onClick={blockClick}
+                onKeyDown={blockKeyPress}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </Tooltip>
 
             <div className="flex min-h-9 flex-1 items-center">
               <Textarea
@@ -233,15 +251,20 @@ export default function NewChatPage() {
             </div>
 
             <div className="mb-0.5 flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                title="Record voice message"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
-              >
-                <Mic className="h-4 w-4" />
-              </Button>
+              <Tooltip content="Voice input (coming soon)">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Record voice message"
+                  aria-disabled="true"
+                  onClick={blockClick}
+                  onKeyDown={blockKeyPress}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+              </Tooltip>
 
               <Button
                 type="button"
@@ -304,3 +327,4 @@ export default function NewChatPage() {
     </div>
   );
 }
+
