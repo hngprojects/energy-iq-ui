@@ -296,11 +296,20 @@ export function useChatSocket(chatId: string) {
         throw new Error("Chat socket is not connected.");
       }
 
+      // Read saved session ID from localStorage
+      let sessionId: string | null = null;
+      try {
+        sessionId = localStorage.getItem(`chat-session:${chatId}`);
+      } catch {
+        // localStorage unavailable
+      }
+
       socket.emit("send_msg", {
         chatId,
         contentType: "TEXT",
         senderId: activeUserId,
         textContent,
+        ...(sessionId ? { sessionId } : {}),
       });
     },
     [chatId],
