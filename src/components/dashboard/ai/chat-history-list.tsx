@@ -90,7 +90,7 @@ function formatChatTimestamp(chat: ChatSession) {
 }
 
 function getTag(chat: ChatSession): TagType {
-  if (chat.tag) return chat.tag;
+  if (chat.tag) return chat.tag === "Report" ? "General" : chat.tag;
   const text = `${chat.title} ${chat.description ?? ""}`.toLowerCase();
 
   // Solar/PV related

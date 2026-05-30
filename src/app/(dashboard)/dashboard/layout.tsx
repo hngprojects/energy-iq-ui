@@ -12,7 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isChatDetailsPage = pathname.includes("/ai-assistant/");
+  const isChatDetailsPage = /^\/dashboard\/ai-assistant\/[^/]+$/.test(pathname);
 
   return (
     <div className="bg-background flex min-h-screen max-w-full">

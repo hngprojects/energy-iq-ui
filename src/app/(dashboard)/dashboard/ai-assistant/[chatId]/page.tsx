@@ -132,6 +132,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasShownLimitToastRef = useRef(false);
 
   const lastUserMessageRef = useRef<string>("");
 
@@ -936,11 +937,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               onChange={(e) => {
                 const value = e.target.value;
                 if (value.length > MAX_CHARS) {
-                  toast.error(
-                    `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
-                  );
+                  if (!hasShownLimitToastRef.current) {
+                    toast.error(
+                      `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                    );
+                    hasShownLimitToastRef.current = true;
+                  }
                   setInput(value.slice(0, MAX_CHARS));
                 } else {
+                  hasShownLimitToastRef.current = false;
                   setInput(value);
                 }
               }}
