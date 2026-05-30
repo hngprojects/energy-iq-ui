@@ -16,6 +16,7 @@ import { LanguageToggle } from "@/components/dashboard/ai/language-toggle";
 import { ChatMessageBubble } from "@/components/dashboard/ai/chat-message-bubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useActiveChat } from "@/hooks/use-chat-queries";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -33,10 +34,7 @@ import {
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
 import { useAuthStore } from "@/stores/auth-store";
 import { getUserInitials } from "@/lib/user-initials";
-import {
-  mergeAiResponseCards,
-  normalizeBackendCards,
-} from "@/lib/chat-cards";
+import { mergeAiResponseCards, normalizeBackendCards } from "@/lib/chat-cards";
 
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
@@ -143,6 +141,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const lastUserMessageRef = useRef<string>("");
 
   const MAX_CHARS = 3000;
+  const isComposerLocked = true;
 
   const {
     connected,
@@ -823,6 +822,18 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
+  const blockClick = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const blockKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const el = e.currentTarget;
     el.style.height = "auto";
@@ -884,16 +895,19 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <LanguageToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Download (coming soon)"
-              aria-label="Download"
-              disabled
-              className="h-9 w-9 text-muted-foreground hover:bg-muted"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            <Tooltip content="Download (coming soon)" side="bottom" align="end">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Download"
+                aria-disabled="true"
+                onClick={blockClick}
+                onKeyDown={blockKeyPress}
+                className="h-9 w-9 text-muted-foreground hover:bg-muted"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </Tooltip>
             <ChatActionsMenu
               chatId={chatId}
               title={title}
@@ -999,35 +1013,63 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
       <div className="fixed bottom-0 right-0 left-0 z-10 border-t border-border bg-card px-6 py-4 lg:left-60">
         <div className="max-w-7xl mx-auto w-full flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
-          <AttachMenu buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground" />
+          <AttachMenu
+            comingSoon
+            comingSoonLabel="Attachments (coming soon)"
+            buttonClassName="h-7 w-7 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+          />
           <div className="flex min-h-8 flex-1 items-center">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length > MAX_CHARS) {
-                  if (!hasShownLimitToastRef.current) {
-                    toast.error(
-                      `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
-                    );
-                    hasShownLimitToastRef.current = true;
+            <Tooltip
+              content="Message input (coming soon)"
+              wrapperClassName="w-full"
+              contentClassName="max-w-[240px] text-center"
+            >
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                readOnly={isComposerLocked}
+                aria-disabled={isComposerLocked}
+                onMouseDown={(event) => {
+                  if (isComposerLocked) blockClick(event);
+                }}
+                onFocus={(event) => {
+                  if (isComposerLocked) event.currentTarget.blur();
+                }}
+                onChange={(e) => {
+                  if (isComposerLocked) return;
+                  const value = e.target.value;
+                  if (value.length > MAX_CHARS) {
+                    if (!hasShownLimitToastRef.current) {
+                      toast.error(
+                        `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                      );
+                      hasShownLimitToastRef.current = true;
+                    }
+                    setInput(value.slice(0, MAX_CHARS));
+                  } else {
+                    hasShownLimitToastRef.current = false;
+                    setInput(value);
                   }
-                  setInput(value.slice(0, MAX_CHARS));
-                } else {
-                  hasShownLimitToastRef.current = false;
-                  setInput(value);
-                }
-              }}
-              onKeyDown={handleKeyDown}
-              onInput={handleTextareaInput}
-              placeholder="Ask anything about your energy system"
-              rows={1}
-              className={cn(
-                "h-auto max-h-32 min-h-0 w-full resize-none border-0 bg-transparent p-0 py-1 text-sm leading-5 text-foreground shadow-none outline-none placeholder:text-muted-foreground",
-                "focus-visible:ring-0",
-              )}
-            />
+                }}
+                onKeyDown={(event) => {
+                  if (isComposerLocked) {
+                    blockKeyPress(event);
+                    return;
+                  }
+                  handleKeyDown(event);
+                }}
+                onInput={(event) => {
+                  if (isComposerLocked) return;
+                  handleTextareaInput(event);
+                }}
+                placeholder="Ask anything about your energy system"
+                rows={1}
+                className={cn(
+                  "h-auto max-h-32 min-h-0 w-full resize-none border-0 bg-transparent p-0 py-1 text-sm leading-5 text-foreground shadow-none outline-none placeholder:text-muted-foreground",
+                  "focus-visible:ring-0",
+                )}
+              />
+            </Tooltip>
           </div>
           <div className="flex justify-end">
             <span className="text-xs text-muted-foreground tabular-nums">
@@ -1035,16 +1077,20 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             </span>
           </div>
           <div className="mb-px flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              title="Voice input"
-              aria-label="Toggle microphone"
-              className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
+            <Tooltip content="Voice input (coming soon)">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Toggle microphone"
+                aria-disabled="true"
+                onClick={blockClick}
+                onKeyDown={blockKeyPress}
+                className="h-8 w-8 rounded-full text-foreground hover:bg-transparent hover:text-foreground"
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            </Tooltip>
             <Button
               type="button"
               title="Send message"
@@ -1066,3 +1112,4 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
+
