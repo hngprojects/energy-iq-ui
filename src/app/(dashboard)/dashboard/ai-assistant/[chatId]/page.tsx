@@ -33,10 +33,7 @@ import {
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
 import { useAuthStore } from "@/stores/auth-store";
 import { getUserInitials } from "@/lib/user-initials";
-import {
-  mergeAiResponseCards,
-  normalizeBackendCards,
-} from "@/lib/chat-cards";
+import { mergeAiResponseCards, normalizeBackendCards } from "@/lib/chat-cards";
 import {
   linkChatMessageCards,
   saveChatMessageCards,
@@ -140,7 +137,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cardsWaitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardsWaitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const hasShownLimitToastRef = useRef(false);
 
   const activeStreamingId = streamingMessageIdRef.current;
@@ -395,8 +394,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               }
 
               const hasCards = Boolean(lastAssistant.cards?.length);
-              const waitingForCards =
-                !hasCards && incoming.text.trim().length > 0;
+              const waitingForCards = Boolean(incoming.awaitingCards);
 
               if (waitingForCards) {
                 scheduleCardsWaitFallback(realId);
@@ -504,8 +502,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               });
             }
 
-            const waitingForCards =
-              cards.length === 0 && parsedContent.trim().length > 0;
+            const waitingForCards = Boolean(incoming.awaitingCards);
 
             if (waitingForCards) {
               scheduleCardsWaitFallback(realId);
@@ -641,7 +638,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       setSending(false);
       clearSendingTimeout();
     });
-  }, [chatId, clearCardsWaitTimeout, clearSendingTimeout, setMessages, subscribeToCards]);
+  }, [
+    chatId,
+    clearCardsWaitTimeout,
+    clearSendingTimeout,
+    setMessages,
+    subscribeToCards,
+  ]);
 
   useEffect(() => {
     if (!socketError) return;

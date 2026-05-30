@@ -151,8 +151,14 @@ export function AiResponseCardView({
           size="sm"
           className="mt-3 h-8 border-slate-300 bg-white text-xs text-slate-900 hover:bg-slate-50"
           onClick={() => {
-            if (card.actionHref) {
-              window.open(card.actionHref, "_blank", "noopener,noreferrer");
+            if (!card.actionHref) return;
+            try {
+              const url = new URL(card.actionHref);
+              if (url.protocol === "http:" || url.protocol === "https:") {
+                window.open(card.actionHref, "_blank", "noopener,noreferrer");
+              }
+            } catch {
+              // Invalid URL — silently ignore
             }
           }}
         >
@@ -185,7 +191,10 @@ export function AiResponseCardsList({
           )}
           style={
             animate
-              ? { animationDelay: `${index * 180}ms`, animationFillMode: "both" }
+              ? {
+                  animationDelay: `${index * 180}ms`,
+                  animationFillMode: "both",
+                }
               : undefined
           }
         />

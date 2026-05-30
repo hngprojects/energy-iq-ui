@@ -24,8 +24,25 @@ function readStore(): CardsStore {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as CardsStore;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return {};
+
+    const store: CardsStore = {};
+    for (const [chatId, entries] of Object.entries(
+      parsed as Record<string, unknown>,
+    )) {
+      if (!Array.isArray(entries)) continue;
+      const valid = entries.filter(
+        (e) =>
+          e &&
+          typeof e === "object" &&
+          Array.isArray((e as Record<string, unknown>).cards) &&
+          typeof (e as Record<string, unknown>).updatedAt === "number",
+      ) as StoredCardEntry[];
+      if (valid.length > 0) store[chatId] = valid;
+    }
+    return store;
   } catch {
     return {};
   }
@@ -77,14 +94,10 @@ export function saveChatMessageCards(
   };
 
   if (existingIndex >= 0) {
-    entries[existingIndex] = {
-      ...entries[existingIndex],
-      ...nextEntry,
-      messageId: nextEntry.messageId ?? entries[existingIndex].messageId,
-    };
-  } else {
-    entries.push(nextEntry);
+    entries.splice(existingIndex, 1);
   }
+  entries.push(nextEntry);
+  store[chatId] = entries.slice(-50);
 
   store[chatId] = entries.slice(-50);
   writeStore(store);
@@ -95,7 +108,12 @@ export function linkChatMessageCards(
   tempMessageId: string,
   realMessageId: string,
 ) {
-  if (!chatId || !tempMessageId || !realMessageId || tempMessageId === realMessageId) {
+  if (
+    !chatId ||
+    !tempMessageId ||
+    !realMessageId ||
+    tempMessageId === realMessageId
+  ) {
     return;
   }
 
@@ -143,7 +161,9 @@ export function extractCardsFromApiMessage(
 
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
-      const normalized = normalizeBackendCards(candidate as BackendAiCardPayload[]);
+      const normalized = normalizeBackendCards(
+        candidate as BackendAiCardPayload[],
+      );
       if (normalized.length > 0) return normalized;
     }
   }
@@ -152,16 +172,24 @@ export function extractCardsFromApiMessage(
   if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
     const metaCards = (metadata as Record<string, unknown>).cards;
     if (Array.isArray(metaCards)) {
-      const normalized = normalizeBackendCards(metaCards as BackendAiCardPayload[]);
+      const normalized = normalizeBackendCards(
+        metaCards as BackendAiCardPayload[],
+      );
       if (normalized.length > 0) return normalized;
     }
   }
 
   const structured = message.structuredContent ?? message.structured_content;
-  if (structured && typeof structured === "object" && !Array.isArray(structured)) {
+  if (
+    structured &&
+    typeof structured === "object" &&
+    !Array.isArray(structured)
+  ) {
     const structCards = (structured as Record<string, unknown>).cards;
     if (Array.isArray(structCards)) {
-      const normalized = normalizeBackendCards(structCards as BackendAiCardPayload[]);
+      const normalized = normalizeBackendCards(
+        structCards as BackendAiCardPayload[],
+      );
       if (normalized.length > 0) return normalized;
     }
   }

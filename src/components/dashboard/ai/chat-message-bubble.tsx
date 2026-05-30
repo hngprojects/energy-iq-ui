@@ -52,16 +52,12 @@ export function ChatMessageBubble({
 
   if (isAssistant) {
     const hasCards = Boolean(message.cards && message.cards.length > 0);
-    const hidePlainText =
-      hasCards ||
-      Boolean(message.isStreaming) ||
-      Boolean(message.awaitingCards);
+    const hidePlainText = hasCards || Boolean(message.awaitingCards);
 
     const showCardLoading =
-      !message.failed && !hasCards && hidePlainText;
+      !message.failed && !hasCards && Boolean(message.awaitingCards);
 
-    const showStreamedText =
-      !hidePlainText && Boolean(message.content?.trim());
+    const showStreamedText = !hidePlainText && Boolean(message.content?.trim());
 
     return (
       <div className="flex w-full items-start justify-start gap-3">
@@ -88,9 +84,7 @@ export function ChatMessageBubble({
 
           {showCardLoading ? <AiResponseCardsLoading /> : null}
 
-          {hasCards ? (
-            <AiResponseCardsList cards={message.cards!} />
-          ) : null}
+          {hasCards ? <AiResponseCardsList cards={message.cards!} /> : null}
 
           {showStreamedText ? (
             <div className="rounded-2xl rounded-bl-sm border border-border bg-card p-4 shadow-sm">

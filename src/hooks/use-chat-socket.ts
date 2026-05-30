@@ -48,6 +48,7 @@ interface NormalizedMessage {
   isFinal: boolean;
   sessionId?: string;
   timestamp?: string;
+  awaitingCards?: boolean;
 }
 
 type MessageCallback = (message: NormalizedMessage) => void;
