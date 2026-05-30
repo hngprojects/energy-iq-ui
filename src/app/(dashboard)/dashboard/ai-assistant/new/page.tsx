@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { chatService } from "@/services/chat-service";
+import { toast } from "sonner";
 import {
   clearChatCreateAttempt,
   createChatRecoveryToken,
@@ -66,6 +67,7 @@ export default function NewChatPage() {
   const [error, setError] = useState<string | null>(null);
 
   const EXPAND_THRESHOLD = 40;
+  const MAX_CHARS = 3000;
 
   const handleStartConversation = async (text: string) => {
     const cleanText = text.trim();
@@ -198,7 +200,17 @@ export default function NewChatPage() {
               <Textarea
                 ref={textareaRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length > MAX_CHARS) {
+                    toast.error(
+                      `Message limit is ${MAX_CHARS} characters. Your text was trimmed.`,
+                    );
+                    setInput(value.slice(0, MAX_CHARS));
+                  } else {
+                    setInput(value);
+                  }
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything about your energy system"
                 rows={1}
@@ -213,6 +225,11 @@ export default function NewChatPage() {
                   setIsTextareaExpanded(el.scrollHeight > EXPAND_THRESHOLD);
                 }}
               />
+            </div>
+            <div className="flex justify-end">
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {input.length}/{MAX_CHARS}
+              </span>
             </div>
 
             <div className="mb-0.5 flex shrink-0 items-center gap-2 self-end md:mb-0 md:self-auto">

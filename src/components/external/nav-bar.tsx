@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { NAV_LINKS, VALID_PATHS } from "@/constants/navlinks";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAuthActions } from "@/hooks/use-auth-actions";
+import { useCurrentUserSync } from "@/hooks/use-current-user-sync";
 import { useMounted } from "@/hooks/use-mounted";
 import { UserAvatar, UserDropdown } from "./nav-user-menu";
 import { LogOut } from "lucide-react";
@@ -58,6 +59,7 @@ export function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated } = useAuthStore();
   const { logout } = useAuthActions();
+  useCurrentUserSync({ enabled: isAuthenticated });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -227,14 +229,14 @@ export function Navbar() {
           </ul>
 
           {mounted && isAuthenticated && user ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col items-center gap-3 pt-2">
               <Link
                 href="/dashboard"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-lg bg-muted/30 p-3"
+                className="flex w-full max-w-xs flex-col items-center gap-3 rounded-lg bg-muted/30 px-4 py-4"
               >
-                <UserAvatar user={user} />
-                <div className="flex flex-col text-left">
+                <UserAvatar user={user} className="h-12 w-12" />
+                <div className="flex flex-col items-center text-center">
                   <span className="text-foreground text-sm font-semibold">
                     {user.firstName} {user.lastName}
                   </span>
@@ -243,7 +245,7 @@ export function Navbar() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-3 rounded-lg p-3 text-sm font-medium transition-colors cursor-pointer"
+                className="text-destructive hover:bg-destructive/10 flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors cursor-pointer"
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out
