@@ -86,7 +86,7 @@ export default function OnboardingPage() {
   } = useOnboardingStore();
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, _hasHydrated } = useAuthStore();
   const isCompleted = useRef(false);
   const stepRef = useRef<Step>(step);
 
@@ -102,6 +102,7 @@ export default function OnboardingPage() {
   const userId = user?.id;
 
   const isLoading =
+    !_hasHydrated ||
     !userId ||
     onboardingStorage.isCompleted(userId) ||
     (!status && !isStatusError) ||
@@ -120,6 +121,10 @@ export default function OnboardingPage() {
   }, [step]);
 
   useEffect(() => {
+    if (!_hasHydrated) {
+      return;
+    }
+
     if (user?.id) {
       identifyUser(user.id);
       if (onboardingStorage.isCompleted(user.id)) {
@@ -128,42 +133,42 @@ export default function OnboardingPage() {
         router.replace("/dashboard");
         return;
       }
-    } else {
-      const searchParamsObj = new URLSearchParams(window.location.search);
-      const hashString = window.location.hash.replace(/^#/, "");
-      const hashParamsObj = new URLSearchParams(hashString);
-      const incomingToken =
-        searchParamsObj.get("accessToken") ||
-        searchParamsObj.get("token") ||
-        hashParamsObj.get("accessToken") ||
-        hashParamsObj.get("token");
+      return;
+    }
 
-      if (!incomingToken) {
-        if (!isAuthenticated) {
-          router.replace("/login");
-          return;
-        } else {
-          // Auth state exists but no user; attempt to restore via HttpOnly cookie.
-          const { setUser, logout } = useAuthStore.getState();
-          AuthService.me()
-            .then((realUser) => {
-              if (realUser?.id) {
-                setUser(realUser);
-              } else {
-                logout();
-                router.replace("/login");
-              }
-            })
-            .catch(() => {
-              logout();
-              router.replace("/login");
-            });
+    const searchParamsObj = new URLSearchParams(window.location.search);
+    const hashString = window.location.hash.replace(/^#/, "");
+    const hashParamsObj = new URLSearchParams(hashString);
+    const incomingToken =
+      searchParamsObj.get("accessToken") ||
+      searchParamsObj.get("token") ||
+      hashParamsObj.get("accessToken") ||
+      hashParamsObj.get("token");
+
+    const shouldRestoreSession =
+      !incomingToken && (!isAuthenticated || !user?.id);
+
+    if (!shouldRestoreSession) {
+      return;
+    }
+
+    const { setUser, logout } = useAuthStore.getState();
+
+    AuthService.me()
+      .then((realUser) => {
+        if (realUser?.id) {
+          setUser(realUser);
           return;
         }
-      }
-      // If we have an incoming token, GoogleAuthSync will handle it.
-    }
-  }, [user, isAuthenticated, router, resetOnboarding]);
+
+        logout();
+        router.replace("/login");
+      })
+      .catch(() => {
+        logout();
+        router.replace("/login");
+      });
+  }, [_hasHydrated, user, isAuthenticated, router, resetOnboarding]);
 
   // Track page unload / tab close
   useEffect(() => {

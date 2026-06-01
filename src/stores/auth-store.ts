@@ -17,16 +17,18 @@ function clearSessionCookie() {
   document.cookie = `${SESSION_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`;
 }
 
-function persistTokensToSession(token: string, refreshToken: string) {
+async function persistTokensToSession(token: string, refreshToken: string) {
   if (typeof window === "undefined") return;
 
-  void fetch("/api/session", {
+  const response = await fetch("/api/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, refreshToken }),
-  }).catch((error) => {
-    console.error("Failed to persist auth session cookies", error);
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to persist auth session cookies (${response.status})`);
+  }
 }
 
 function scrubPersistedAuthStorage() {
@@ -68,7 +70,14 @@ interface AuthState {
     refreshToken: string,
     rememberMe?: boolean,
   ) => void;
+  setAuthLocal: (
+    user: User,
+    token: string,
+    refreshToken: string,
+    rememberMe?: boolean,
+  ) => void;
   setTokens: (token: string, refreshToken: string) => void;
+  setTokensLocal: (token: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   setTempEmail: (email: string | null) => void;
   logout: () => void;
@@ -99,7 +108,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       tempEmail: null,
       _hasHydrated: false,
-      setAuth: (user, token, refreshToken, rememberMe = false) => {
+      setAuthLocal: (user, token, refreshToken, rememberMe = false) => {
         if (typeof window !== "undefined") {
           sessionStorage.setItem("session_active", "1");
           if (rememberMe) {
@@ -109,8 +118,6 @@ export const useAuthStore = create<AuthState>()(
           }
         }
         setSessionCookie(rememberMe);
-        // Inform the server to persist tokens as HttpOnly cookies.
-        persistTokensToSession(token, refreshToken);
         set({
           user: normalizeUser(user),
           token,
@@ -119,9 +126,26 @@ export const useAuthStore = create<AuthState>()(
           tempEmail: null,
         });
       },
-      setTokens: (token, refreshToken) => {
-        persistTokensToSession(token, refreshToken);
+      setAuth: (user, token, refreshToken, rememberMe = false) => {
+        useAuthStore.getState().setAuthLocal(
+          user,
+          token,
+          refreshToken,
+          rememberMe,
+        );
+        // Inform the server to persist tokens as HttpOnly cookies.
+        void persistTokensToSession(token, refreshToken).catch((error) => {
+          console.error("Failed to persist auth session cookies", error);
+        });
+      },
+      setTokensLocal: (token, refreshToken) => {
         set({ token, refreshToken });
+      },
+      setTokens: (token, refreshToken) => {
+        useAuthStore.getState().setTokensLocal(token, refreshToken);
+        void persistTokensToSession(token, refreshToken).catch((error) => {
+          console.error("Failed to persist auth session cookies", error);
+        });
       },
       setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
