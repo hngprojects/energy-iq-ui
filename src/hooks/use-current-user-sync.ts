@@ -8,12 +8,12 @@ import { useAuthStore } from "@/stores/auth-store";
 import { User } from "@/types/auth";
 
 export function useCurrentUserSync(options?: { enabled?: boolean }) {
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const setUser = useAuthStore((state) => state.setUser);
-  const enabled = (options?.enabled ?? true) && !!token;
+  const enabled = (options?.enabled ?? true) && isAuthenticated;
 
   const query = useQuery({
-    queryKey: ["auth-me", token],
+    queryKey: ["auth-me"],
     queryFn: () => AuthService.me(),
     enabled,
     staleTime: 5 * 60 * 1000,

@@ -5,10 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
-import {
-  InverterTypeStep,
-  type InverterType,
-} from "@/components/onboarding/inverter-type-step";
+import { InverterTypeStep } from "@/components/onboarding/inverter-type-step";
 import { InverterConnectionStep } from "@/components/onboarding/inverter-connection-step";
 import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-success-dialog";
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
@@ -32,18 +29,18 @@ function GoogleAuthSync() {
     const hashString = window.location.hash.replace(/^#/, "");
     const hashParams = new URLSearchParams(hashString);
 
-    const error =
-      searchParams.get("error") || hashParams.get("error");
+    const error = searchParams.get("error") || hashParams.get("error");
 
     if (error) {
       window.history.replaceState(null, "", window.location.pathname);
-       const isDuplicateAccount = error === "account_exists" || error === "duplicate";
+      const isDuplicateAccount =
+        error === "account_exists" || error === "duplicate";
       toast.error(
         isDuplicateAccount
           ? "An account with this email already exists. Please sign in with your email and password."
           : "Sign in failed. Please try again.",
-          { duration: 6000 },
-        );
+        { duration: 6000 },
+      );
       router.replace("/login");
       return;
     }
@@ -55,9 +52,7 @@ function GoogleAuthSync() {
       hashParams.get("token");
 
     const refreshToken =
-      searchParams.get("refreshToken") ||
-      hashParams.get("refreshToken") ||
-      "";
+      searchParams.get("refreshToken") || hashParams.get("refreshToken") || "";
 
     if (token && !isAuthenticated) {
       window.history.replaceState(null, "", window.location.pathname);
@@ -83,10 +78,15 @@ function GoogleAuthSync() {
 }
 
 export default function OnboardingPage() {
-  const { step, setStep, inverterType: inverter, resetOnboarding } = useOnboardingStore();
+  const {
+    step,
+    setStep,
+    inverterType: inverter,
+    resetOnboarding,
+  } = useOnboardingStore();
   const [successOpen, setSuccessOpen] = useState(false);
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated, _hasHydrated } = useAuthStore();
   const isCompleted = useRef(false);
   const stepRef = useRef<Step>(step);
 
@@ -102,6 +102,7 @@ export default function OnboardingPage() {
   const userId = user?.id;
 
   const isLoading =
+    !_hasHydrated ||
     !userId ||
     onboardingStorage.isCompleted(userId) ||
     (!status && !isStatusError) ||
@@ -119,16 +120,22 @@ export default function OnboardingPage() {
     stepRef.current = step;
   }, [step]);
 
-useEffect(() => {
-  if (user?.id) {
-    identifyUser(user.id);
-    if (onboardingStorage.isCompleted(user.id)) {
-      isCompleted.current = true;
-      resetOnboarding();
-      router.replace("/dashboard");
+  useEffect(() => {
+    if (!_hasHydrated) {
       return;
     }
-  } else {
+
+    if (user?.id) {
+      identifyUser(user.id);
+      if (onboardingStorage.isCompleted(user.id)) {
+        isCompleted.current = true;
+        resetOnboarding();
+        router.replace("/dashboard");
+        return;
+      }
+      return;
+    }
+
     const searchParamsObj = new URLSearchParams(window.location.search);
     const hashString = window.location.hash.replace(/^#/, "");
     const hashParamsObj = new URLSearchParams(hashString);
@@ -138,41 +145,40 @@ useEffect(() => {
       hashParamsObj.get("accessToken") ||
       hashParamsObj.get("token");
 
-    if (!incomingToken) {
-      const storeToken = useAuthStore.getState().token;
-      if (!storeToken) {
-        router.replace("/login");
-        return;
-      } else {
-        // Stored token exists but no user — attempt to restore session
-        const { setAuth, logout } = useAuthStore.getState();
-        const refreshToken = useAuthStore.getState().refreshToken || "";
-        AuthService.me()
-          .then((realUser) => {
-            if (realUser?.id) {
-              setAuth(realUser, storeToken, refreshToken);
-            } else {
-              logout();
-              router.replace("/login");
-            }
-          })
-          .catch(() => {
-            logout();
-            router.replace("/login");
-          });
-        return;
-      }
+    const shouldRestoreSession =
+      !incomingToken && (!isAuthenticated || !user?.id);
+
+    if (!shouldRestoreSession) {
+      return;
     }
-    // If we have an incoming token, GoogleAuthSync will handle it.
-  }
-}, [user, router]);
+
+    const { setUser, logout } = useAuthStore.getState();
+
+    AuthService.me()
+      .then((realUser) => {
+        if (realUser?.id) {
+          setUser(realUser);
+          return;
+        }
+
+        logout();
+        router.replace("/login");
+      })
+      .catch(() => {
+        logout();
+        router.replace("/login");
+      });
+  }, [_hasHydrated, user, isAuthenticated, router, resetOnboarding]);
 
   // Track page unload / tab close
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (!isCompleted.current) {
         trackEvent("Onboarding Abandoned", {
-          screen_name: step === "select" ? "Inverter Type Selection" : "Inverter Connection Details",
+          screen_name:
+            step === "select"
+              ? "Inverter Type Selection"
+              : "Inverter Connection Details",
           exit_type: "tab_close",
         });
       }
@@ -254,3 +260,4 @@ useEffect(() => {
     </AuthWrapper>
   );
 }
+

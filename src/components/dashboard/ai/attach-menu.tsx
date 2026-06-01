@@ -2,12 +2,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, Paperclip, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface AttachMenuProps {
   buttonClassName?: string;
   iconSize?: string;
   onFilesSelected?: (files: FileList) => void;
   onTakeScreenshot?: () => void;
+  comingSoon?: boolean;
+  comingSoonLabel?: string;
 }
 
 export function AttachMenu({
@@ -15,9 +19,12 @@ export function AttachMenu({
   iconSize = "h-4 w-4",
   onFilesSelected,
   onTakeScreenshot,
+  comingSoon = false,
+  comingSoonLabel = "Attach (coming soon)",
 }: AttachMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonTitle = comingSoon ? comingSoonLabel : "Attach";
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -31,19 +38,42 @@ export function AttachMenu({
 
   return (
     <div ref={ref} className="relative shrink-0">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        title="Attach"
-        aria-label="Attach"
-        onClick={() => setOpen((v) => !v)}
-        className={buttonClassName}
+      <Tooltip
+        content={buttonTitle}
+        wrapperClassName="inline-flex"
+        align="start"
       >
-        <Plus className={iconSize} />
-      </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={buttonTitle}
+          aria-disabled={comingSoon}
+          onClick={(event) => {
+            if (comingSoon) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            setOpen((v) => !v);
+          }}
+          onKeyDown={(event) => {
+            if (!comingSoon) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }}
+          className={cn(
+            buttonClassName,
+            comingSoon && "cursor-not-allowed opacity-50",
+          )}
+        >
+          <Plus className={iconSize} />
+        </Button>
+      </Tooltip>
 
-      {open && (
+      {open && !comingSoon && (
         <div className="absolute bottom-full left-0 mb-2 w-48 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
           <label className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted">
             <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -75,3 +105,4 @@ export function AttachMenu({
     </div>
   );
 }
+

@@ -80,7 +80,7 @@ export const useAuthQueries = () => {
   const {
     setAuth,
     logout: storeLogout,
-    token: currentToken,
+    isAuthenticated,
     setTempEmail,
   } = useAuthStore();
 
@@ -131,14 +131,17 @@ export const useAuthQueries = () => {
       },
       onError: (error: unknown, variables) => {
         const message = getErrorMessage(error, "Registration failed");
-        
+
         // If account exists, it might be unverified, so we redirect to verify-email
         if (message === "This email is already registered") {
           const apiError = error instanceof ApiError ? error : null;
-          const details = apiError?.details as RegistrationErrorDetails | undefined;
-          
+          const details = apiError?.details as
+            | RegistrationErrorDetails
+            | undefined;
+
           // Check if the backend explicitly indicates verification status
-          const isVerified = details?.isVerified || details?.user?.isEmailVerified;
+          const isVerified =
+            details?.isVerified || details?.user?.isEmailVerified;
 
           if (isVerified === true) {
             toast.info("Account already exists and is verified. Please login.");
@@ -203,7 +206,7 @@ export const useAuthQueries = () => {
     useQuery({
       queryKey: ["auth-me"],
       queryFn: AuthService.me,
-      enabled: !!currentToken,
+      enabled: isAuthenticated,
     });
 
   const useForgotPassword = () =>
