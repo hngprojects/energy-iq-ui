@@ -9,6 +9,11 @@ const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
 const isInternalApiPath = (path: string): boolean => path.startsWith("/api/");
 const isServer = typeof window === "undefined";
 
+if (!isServer) {
+  // Ensure browser requests send cookies (HttpOnly token cookie)
+  axios.defaults.withCredentials = true;
+}
+
 let refreshingPromise: Promise<RefreshTokenResponse | null> | null = null;
 
 function getBaseUrl(): string | undefined {
@@ -68,15 +73,6 @@ export async function apiFetch<TResponse>(
     ...((config.headers as Record<string, string>) || {}),
   };
 
-  // Automatically attach Authorization header if not present
-  if (!headers["Authorization"]) {
-    const token = !isServer ? useAuthStore.getState().token : null;
-
-    if (token && token !== "undefined" && token !== "null") {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
-
   const isJson =
     config.data &&
     !(config.data instanceof FormData) &&
@@ -128,71 +124,57 @@ export async function apiFetch<TResponse>(
         !isAuthEndpoint(path) &&
         !isRefreshPath
       ) {
-        const refreshToken = useAuthStore.getState().refreshToken;
+        try {
+          if (!refreshingPromise) {
+            refreshingPromise = axios
+              .request<RefreshTokenResponse | { data: RefreshTokenResponse }>({
+                url: "/api/session",
+                method: "PATCH",
+              })
+              .then((res) => {
+                const data = "data" in res.data ? res.data.data : res.data;
+                const { accessToken: newToken, refreshToken: newRefreshToken } =
+                  data;
 
-        if (refreshToken) {
-          try {
-            if (!refreshingPromise) {
-              const refreshUrl = resolveRequestUrl("/auth/refresh", proxy);
-              refreshingPromise = axios
-                .request<RefreshTokenResponse | { data: RefreshTokenResponse }>(
-                  {
-                    url: refreshUrl,
-                    method: "POST",
-                    data: { refreshToken },
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  },
-                )
-                .then((res) => {
-                  const data = "data" in res.data ? res.data.data : res.data;
-                  const {
-                    accessToken: newToken,
-                    refreshToken: newRefreshToken,
-                  } = data;
+                if (newToken && newRefreshToken) {
+                  const { user, setAuth, setTokens } = useAuthStore.getState();
+                  const rememberMe =
+                    localStorage.getItem("remember_me") === "1";
 
-                  if (newToken && newRefreshToken) {
-                    const { user, setAuth, setTokens } =
-                      useAuthStore.getState();
-                    const rememberMe =
-                      localStorage.getItem("remember_me") === "1";
-
-                    if (user) {
-                      setAuth(user, newToken, newRefreshToken, rememberMe);
-                    } else {
-                      setTokens(newToken, newRefreshToken);
-                    }
+                  if (user) {
+                    setAuth(user, newToken, newRefreshToken, rememberMe);
+                  } else {
+                    setTokens(newToken, newRefreshToken);
                   }
-                  return data;
-                })
-                .catch((error) => {
-                  throw error;
-                })
-                .finally(() => {
-                  refreshingPromise = null;
-                });
-            }
-
-            const refreshData = await refreshingPromise;
-            if (refreshData?.accessToken) {
-              // Retry the original request with new token
-              const newHeaders = {
-                ...headers,
-                Authorization: `Bearer ${refreshData.accessToken}`,
-              };
-              return apiFetch<TResponse>(
-                path,
-                { ...config, headers: newHeaders },
-                proxy,
-              );
-            }
-          } catch (refreshErr) {
-            // Refresh failed, fall through to logout
+                }
+                return data;
+              })
+              .catch((error) => {
+                throw error;
+              })
+              .finally(() => {
+                refreshingPromise = null;
+              });
           }
+
+          const refreshData = await refreshingPromise;
+          if (refreshData?.accessToken) {
+            // Retry the original request with new token
+            const newHeaders = {
+              ...headers,
+              Authorization: `Bearer ${refreshData.accessToken}`,
+            };
+            return apiFetch<TResponse>(
+              path,
+              { ...config, headers: newHeaders },
+              proxy,
+            );
+          }
+        } catch {
+          // Refresh failed, fall through to logout
         }
 
-        // Clear auth tokens via Zustand on 401 if refresh failed or no refresh token
+        // Clear auth tokens via Zustand on 401 if refresh failed.
         useAuthStore.getState().logout();
         window.location.replace("/login");
       }

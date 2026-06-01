@@ -20,19 +20,19 @@ const getSafeRedirect = (redirect: string | null, fallback: string): string => {
 };
 
 export default function LoginPage() {
-  const { setTempEmail, isAuthenticated, token } = useAuthStore();
+  const { setTempEmail, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       const redirect = searchParams.get("redirect");
       router.replace(getSafeRedirect(redirect, "/dashboard"));
       return;
     }
     setTempEmail(null);
     localStorage.removeItem("temp_email");
-  }, [isAuthenticated, token, router, setTempEmail, searchParams]);
+  }, [isAuthenticated, router, setTempEmail, searchParams]);
 
   return (
     <AuthWrapper>

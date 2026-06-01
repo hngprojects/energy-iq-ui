@@ -9,15 +9,14 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 export const proxy: NextProxy = (request) => {
-  const requestId =
-    request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);
 
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
-    const hasSession = request.cookies.has("auth_session");
-    if (!hasSession) {
+    const tokenCookie = request.cookies.get("token");
+    if (!tokenCookie?.value) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set(
         "redirect",

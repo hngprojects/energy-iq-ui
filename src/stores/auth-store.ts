@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { User } from "@/types/auth";
 
 const SESSION_COOKIE = "auth_session";
+const AUTH_STORAGE_KEY = "auth-storage";
 
 function setSessionCookie(persist = false) {
   if (typeof document === "undefined") return;
@@ -14,6 +15,46 @@ function setSessionCookie(persist = false) {
 function clearSessionCookie() {
   if (typeof document === "undefined") return;
   document.cookie = `${SESSION_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`;
+}
+
+function persistTokensToSession(token: string, refreshToken: string) {
+  if (typeof window === "undefined") return;
+
+  try {
+    void fetch("/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, refreshToken }),
+    });
+  } catch {
+    // ignore network errors here
+  }
+}
+
+function scrubPersistedAuthStorage() {
+  if (typeof window === "undefined") return;
+
+  try {
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!stored) return;
+
+    const parsed = JSON.parse(stored) as {
+      state?: Record<string, unknown>;
+      version?: number;
+    };
+    if (!parsed.state) return;
+
+    const safeState = { ...parsed.state };
+    delete safeState.token;
+    delete safeState.refreshToken;
+
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ ...parsed, state: safeState }),
+    );
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
 }
 
 interface AuthState {
@@ -70,6 +111,8 @@ export const useAuthStore = create<AuthState>()(
           }
         }
         setSessionCookie(rememberMe);
+        // Inform the server to persist tokens as HttpOnly cookies.
+        persistTokensToSession(token, refreshToken);
         set({
           user: normalizeUser(user),
           token,
@@ -78,7 +121,10 @@ export const useAuthStore = create<AuthState>()(
           tempEmail: null,
         });
       },
-      setTokens: (token, refreshToken) => set({ token, refreshToken }),
+      setTokens: (token, refreshToken) => {
+        persistTokensToSession(token, refreshToken);
+        set({ token, refreshToken });
+      },
       setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
       setHasHydrated: (value) => set({ _hasHydrated: value }),
@@ -88,6 +134,14 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem("remember_me");
         }
         clearSessionCookie();
+        // Also clear server-side HttpOnly token cookie
+        if (typeof window !== "undefined") {
+          try {
+            void fetch("/api/session", { method: "DELETE" });
+          } catch {
+            // ignore
+          }
+        }
         set({
           user: null,
           token: null,
@@ -98,15 +152,27 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "auth-storage",
+      name: AUTH_STORAGE_KEY,
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
         tempEmail: state.tempEmail,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted =
+          persistedState && typeof persistedState === "object"
+            ? (persistedState as Partial<AuthState>)
+            : {};
+
+        return {
+          ...currentState,
+          ...persisted,
+          token: null,
+          refreshToken: null,
+        };
+      },
       onRehydrateStorage: () => (state) => {
+        scrubPersistedAuthStorage();
         if (typeof window === "undefined" || !state) return;
         if (state.user) {
           state.user = normalizeUser(state.user);
