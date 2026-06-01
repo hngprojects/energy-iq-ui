@@ -20,15 +20,13 @@ function clearSessionCookie() {
 function persistTokensToSession(token: string, refreshToken: string) {
   if (typeof window === "undefined") return;
 
-  try {
-    void fetch("/api/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, refreshToken }),
-    });
-  } catch {
-    // ignore network errors here
-  }
+  void fetch("/api/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, refreshToken }),
+  }).catch((error) => {
+    console.error("Failed to persist auth session cookies", error);
+  });
 }
 
 function scrubPersistedAuthStorage() {
@@ -136,11 +134,9 @@ export const useAuthStore = create<AuthState>()(
         clearSessionCookie();
         // Also clear server-side HttpOnly token cookie
         if (typeof window !== "undefined") {
-          try {
-            void fetch("/api/session", { method: "DELETE" });
-          } catch {
-            // ignore
-          }
+          void fetch("/api/session", { method: "DELETE" }).catch((error) => {
+            console.error("Failed to clear auth session cookies", error);
+          });
         }
         set({
           user: null,
@@ -191,3 +187,4 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+

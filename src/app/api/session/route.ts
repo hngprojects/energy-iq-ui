@@ -68,15 +68,33 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const backendResponse = await fetch(
-      `${API_BASE_URL.replace(/\/+$/, "")}/auth/refresh`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-        cache: "no-store",
-      },
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    let backendResponse: Response;
+    try {
+      backendResponse = await fetch(
+        `${API_BASE_URL.replace(/\/+$/, "")}/auth/refresh`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+          cache: "no-store",
+          signal: controller.signal,
+        },
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return NextResponse.json(
+          { message: "Refresh request timed out." },
+          { status: 504 },
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const payload = await backendResponse.json().catch(() => null);
     if (!backendResponse.ok) {
@@ -119,3 +137,4 @@ export async function DELETE() {
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", expiredCookieOptions);
   return response;
 }
+

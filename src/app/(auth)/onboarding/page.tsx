@@ -163,7 +163,7 @@ export default function OnboardingPage() {
       }
       // If we have an incoming token, GoogleAuthSync will handle it.
     }
-  }, [user, isAuthenticated, router]);
+  }, [user, isAuthenticated, router, resetOnboarding]);
 
   // Track page unload / tab close
   useEffect(() => {
