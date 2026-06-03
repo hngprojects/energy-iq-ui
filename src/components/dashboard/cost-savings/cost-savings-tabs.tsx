@@ -75,7 +75,7 @@ export function CostSavingsTabs({
   useSearchParamNav = false,
   className,
   calculatorStep = 1,
-  totalCalculatorSteps = 6,
+  totalCalculatorSteps = 3,
   summaryPeriod = "daily",
   onSummaryPeriodChange,
 }: CostSavingsTabsProps) {
@@ -131,7 +131,16 @@ export function CostSavingsTabs({
           <h1 className="text-foreground text-2xl font-bold tracking-tight lg:text-3xl">
             {title}
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>
+          <p
+            className={cn(
+              "mt-1 text-sm",
+              activeTab === "calculator"
+                ? "text-primary font-medium"
+                : "text-muted-foreground",
+            )}
+          >
+            {subtitle}
+          </p>{" "}
         </div>
 
         {activeTab === "summary" ? (
