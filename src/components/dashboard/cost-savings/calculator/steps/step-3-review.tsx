@@ -1,3 +1,3 @@
-export function Step1Review() {
+export function Step3Review() {
   return null;
 }

@@ -1,3 +1,3 @@
-export function Step1Price() {
+export function Step2Price() {
   return null;
 }

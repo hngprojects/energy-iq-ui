@@ -84,7 +84,14 @@ export function CostSavingsTabs({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const paramTab = (searchParams.get("tab") as CostSavingsTab) ?? "summary";
+  const VALID_TABS: CostSavingsTab[] = [
+    "summary",
+    "calculator",
+    "results",
+    "cumulative-tracker",
+  ];
+  const rawTab = searchParams.get("tab") as CostSavingsTab;
+  const paramTab = VALID_TABS.includes(rawTab) ? rawTab : "summary";
   const activeTab = useSearchParamNav ? paramTab : (controlledTab ?? "summary");
 
   const handleTabChange = useCallback(
@@ -140,7 +147,7 @@ export function CostSavingsTabs({
             )}
           >
             {subtitle}
-          </p>{" "}
+          </p>
         </div>
 
         {activeTab === "summary" ? (
@@ -188,7 +195,7 @@ export function CostSavingsTabs({
                   "mt-4 rounded-none whitespace-nowrap pb-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isActive
                     ? "border-0 border-b-2 border-primary text-foreground"
-                    : "!border-0 border-b-2 border-transparent text-muted-foreground hover:text-foreground/80",
+                    : "border-0 border-b-2 border-transparent text-muted-foreground hover:text-foreground/80",
                 )}
               >
                 {label}
@@ -203,5 +210,12 @@ export function CostSavingsTabs({
 
 export function useActiveCostSavingsTab(): CostSavingsTab {
   const searchParams = useSearchParams();
-  return (searchParams.get("tab") as CostSavingsTab) ?? "summary";
+  const rawTab = searchParams.get("tab") as CostSavingsTab;
+  const VALID_TABS: CostSavingsTab[] = [
+    "summary",
+    "calculator",
+    "results",
+    "cumulative-tracker",
+  ];
+  return VALID_TABS.includes(rawTab) ? rawTab : "summary";
 }
