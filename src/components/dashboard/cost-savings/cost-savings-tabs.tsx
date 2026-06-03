@@ -58,65 +58,43 @@ const TAB_HEADER: Record<
 
 export type SummaryPeriod = "daily" | "weekly" | "monthly";
 
-interface CostSavingsTabsProps {
-  activeTab?: CostSavingsTab;
-  onTabChange?: (tab: CostSavingsTab) => void;
-  useSearchParamNav?: boolean;
+type CostSavingsTabsProps = (
+  | {
+      useSearchParamNav: true;
+      activeTab?: never;
+      onTabChange?: never;
+    }
+  | {
+      useSearchParamNav?: false;
+      activeTab?: CostSavingsTab;
+      onTabChange?: (tab: CostSavingsTab) => void;
+    }
+) & {
   className?: string;
   calculatorStep?: number;
   totalCalculatorSteps?: number;
   summaryPeriod?: SummaryPeriod;
   onSummaryPeriodChange?: (period: SummaryPeriod) => void;
-}
+};
 
-export function CostSavingsTabs({
-  activeTab: controlledTab,
-  onTabChange,
-  useSearchParamNav = false,
+function CostSavingsTabsInner({
+  activeTab,
+  onTabChange: handleTabChange,
   className,
   calculatorStep = 1,
   totalCalculatorSteps = 3,
   summaryPeriod = "daily",
   onSummaryPeriodChange,
-}: CostSavingsTabsProps) {
+}: {
+  activeTab: CostSavingsTab;
+  onTabChange: (tab: CostSavingsTab) => void;
+  className?: string;
+  calculatorStep?: number;
+  totalCalculatorSteps?: number;
+  summaryPeriod?: SummaryPeriod;
+  onSummaryPeriodChange?: (period: SummaryPeriod) => void;
+}) {
   const { user } = useAuthStore();
-
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const [localTab, setLocalTab] = useState<CostSavingsTab>("summary");
-
-  const VALID_TABS: CostSavingsTab[] = [
-    "summary",
-    "calculator",
-    "results",
-    "cumulative-tracker",
-  ];
-
-  const paramTab = useSearchParamNav
-    ? (() => {
-        const raw = searchParams.get("tab") as CostSavingsTab;
-        return VALID_TABS.includes(raw) ? raw : "summary";
-      })()
-    : "summary";
-
-  const activeTab = useSearchParamNav ? paramTab : (controlledTab ?? localTab);
-
-  const handleTabChange = useCallback(
-    (tab: CostSavingsTab) => {
-      if (useSearchParamNav) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("tab", tab);
-        router.replace(`${pathname}?${params.toString()}`);
-      } else if (onTabChange) {
-        onTabChange(tab);
-      } else {
-        setLocalTab(tab);
-      }
-    },
-    [useSearchParamNav, searchParams, pathname, router, onTabChange],
-  );
 
   const [localPeriod, setLocalPeriod] = useState<SummaryPeriod>("daily");
   const effectivePeriod = onSummaryPeriodChange ? summaryPeriod : localPeriod;
@@ -188,7 +166,7 @@ export function CostSavingsTabs({
         ) : null}
       </div>
 
-      {/* Tab strip  */}
+      {/* Tab strip */}
       <div className="mt-3 border-b border-border">
         <nav
           className="-mb-px flex gap-4 sm:gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none"
@@ -216,6 +194,88 @@ export function CostSavingsTabs({
         </nav>
       </div>
     </div>
+  );
+}
+
+function CostSavingsTabsUrlSynced(
+  props: Omit<
+    CostSavingsTabsProps & { useSearchParamNav: true },
+    "useSearchParamNav" | "activeTab" | "onTabChange"
+  >,
+) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const VALID_TABS: CostSavingsTab[] = [
+    "summary",
+    "calculator",
+    "results",
+    "cumulative-tracker",
+  ];
+  const rawTab = searchParams.get("tab") as CostSavingsTab;
+  const paramTab = VALID_TABS.includes(rawTab) ? rawTab : "summary";
+
+  const handleTabChange = useCallback(
+    (tab: CostSavingsTab) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.replace(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, pathname, router],
+  );
+
+  return (
+    <CostSavingsTabsInner
+      {...props}
+      activeTab={paramTab}
+      onTabChange={handleTabChange}
+    />
+  );
+}
+
+function CostSavingsTabsControlled({
+  activeTab: controlledTab,
+  onTabChange,
+  ...props
+}: Omit<
+  CostSavingsTabsProps & { useSearchParamNav?: false },
+  "useSearchParamNav"
+>) {
+  const [localTab, setLocalTab] = useState<CostSavingsTab>("summary");
+  const activeTab = controlledTab ?? localTab;
+
+  const handleTabChange = useCallback(
+    (tab: CostSavingsTab) => {
+      if (onTabChange) {
+        onTabChange(tab);
+      } else {
+        setLocalTab(tab);
+      }
+    },
+    [onTabChange],
+  );
+
+  return (
+    <CostSavingsTabsInner
+      {...props}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    />
+  );
+}
+
+export function CostSavingsTabs({
+  useSearchParamNav,
+  ...rest
+}: CostSavingsTabsProps) {
+  if (useSearchParamNav) {
+    return <CostSavingsTabsUrlSynced {...rest} />;
+  }
+  return (
+    <CostSavingsTabsControlled
+      {...(rest as Parameters<typeof CostSavingsTabsControlled>[0])}
+    />
   );
 }
 
