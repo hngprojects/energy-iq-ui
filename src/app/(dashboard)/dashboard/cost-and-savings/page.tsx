@@ -26,6 +26,7 @@ function TabPanels({
 
 export default function CostAndSavingsPage() {
   const [calculatorStep, setCalculatorStep] = useState(1);
+  const activeTab = useActiveCostSavingsTab(); // ← move hook here
 
   return (
     <Suspense fallback={null}>
@@ -36,8 +37,14 @@ export default function CostAndSavingsPage() {
       />
       <Suspense fallback={null}>
         <CalculatorProvider>
-          <TabPanels onCalculatorStepChange={setCalculatorStep} />
-        </CalculatorProvider>{" "}
+          <div
+            role="tabpanel"
+            id={`tabpanel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+          >
+            <TabPanels onCalculatorStepChange={setCalculatorStep} />
+          </div>
+        </CalculatorProvider>
       </Suspense>
     </Suspense>
   );

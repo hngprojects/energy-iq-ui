@@ -80,9 +80,12 @@ export function CostSavingsTabs({
   onSummaryPeriodChange,
 }: CostSavingsTabsProps) {
   const { user } = useAuthStore();
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [localTab, setLocalTab] = useState<CostSavingsTab>("summary");
 
   const VALID_TABS: CostSavingsTab[] = [
     "summary",
@@ -90,9 +93,15 @@ export function CostSavingsTabs({
     "results",
     "cumulative-tracker",
   ];
-  const rawTab = searchParams.get("tab") as CostSavingsTab;
-  const paramTab = VALID_TABS.includes(rawTab) ? rawTab : "summary";
-  const activeTab = useSearchParamNav ? paramTab : (controlledTab ?? "summary");
+
+  const paramTab = useSearchParamNav
+    ? (() => {
+        const raw = searchParams.get("tab") as CostSavingsTab;
+        return VALID_TABS.includes(raw) ? raw : "summary";
+      })()
+    : "summary";
+
+  const activeTab = useSearchParamNav ? paramTab : (controlledTab ?? localTab);
 
   const handleTabChange = useCallback(
     (tab: CostSavingsTab) => {
@@ -100,8 +109,10 @@ export function CostSavingsTabs({
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tab);
         router.replace(`${pathname}?${params.toString()}`);
+      } else if (onTabChange) {
+        onTabChange(tab);
       } else {
-        onTabChange?.(tab);
+        setLocalTab(tab);
       }
     },
     [useSearchParamNav, searchParams, pathname, router, onTabChange],
@@ -132,7 +143,7 @@ export function CostSavingsTabs({
 
   return (
     <div className={cn("w-full", className)}>
-      {/* ── Page-level header ───────────────────────────────────────────── */}
+      {/* Page-level header */}
       <div className="flex mb-6 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-foreground text-2xl font-bold tracking-tight lg:text-3xl">
@@ -177,7 +188,7 @@ export function CostSavingsTabs({
         ) : null}
       </div>
 
-      {/* ── Tab strip ───────────────────────────────────────────────────── */}
+      {/* Tab strip  */}
       <div className="mt-3 border-b border-border">
         <nav
           className="-mb-px flex gap-4 sm:gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none"
@@ -189,10 +200,7 @@ export function CostSavingsTabs({
               <Button
                 key={id}
                 type="button"
-                role="tab"
                 variant="ghost"
-                aria-selected={isActive}
-                aria-controls={`tabpanel-${id}`}
                 onClick={() => handleTabChange(id)}
                 className={cn(
                   "rounded-none whitespace-nowrap pb-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
