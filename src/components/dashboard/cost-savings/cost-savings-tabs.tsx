@@ -99,7 +99,7 @@ export function CostSavingsTabs({
       if (useSearchParamNav) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("tab", tab);
-        router.push(`${pathname}?${params.toString()}`);
+        router.replace(`${pathname}?${params.toString()}`);
       } else {
         onTabChange?.(tab);
       }
@@ -133,7 +133,7 @@ export function CostSavingsTabs({
   return (
     <div className={cn("w-full", className)}>
       {/* ── Page-level header ───────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex mb-6 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-foreground text-2xl font-bold tracking-tight lg:text-3xl">
             {title}
@@ -178,8 +178,11 @@ export function CostSavingsTabs({
       </div>
 
       {/* ── Tab strip ───────────────────────────────────────────────────── */}
-      <div className="mt-4 border-b border-border">
-        <nav className="-mb-px flex gap-6" aria-label="Cost and Savings tabs">
+      <div className="mt-3 border-b border-border">
+        <nav
+          className="-mb-px flex gap-4 sm:gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none"
+          aria-label="Cost and Savings tabs"
+        >
           {TABS.map(({ id, label }) => {
             const isActive = id === activeTab;
             return (
@@ -192,7 +195,7 @@ export function CostSavingsTabs({
                 aria-controls={`tabpanel-${id}`}
                 onClick={() => handleTabChange(id)}
                 className={cn(
-                  "mt-4 rounded-none whitespace-nowrap pb-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  "rounded-none whitespace-nowrap pb-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isActive
                     ? "border-0 border-b-2 border-primary text-foreground"
                     : "border-0 border-b-2 border-transparent text-muted-foreground hover:text-foreground/80",

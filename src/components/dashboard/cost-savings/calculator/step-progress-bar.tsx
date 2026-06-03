@@ -20,7 +20,7 @@ export function StepProgressBar({ currentStep }: { currentStep: number }) {
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  "w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium border",
+                  "w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sm font-medium border",
                   isDone && "bg-primary border-primary text-white",
                   isActive && "bg-foreground border-foreground text-background",
                   !isDone &&
@@ -33,6 +33,7 @@ export function StepProgressBar({ currentStep }: { currentStep: number }) {
               <span
                 className={cn(
                   "text-[11px] mt-1.5 text-center max-w-18",
+                  "hidden sm:block",
                   isActive
                     ? "text-primary font-medium"
                     : "text-muted-foreground",
