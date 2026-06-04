@@ -99,6 +99,7 @@ export const useAuthQueries = () => {
         try {
           await setAuth(user, token, refreshToken, variables.rememberMe ?? false);
         } catch {
+          storeLogout();
           toast.error("Signed in, but we could not start your session. Please try again.");
           return;
         }
@@ -176,6 +177,7 @@ export const useAuthQueries = () => {
         try {
           await setAuth(user, token, refreshToken);
         } catch {
+          storeLogout();
           toast.error(
             "Email verified, but we could not start your session. Please sign in again.",
           );

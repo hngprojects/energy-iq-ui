@@ -57,8 +57,6 @@ function GoogleAuthSync() {
       searchParams.get("refreshToken") || hashParams.get("refreshToken") || "";
 
     if (token && !isAuthenticated) {
-      window.history.replaceState(null, "", window.location.pathname);
-
       void (async () => {
         try {
           setTokensLocal(token, refreshToken);
@@ -66,6 +64,7 @@ function GoogleAuthSync() {
           const realUser = await AuthService.me();
           if (realUser?.id) {
             setAuthLocal(realUser, token, refreshToken);
+            window.history.replaceState(null, "", window.location.pathname);
           } else {
             logout();
           }

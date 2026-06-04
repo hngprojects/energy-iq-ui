@@ -35,22 +35,26 @@ function applyRefreshResponse(data: RefreshTokenResponse) {
 export async function refreshAuthSession(): Promise<boolean> {
   if (typeof window === "undefined") return false;
 
-  const response = await fetch("/api/session", {
-    method: "PATCH",
-    credentials: "include",
-  });
+  try {
+    const response = await fetch("/api/session", {
+      method: "PATCH",
+      credentials: "include",
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return false;
+    }
+
+    const payload = await response.json().catch(() => null);
+    const data = (payload?.data ?? payload) as RefreshTokenResponse | null;
+
+    if (!data?.accessToken || !data?.refreshToken) {
+      return false;
+    }
+
+    applyRefreshResponse(data);
+    return true;
+  } catch {
     return false;
   }
-
-  const payload = await response.json().catch(() => null);
-  const data = (payload?.data ?? payload) as RefreshTokenResponse | null;
-
-  if (!data?.accessToken || !data?.refreshToken) {
-    return false;
-  }
-
-  applyRefreshResponse(data);
-  return true;
 }

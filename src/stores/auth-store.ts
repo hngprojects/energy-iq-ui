@@ -114,20 +114,20 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       setAuth: async (user, token, refreshToken, rememberMe = false) => {
+        await persistTokensToSession(token, refreshToken);
         useAuthStore.getState().setAuthLocal(
           user,
           token,
           refreshToken,
           rememberMe,
         );
-        await persistTokensToSession(token, refreshToken);
       },
       setTokensLocal: (token, refreshToken) => {
         set({ token, refreshToken });
       },
       setTokens: async (token, refreshToken) => {
-        useAuthStore.getState().setTokensLocal(token, refreshToken);
         await persistTokensToSession(token, refreshToken);
+        useAuthStore.getState().setTokensLocal(token, refreshToken);
       },
       setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
