@@ -109,8 +109,8 @@ export function FuelPriceImpactCard() {
                 }}
               />
               <Tooltip
-                formatter={(value: string | number | (string | number)[]): [string, string] => [
-                  `₦${Number(Array.isArray(value) ? value[0] : value ?? 0).toLocaleString()}`,
+                formatter={(value: string | number | (string | number)[] | undefined): [string, string] => [
+                  `₦${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toLocaleString()}`,
                   "Savings",
                 ]}
                 contentStyle={{

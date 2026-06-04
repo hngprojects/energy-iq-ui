@@ -63,8 +63,8 @@ export function DailyBarChartCard() {
             />
             <Tooltip
               cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-              formatter={(value: string | number | (string | number)[], name: string | number): [string, string] => [
-                `₦${Number(Array.isArray(value) ? value[0] : value ?? 0).toLocaleString()}`,
+              formatter={(value: string | number | (string | number)[] | undefined, name: string | number): [string, string] => [
+                `₦${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toLocaleString()}`,
                 name === "savings" ? "Solar savings" : "Petrol cost",
               ]}
               contentStyle={{
