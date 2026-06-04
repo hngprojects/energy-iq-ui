@@ -20,19 +20,26 @@ const getSafeRedirect = (redirect: string | null, fallback: string): string => {
 };
 
 export default function LoginPage() {
-  const { setTempEmail, isAuthenticated } = useAuthStore();
+  const { setTempEmail, isAuthenticated, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Run once after hydrate: redirect only if user was already logged in before landing here.
+  // Fresh logins redirect once from useLogin — avoids two navigations (slow in dev).
   useEffect(() => {
-    if (isAuthenticated) {
-      const redirect = searchParams.get("redirect");
-      router.replace(getSafeRedirect(redirect, "/dashboard"));
-      return;
+    if (!_hasHydrated) return;
+    if (!useAuthStore.getState().isAuthenticated) return;
+
+    const redirect = searchParams.get("redirect");
+    router.replace(getSafeRedirect(redirect, "/dashboard"));
+  }, [_hasHydrated, router, searchParams]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setTempEmail(null);
+      localStorage.removeItem("temp_email");
     }
-    setTempEmail(null);
-    localStorage.removeItem("temp_email");
-  }, [isAuthenticated, router, setTempEmail, searchParams]);
+  }, [isAuthenticated, setTempEmail]);
 
   return (
     <AuthWrapper>
