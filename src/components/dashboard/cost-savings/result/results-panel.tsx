@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { SUMMARY_CARDS, PETROL_RATE, HOURS_BEFORE, HOURS_AFTER } from "@/lib/mocks/cost-savings-results";
 import { SavingsCard } from "./primitives";
 import { DailyCostBreakdownCard } from "./daily-cost-breakdown-card";
-import { ProjectedPaybackCard } from "./projected-payback-card";
 import { DailyBarChartCard } from "./daily-bar-chart-card";
-import { FuelPriceImpactCard } from "./fuel-price-impact-card";
 
 interface ResultsPanelProps {
   onViewCumulativeTracker?: () => void;
@@ -40,16 +38,10 @@ export function ResultsPanel({
         ))}
       </div>
 
-      {/* ── Daily breakdown + Projected payback ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 mt-8 lg:mt-10.25">
-        <DailyCostBreakdownCard />
-        <ProjectedPaybackCard />
-      </div>
-
-      {/* ── Bar chart + Fuel price impact ── */}
+      {/* ── Bar chart + Daily cost breakdown ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 mt-8 lg:mt-10.25">
         <DailyBarChartCard />
-        <FuelPriceImpactCard />
+        <DailyCostBreakdownCard />
       </div>
 
       {/* ── Action bar ── */}

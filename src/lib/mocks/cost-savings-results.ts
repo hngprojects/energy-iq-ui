@@ -13,10 +13,9 @@ export const PAYBACK_PCT  = 48;
 
 
 export const DAILY_LEGEND_ITEMS: LegendItem[] = [
-  { label: "Petrol gen (before solar)", before: "₦21,000", after: "₦14,500" },
-  { label: "Solar cost",                before: "-",        after: "₦2,740"  },
-  { label: "Maintenance cost",          before: "₦500",     after: "₦1,500"  },
-  { label: "NERC grid (Band A)",        before: "₦1,500",   after: "₦0"      },
+  { label: "Total Active hours", before: "₦21,000", after: "₦14,500" },
+  { label: "Equivalent power generated within active hours", before: "-", after: "₦2,740" },
+  { label: "Equivalent PMS generator cost saved", before: "₦500", after: "₦1,500" },
 ];
 
 
@@ -39,8 +38,8 @@ export const FUEL_SPARKLINE_DATA = [
 
 
 export const SUMMARY_CARDS = [
-  { label: "Daily Savings",  value: "₦8,200",  note: "vs petrol"         },
-  { label: "Weekly Savings", value: "₦240,000", note: "30-day projection" },
-  { label: "Monthly Saving", value: "₦182,000", note: "365-day estimate"  },
+  { label: "Total Cost Saved",  value: "₦8,200",  note: "vs petrol"         },
+  { label: "Generator Cost Avoided", value: "₦240,000", note: "30-day projection" },
+  { label: "Savings Percentage", value: "60%", note: "365-day estimate"  },
   { label: "CO2 avoided",    value: "216kg",    note: "per month"         },
 ] as const;
