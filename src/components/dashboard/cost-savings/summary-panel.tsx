@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  TrendingUp,
-  TrendingDown,
-  Zap,
-  Sun,
-  Fuel,
-  Activity,
-} from "lucide-react";
+import { Zap, Sun, Fuel, Activity } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -18,77 +11,16 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { cn } from "@/lib/utils";
+import { formatNaira } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { SummaryPeriod } from "./cost-savings-tabs";
+import { TREND_DATA, STATS } from "@/constants/cost-savings";
+import { StatCard } from "./cards/stat-card";
 
 interface SummaryPanelProps {
   period: SummaryPeriod;
   onCheckCalculator?: () => void;
 }
-
-const TREND_DATA: Record<SummaryPeriod, { label: string; value: number }[]> = {
-  daily: [
-    { label: "Mon 12", value: 15000 },
-    { label: "Tue 13", value: 15000 },
-    { label: "Wed 14", value: 10000 },
-    { label: "Thu 15", value: 20000 },
-    { label: "Fri 16", value: 22000 },
-    { label: "Sat 17", value: 15000 },
-    { label: "Sun 18", value: 27000 },
-  ],
-  weekly: [
-    { label: "Wk 1", value: 62000 },
-    { label: "Wk 2", value: 75000 },
-    { label: "Wk 3", value: 58000 },
-    { label: "Wk 4", value: 91000 },
-  ],
-  monthly: [
-    { label: "Jan", value: 210000 },
-    { label: "Feb", value: 195000 },
-    { label: "Mar", value: 240000 },
-    { label: "Apr", value: 220000 },
-    { label: "May", value: 275000 },
-    { label: "Jun", value: 260000 },
-  ],
-};
-
-const STATS: Record<
-  SummaryPeriod,
-  {
-    totalSaved: number;
-    totalSavedDelta: number;
-    energyConsumed: number;
-    energyDelta: number;
-    solarGeneration: number;
-    solarGenerationDelta: number;
-  }
-> = {
-  daily: {
-    totalSaved: 28400,
-    totalSavedDelta: 4200,
-    energyConsumed: 38.7,
-    energyDelta: 8,
-    solarGeneration: 24.2,
-    solarGenerationDelta: 3.5,
-  },
-  weekly: {
-    totalSaved: 142000,
-    totalSavedDelta: 18500,
-    energyConsumed: 214.3,
-    energyDelta: 12,
-    solarGeneration: 158.7,
-    solarGenerationDelta: 21.4,
-  },
-  monthly: {
-    totalSaved: 560000,
-    totalSavedDelta: -32000,
-    energyConsumed: 891.2,
-    energyDelta: -3,
-    solarGeneration: 682.1,
-    solarGenerationDelta: -45.8,
-  },
-};
 
 const getPeriodLabel = (period: SummaryPeriod): string => {
   switch (period) {
@@ -101,19 +33,10 @@ const getPeriodLabel = (period: SummaryPeriod): string => {
   }
 };
 
-function formatNaira(value: number): string {
-  if (Math.abs(value) >= 1_000_000)
-    return `₦ ${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `₦ ${(value / 1_000).toFixed(0)}k`;
-  return `₦ ${value}`;
-}
-
 function formatAxisNaira(value: number): string {
   if (value === 0) return "₦0k";
   return `₦${value / 1000}k`;
 }
-
-// ── Custom tooltip ────────────────────────────────────────────────────────────
 
 function ChartTooltip({
   active,
@@ -131,58 +54,6 @@ function ChartTooltip({
       <p className="font-semibold text-foreground">
         {formatNaira(payload[0].value)}
       </p>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  delta,
-  deltaLabel,
-  icon,
-  iconBg,
-}: {
-  label: string;
-  value: string;
-  delta?: number;
-  deltaLabel?: string;
-  icon: React.ReactNode;
-  iconBg: string;
-}) {
-  const positive = delta === undefined || delta >= 0;
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-3">
-      <div className="flex items-start justify-between">
-        <p className="text-sm text-muted-foreground font-medium">{label}</p>
-        <span
-          className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-full",
-            iconBg,
-          )}
-        >
-          {icon}
-        </span>
-      </div>
-      <p className="text-3xl font-bold tracking-tight text-foreground">
-        {value}
-      </p>
-      {delta !== undefined && deltaLabel && (
-        <p
-          className={cn(
-            "flex items-center gap-1 text-xs font-medium",
-            positive ? "text-battery-full" : "text-destructive",
-          )}
-        >
-          {positive ? (
-            <TrendingUp className="h-3.5 w-3.5" />
-          ) : (
-            <TrendingDown className="h-3.5 w-3.5" />
-          )}
-          {positive ? "+" : ""}
-          {deltaLabel}
-        </p>
-      )}
     </div>
   );
 }
@@ -246,7 +117,6 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
           </div>
         </div>
 
-        {/* Chart */}
         <div className="h-72">
           <ResponsiveContainer
             width="100%"
@@ -313,7 +183,6 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Footer row */}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button
             type="button"
