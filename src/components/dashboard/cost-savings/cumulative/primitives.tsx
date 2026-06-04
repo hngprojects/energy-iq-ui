@@ -14,13 +14,13 @@ type TrackerBadgeProps =
       badgeColor?: undefined;
     };
 
-export interface TrackerCardData extends TrackerBadgeProps {
+export type TrackerCardData = {
   icon: LucideIcon;
   iconColor: string;
   iconBg: string;
   label: string;
   value: string;
-}
+} & TrackerBadgeProps;
 
 export interface TrendCardData {
   label: string;
