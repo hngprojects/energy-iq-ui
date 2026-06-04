@@ -10,7 +10,7 @@ interface CalculatorShellProps {
 }
 
 export function CalculatorShell({ onStepChange }: CalculatorShellProps) {
-  const { step } = useCalculator();
+  const { step, setData, goNext } = useCalculator();
 
   useEffect(() => {
     onStepChange?.(step);
@@ -20,7 +20,18 @@ export function CalculatorShell({ onStepChange }: CalculatorShellProps) {
     <div>
       <StepProgressBar currentStep={step} />
 
-      {step === 1 && <Step1Period />}
+      {step === 1 && (
+        <Step1Period
+          onContinue={(data) => {
+            setData({
+              period: data.period,
+              customStartDate: data.customStartDate,
+              customEndDate: data.customEndDate,
+            });
+            goNext();
+          }}
+        />
+      )}
       {step === 2 && <Step2Price />}
       {step === 3 && <Step3Review />}
     </div>

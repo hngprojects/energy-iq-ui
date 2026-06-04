@@ -6,7 +6,7 @@ import { CostSavingsTabs } from "@/components/dashboard/cost-savings/cost-saving
 import { SummaryPanel } from "@/components/dashboard/cost-savings/summary-panel";
 import { CalculatorPanel } from "@/components/dashboard/cost-savings/calculator/calculator-panel";
 import { CalculatorProvider } from "@/components/dashboard/cost-savings/calculator/calculator-context";
-import { ResultsPanel } from "@/components/dashboard/cost-savings/results-panel";
+import { ResultsPanel } from "@/components/dashboard/cost-savings/result/results-panel";
 import { CumulativeTrackerPanel } from "@/components/dashboard/cost-savings/cumulative-tracker-panel";
 import { TOTAL_STEPS } from "@/components/dashboard/cost-savings/calculator/calculator-context";
 import type { SummaryPeriod } from "@/components/dashboard/cost-savings/cost-savings-tabs";
