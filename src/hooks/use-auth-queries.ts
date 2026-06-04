@@ -91,17 +91,24 @@ export const useAuthQueries = () => {
           email: variables.email,
           password: variables.password,
         }),
-      onSuccess: (data, variables) => {
+      onSuccess: async (data, variables) => {
         const token = data.accessToken;
         const user = data.user;
         const refreshToken = data.refreshToken;
 
-        setAuth(user, token, refreshToken, variables.rememberMe ?? false);
+        try {
+          await setAuth(user, token, refreshToken, variables.rememberMe ?? false);
+        } catch {
+          storeLogout();
+          toast.error("Signed in, but we could not start your session. Please try again.");
+          return;
+        }
+
         toast.success("Welcome back!", {
           duration: 5000,
         });
         const redirect = searchParams.get("redirect");
-        router.push(getSafeRedirect(redirect, "/onboarding"));
+        router.replace(getSafeRedirect(redirect, "/dashboard"));
       },
       onError: (error: unknown) => {
         const message = getErrorMessage(
@@ -162,12 +169,21 @@ export const useAuthQueries = () => {
   const useVerifyEmail = () =>
     useMutation({
       mutationFn: AuthService.verifyEmail,
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         const token = data.accessToken;
         const user = data.user;
         const refreshToken = data.refreshToken;
 
-        setAuth(user, token, refreshToken);
+        try {
+          await setAuth(user, token, refreshToken);
+        } catch {
+          storeLogout();
+          toast.error(
+            "Email verified, but we could not start your session. Please sign in again.",
+          );
+          return;
+        }
+
         toast.success("Email verified successfully!");
       },
       onError: (error: unknown) => {

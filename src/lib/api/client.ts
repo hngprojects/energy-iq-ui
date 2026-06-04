@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { ApiError } from "./error";
 // import { env as serverEnv } from "@/env/server";
+import { refreshAuthSession } from "@/lib/auth-session";
 import { useAuthStore } from "@/stores/auth-store";
 import { AUTH_PUBLIC_PATHS } from "@/constants/auth";
 import { RefreshTokenResponse } from "@/types/auth";
@@ -126,35 +127,19 @@ export async function apiFetch<TResponse>(
       ) {
         try {
           if (!refreshingPromise) {
-            refreshingPromise = axios
-              .request<RefreshTokenResponse | { data: RefreshTokenResponse }>({
-                url: "/api/session",
-                method: "PATCH",
-              })
-              .then((res) => {
-                const data = "data" in res.data ? res.data.data : res.data;
-                const { accessToken: newToken, refreshToken: newRefreshToken } =
-                  data;
-
-                if (newToken && newRefreshToken) {
-                  const {
-                    user,
-                    setAuthLocal,
-                    setTokensLocal,
-                  } = useAuthStore.getState();
-                  const rememberMe =
-                    localStorage.getItem("remember_me") === "1";
-
-                  if (user) {
-                    setAuthLocal(user, newToken, newRefreshToken, rememberMe);
-                  } else {
-                    setTokensLocal(newToken, newRefreshToken);
-                  }
+            refreshingPromise = refreshAuthSession()
+              .then((ok) => {
+                if (!ok) {
+                  throw new Error("Session refresh failed");
                 }
-                return data;
-              })
-              .catch((error) => {
-                throw error;
+                const { token, refreshToken } = useAuthStore.getState();
+                if (!token || !refreshToken) {
+                  throw new Error("Session refresh missing tokens");
+                }
+                return {
+                  accessToken: token,
+                  refreshToken,
+                } satisfies RefreshTokenResponse;
               })
               .finally(() => {
                 refreshingPromise = null;

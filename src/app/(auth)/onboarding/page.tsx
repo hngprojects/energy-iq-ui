@@ -11,6 +11,7 @@ import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-succ
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
+import { persistTokensToSession } from "@/lib/auth-session";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 import { onboardingStorage } from "@/lib/onboarding-storage";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -21,7 +22,8 @@ type Step = "select" | "connect";
 function GoogleAuthSync() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setAuth, logout, isAuthenticated } = useAuthStore();
+  const { setAuthLocal, setTokensLocal, logout, isAuthenticated } =
+    useAuthStore();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -55,24 +57,24 @@ function GoogleAuthSync() {
       searchParams.get("refreshToken") || hashParams.get("refreshToken") || "";
 
     if (token && !isAuthenticated) {
-      window.history.replaceState(null, "", window.location.pathname);
-      useAuthStore.setState({ token, refreshToken });
-
-      AuthService.me()
-        .then((realUser) => {
+      void (async () => {
+        try {
+          setTokensLocal(token, refreshToken);
+          await persistTokensToSession(token, refreshToken);
+          const realUser = await AuthService.me();
           if (realUser?.id) {
-            setAuth(realUser, token, refreshToken);
-            // No need for router.replace("/onboarding") here, we are already on it.
+            setAuthLocal(realUser, token, refreshToken);
+            window.history.replaceState(null, "", window.location.pathname);
           } else {
             logout();
           }
-        })
-        .catch((err) => {
+        } catch (err) {
           console.error("Failed to fetch user profile", err);
           logout();
-        });
+        }
+      })();
     }
-  }, [searchParams, setAuth, logout, isAuthenticated, router]);
+  }, [searchParams, setAuthLocal, setTokensLocal, logout, isAuthenticated, router]);
 
   return null;
 }
