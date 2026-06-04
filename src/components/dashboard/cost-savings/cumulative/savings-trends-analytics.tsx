@@ -18,7 +18,7 @@ const TREND_CARDS: TrendCardData[] = [
 
 export function SavingsTrendsAnalytics() {
   return (
-    <div className="flex flex-col w-full lg:w-[381px] lg:shrink-0 min-w-0">
+    <div className="flex flex-col w-full lg:w-95.25 lg:shrink-0 min-w-0">
       <h3 className="leading-normal font-medium text-[18px] lg:text-[20px] truncate text-foreground">
         Savings Trends &amp; Analytics
       </h3>

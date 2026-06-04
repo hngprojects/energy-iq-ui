@@ -28,7 +28,7 @@ export function CumulativeSavingsChart() {
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[8.87px] border bg-card overflow-hidden w-full lg:flex-1 lg:max-w-[733px] p-4 sm:p-6 lg:p-[26.61px] border-amber-80",
+        "flex flex-col rounded-[8.87px] border bg-card overflow-hidden w-full lg:flex-1 lg:max-w-183.25 p-4 sm:p-6 lg:p-[26.61px] border-amber-80",
       )}
     >
       <h3 className="leading-normal font-medium text-[18px] lg:text-[20px] truncate text-foreground">
@@ -50,7 +50,7 @@ export function CumulativeSavingsChart() {
         </span>
       </div>
 
-      <div className="relative w-full mt-[37.7px] h-[220px] sm:h-[280px] lg:h-[355px]">
+      <div className="relative w-full mt-[37.7px] h-55 sm:h-70 lg:h-88.75">
         <p
           className="absolute left-0 text-[11px] font-medium leading-none pointer-events-none z-10 whitespace-nowrap text-amber-30"
           style={{ top: "58px" }}

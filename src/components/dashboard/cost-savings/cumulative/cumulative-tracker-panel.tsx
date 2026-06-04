@@ -46,7 +46,7 @@ export function CumulativeTrackerPanel() {
       aria-label="Cumulative tracker"
       className="w-full min-w-0 overflow-hidden"
     >
-      <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-[27px]">
+      <div className="grid gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-6.75">
         {TRACKER_CARDS.map((card) => (
           <TrackerCard key={card.label} {...card} />
         ))}

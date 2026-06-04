@@ -80,7 +80,7 @@ export function TrackerCard({
 export function TrendCard({ label, value, change, description }: TrendCardData) {
   return (
     <div
-      className="rounded-lg border bg-card min-w-0 overflow-hidden p-4 sm:p-6 lg:p-[24px] border-amber-80"
+      className="rounded-lg border bg-card min-w-0 overflow-hidden p-4 sm:p-6 lg:p-6 border-amber-80"
       style={{
         minHeight: "132px",
       }}
@@ -101,7 +101,7 @@ export function TrendCard({ label, value, change, description }: TrendCardData) 
           {value}
         </p>
 
-        <p className="text-[12px] font-bold leading-[16px] truncate mt-1 text-battery-full">
+        <p className="text-[12px] font-bold leading-4 truncate mt-1 text-battery-full">
           {change}
         </p>
 
