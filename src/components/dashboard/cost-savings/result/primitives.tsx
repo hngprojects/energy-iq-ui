@@ -91,10 +91,16 @@ export function LegendRow({ item }: { item: LegendItem }) {
   );
 }
 
-export function NetSavingsRow() {
+export function NetSavingsRow({
+  before = "₦23,000",
+  after = "₦17,740",
+}: {
+  before?: string;
+  after?: string;
+} = {}) {
   return (
     <div className="border-t border-border pt-3 mt-1">
-      <BreakdownTableRow dot={false} label="Net Savings" before="₦23,000" after="₦17,740" bold />
+      <BreakdownTableRow dot={false} label="Net Savings" before={before} after={after} bold />
     </div>
   );
 }

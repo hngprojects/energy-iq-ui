@@ -59,11 +59,11 @@ export function DailyBarChartCard() {
               tickLine={false}
               axisLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 9 }}
-              tickFormatter={(v: number) => `₦${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v: number | undefined) => v != null ? `₦${(v / 1000).toFixed(0)}k` : ""}
             />
             <Tooltip
               cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-              formatter={(value: string | number | (string | number)[] | undefined, name: string | number): [string, string] => [
+              formatter={(value: string | number | readonly (string | number)[] | undefined, name: string | number | undefined): [string, string] => [
                 `₦${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toLocaleString()}`,
                 name === "savings" ? "Solar savings" : "Petrol cost",
               ]}

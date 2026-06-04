@@ -3,8 +3,15 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FUEL_PRICE, PAYBACK_PCT } from "@/lib/mocks/cost-savings-results";
 
+interface ProjectedPaybackCardProps {
+  paybackYears?: string;
+  paybackLabel?: string;
+}
 
-export function ProjectedPaybackCard() {
+export function ProjectedPaybackCard({
+  paybackYears = "2.3 Years",
+  paybackLabel = "2 years 4 months to fully payback",
+}: ProjectedPaybackCardProps = {}) {
   return (
     <div
       className={cn(
@@ -30,11 +37,12 @@ export function ProjectedPaybackCard() {
         Before vs after - petrol at {FUEL_PRICE}
       </p>
 
+      {/* Big value */}
       <p
         className="leading-none text-amber-70 text-[20px] lg:text-[24px] font-medium"
         style={{ letterSpacing: "-0.01em", marginTop: "20px" }}
       >
-        2.3 Years
+        {paybackYears}
       </p>
 
       {/* Sub-label */}
@@ -42,7 +50,7 @@ export function ProjectedPaybackCard() {
         className="leading-none text-[13px] lg:text-[14px] font-normal"
         style={{ color: "#666666", marginTop: "6px" }}
       >
-        2 years 4 months to fully payback
+        {paybackLabel}
       </p>
 
       {/* Progress bar */}
@@ -78,7 +86,7 @@ export function ProjectedPaybackCard() {
           size="default"
           className="h-10 gap-1.5 text-surface-20 rounded-lg w-full sm:w-auto"
         >
-          Button
+          View details
           <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
       </div>

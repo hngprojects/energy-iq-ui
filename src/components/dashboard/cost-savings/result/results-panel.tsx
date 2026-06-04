@@ -11,8 +11,17 @@ import { ProjectedPaybackCard } from "./projected-payback-card";
 import { DailyBarChartCard } from "./daily-bar-chart-card";
 import { FuelPriceImpactCard } from "./fuel-price-impact-card";
 
+interface ResultsPanelProps {
+  onViewCumulativeTracker?: () => void;
+  onRecalculate?: () => void;
+  onExportPdf?: () => void;
+}
 
-export function ResultsPanel() {
+export function ResultsPanel({
+  onViewCumulativeTracker,
+  onRecalculate,
+  onExportPdf,
+}: ResultsPanelProps = {}) {
   return (
     <section aria-label="Savings results" className="w-full min-w-0 overflow-hidden pb-8">
 
@@ -55,6 +64,7 @@ export function ResultsPanel() {
         <Button
           variant="secondary"
           className="h-10 gap-1.5 text-surface-20 rounded-lg px-4 w-full sm:w-auto lg:w-69.5"
+          onClick={onViewCumulativeTracker}
         >
           View cumulative saving tracker
           <ArrowRight className="size-4" aria-hidden="true" />
@@ -63,6 +73,7 @@ export function ResultsPanel() {
         <Button
           variant="outline"
           className="h-10 gap-1.5 rounded-lg border-slate-60 text-foreground px-4 w-full sm:w-auto lg:w-71"
+          onClick={onRecalculate}
         >
           <RefreshCw className="size-4" aria-hidden="true" />
           Recalculate
@@ -71,6 +82,7 @@ export function ResultsPanel() {
         <Button
           variant="outline"
           className="h-10 gap-2 rounded-lg border-slate-60 text-foreground px-4 w-full sm:w-auto lg:w-71"
+          onClick={onExportPdf}
         >
           <Download className="size-4" aria-hidden="true" />
           Export PDF report
