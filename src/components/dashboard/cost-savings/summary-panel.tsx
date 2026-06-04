@@ -60,8 +60,8 @@ const STATS: Record<
     totalSavedDelta: number;
     energyConsumed: number;
     energyDelta: number;
-    solarGeneration: number; // <-- changed
-    solarGenerationDelta: number; // <-- added
+    solarGeneration: number;
+    solarGenerationDelta: number;
   }
 > = {
   daily: {
@@ -88,6 +88,17 @@ const STATS: Record<
     solarGeneration: 682.1,
     solarGenerationDelta: -45.8,
   },
+};
+
+const getPeriodLabel = (period: SummaryPeriod): string => {
+  switch (period) {
+    case "daily":
+      return "day";
+    case "weekly":
+      return "week";
+    case "monthly":
+      return "month";
+  }
 };
 
 function formatNaira(value: number): string {
@@ -179,6 +190,7 @@ function StatCard({
 export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
   const stats = STATS[period];
   const trendData = TREND_DATA[period];
+  const periodLabel = getPeriodLabel(period);
 
   const minIdx = trendData.reduce(
     (minI, d, i, arr) => (d.value < arr[minI].value ? i : minI),
@@ -197,7 +209,7 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
           label="Total Saved"
           value={formatNaira(stats.totalSaved)}
           delta={stats.totalSavedDelta}
-          deltaLabel={`${formatNaira(Math.abs(stats.totalSavedDelta))} vs last ${period === "daily" ? "day" : period === "weekly" ? "week" : "month"}`}
+          deltaLabel={`${formatNaira(Math.abs(stats.totalSavedDelta))} vs last ${periodLabel}`}
           iconBg="bg-amber-light"
           icon={<Fuel className="h-5 w-5 text-amber-60" />}
         />
@@ -205,15 +217,15 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
           label="Energy consumed"
           value={`${stats.energyConsumed} kWh`}
           delta={stats.energyDelta}
-          deltaLabel={`${Math.abs(stats.energyDelta)}% vs last ${period === "daily" ? "day" : period === "weekly" ? "week" : "month"}`}
+          deltaLabel={`${Math.abs(stats.energyDelta)}% vs last ${periodLabel}`}
           iconBg="bg-[#ede9fe]"
           icon={<Activity className="h-5 w-5 text-[#7c3aed]" />}
         />
         <StatCard
-          label="Generation Today"
+          label={period === "daily" ? "Generation Today" : "Solar Generation"}
           value={`${stats.solarGeneration} kWh`}
           delta={stats.solarGenerationDelta}
-          deltaLabel={`${Math.abs(stats.solarGenerationDelta)} kWh vs last ${period === "daily" ? "day" : period === "weekly" ? "week" : "month"}`}
+          deltaLabel={`${Math.abs(stats.solarGenerationDelta)} kWh vs last ${periodLabel}`}
           iconBg="bg-[#fce7f3]"
           icon={<Zap className="h-5 w-5 text-[#db2777]" />}
         />
@@ -311,10 +323,12 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
             Check Calculator
           </Button>
 
-          <div className="flex items-center gap-2 rounded-lg bg-[#f0fdf4] border border-[#bbf7d0] px-4 py-2.5 text-xs text-[#15803d] font-medium flex-1 sm:ml-3">
-            <Sun className="h-4 w-4 shrink-0 text-primary" />
-            Your savings increased by 20% due to high solar output
-          </div>
+          {stats.totalSavedDelta > 0 && (
+            <div className="flex items-center gap-2 rounded-lg bg-[#f0fdf4] border border-[#bbf7d0] px-4 py-2.5 text-xs text-[#15803d] font-medium flex-1 sm:ml-3">
+              <Sun className="h-4 w-4 shrink-0 text-primary" />
+              Your savings increased due to high solar output
+            </div>
+          )}
         </div>
       </div>
     </div>
