@@ -26,10 +26,17 @@ export function DateRangeModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const stableOnClose = useCallback(() => onClose(), [onClose]);
 
+  const FOCUSABLE =
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
   useEffect(() => {
     if (!open) return;
-    const firstInput = dialogRef.current?.querySelector<HTMLElement>("input");
-    firstInput?.focus();
+    const first = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+    if (first) {
+      first.focus();
+    } else {
+      dialogRef.current?.focus();
+    }
   }, [open]);
 
   useEffect(() => {
@@ -47,9 +54,8 @@ export function DateRangeModal({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Tab") return;
-    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
+    const focusable =
+      dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE);
     if (!focusable || focusable.length === 0) return;
     const first = focusable[0],
       last = focusable[focusable.length - 1];
