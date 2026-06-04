@@ -28,6 +28,12 @@ export function DateRangeModal({
 
   useEffect(() => {
     if (!open) return;
+    const firstInput = dialogRef.current?.querySelector<HTMLElement>("input");
+    firstInput?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") stableOnClose();
     };

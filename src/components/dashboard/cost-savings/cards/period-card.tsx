@@ -2,8 +2,9 @@
 
 import { CalendarDays, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { CalculationPeriod } from "../calculator/calculator-context";
 
-export type PeriodId = "this-week" | "this-month" | "last-month" | "custom";
+export type PeriodId = CalculationPeriod;
 
 export interface Period {
   id: PeriodId;
@@ -27,6 +28,7 @@ export function PeriodCard({
   return (
     <button
       type="button"
+      aria-label={`Select ${period.label}`}
       onClick={onSelect}
       className={cn(
         "group relative flex flex-col gap-10 cursor-pointer rounded-xl border-2 bg-card p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:-translate-y-1",
