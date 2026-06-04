@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { AlertCircle, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -70,7 +69,6 @@ export function PriceSpinner({
             className="bg-transparent text-lg font-semibold text-foreground focus:outline-none w-full"
           />
         </div>
-
         <div className="flex flex-col gap-0.5 ml-3">
           <Button
             type="button"

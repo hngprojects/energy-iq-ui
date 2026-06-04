@@ -5,6 +5,7 @@ import { ArrowRight, ArrowLeft, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AboutThisPrice } from "../../cards/about-this-price";
 import { PriceSpinner } from "../price-spinner";
+import { toast } from "sonner";
 
 interface Step2PmsPriceProps {
   onBack?: () => void;
@@ -13,14 +14,14 @@ interface Step2PmsPriceProps {
 
 const AUTO_PRICE = 870;
 
-const lastUpdated = `Today, ${new Date().toLocaleTimeString("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-  hour12: true,
-})}`;
-
 export function Step2Price({ onBack, onContinue }: Step2PmsPriceProps) {
   const [price, setPrice] = useState(AUTO_PRICE);
+
+  const lastUpdated = `Today, ${new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,7 +116,13 @@ export function Step2Price({ onBack, onContinue }: Step2PmsPriceProps) {
         </Button>
         <Button
           type="button"
-          onClick={() => onContinue?.({ pmsPrice: price })}
+          onClick={() => {
+            if (price <= 0) {
+              toast.error("Please enter a valid price greater than zero.");
+              return;
+            }
+            onContinue?.({ pmsPrice: price });
+          }}
           className="bg-secondary text-secondary-foreground hover:bg-secondary/90 gap-2 px-8"
         >
           Continue <ArrowRight className="h-4 w-4" />
