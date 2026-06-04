@@ -2,13 +2,22 @@ import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export interface TrackerCardData {
+type TrackerBadgeProps =
+  | {
+      badge: string;
+      badgeBg: string;
+      badgeColor: string;
+    }
+  | {
+      badge?: undefined;
+      badgeBg?: undefined;
+      badgeColor?: undefined;
+    };
+
+export interface TrackerCardData extends TrackerBadgeProps {
   icon: LucideIcon;
   iconColor: string;
   iconBg: string;
-  badge?: string;
-  badgeBg?: string;
-  badgeColor?: string;
   label: string;
   value: string;
 }
@@ -50,7 +59,7 @@ export function TrackerCard({
           />
         </div>
 
-        {badge && badgeBg && badgeColor && (
+        {badge && (
           <span
             className="text-[12px] font-medium leading-none whitespace-nowrap shrink-0 rounded-[9px] py-1 px-2"
             style={{
