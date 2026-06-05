@@ -9,6 +9,15 @@ import { useSavingsSetup } from "./savings-setup-context";
 
 const SESSION_DISMISS_KEY = "energy_iq_savings_setup_dismissed";
 
+function dismissSetupForSession() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
+  } catch (error) {
+    console.warn("Failed to persist savings setup dismiss flag:", error);
+  }
+}
+
 /**
  * Mount on the Cost & Savings page only — auto-opens the setup modal on first visit.
  */
@@ -35,7 +44,5 @@ export function SavingsSetupGate() {
 
   if (!checked) return null;
 
-  return <SavingsSetupModal onDismissSession={() => {
-    sessionStorage.setItem(SESSION_DISMISS_KEY, "1");
-  }} />;
+  return <SavingsSetupModal onDismissSession={dismissSetupForSession} />;
 }

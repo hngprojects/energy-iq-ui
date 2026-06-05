@@ -49,7 +49,7 @@ export function SavingsSetupSettingsSection() {
     return hoursPreset;
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!generatorType) {
       toast.error("Please select a generator type.");
       return;
@@ -187,7 +187,7 @@ export function SavingsSetupSettingsSection() {
           <Button
             type="button"
             disabled={saving || !generatorType}
-            onClick={() => void handleSave()}
+            onClick={handleSave}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto hover:text-white"
           >
             {saving ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -36,8 +36,14 @@ const WHAT_WE_CALCULATE = [
   "Projected payback period",
 ] as const;
 
-function fmtDate(iso: string) {
-  const d = new Date(iso + "T00:00:00");
+function parseDateString(dateString: string): Date {
+  const hasTime = /[Tt]/.test(dateString) || dateString.endsWith("Z");
+  return new Date(hasTime ? dateString : `${dateString}T00:00:00`);
+}
+
+function fmtDate(dateString: string) {
+  const d = parseDateString(dateString);
+  if (Number.isNaN(d.getTime())) return dateString;
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -84,8 +90,13 @@ function getPeriodDateRange(
   return "—";
 }
 
-function formatUpdatedAt() {
-  return `Updated today, ${new Date().toLocaleTimeString("en-US", {
+function formatSavedTimestamp(savedAt?: string) {
+  if (!savedAt) return "From your savings setup";
+  const d = new Date(savedAt);
+  if (Number.isNaN(d.getTime())) return "From your savings setup";
+  return `Saved ${d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -182,7 +193,14 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
     preferences?.generatorType === "diesel"
       ? "Diesel (AGO) Price"
       : "Petrol (PMS) Price";
-  const updatedAt = useMemo(() => formatUpdatedAt(), []);
+  const fuelPriceMeta =
+    data.pmsPricePerLitre != null
+      ? "Adjusted for this calculation"
+      : formatSavedTimestamp(
+          preferences?.fuelPricePerLitre != null && !preferences?.skipped
+            ? preferences.updatedAt
+            : undefined,
+        );
 
   const periodLabel = PERIOD_LABELS[period];
   const periodRange = getPeriodDateRange(
@@ -260,7 +278,7 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               title={fuelTitle}
               description="Fuel price used for this calculation"
               value={`₦${pmsPrice.toLocaleString()} / litre`}
-              meta={updatedAt}
+              meta={fuelPriceMeta}
               onEdit={() => goToStep(2)}
             />
           </div>

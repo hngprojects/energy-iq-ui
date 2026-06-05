@@ -1,4 +1,7 @@
-import type { SavingsSetupPreferences } from "@/types/savings-setup";
+import {
+  SavingsSetupPreferencesSchema,
+  type SavingsSetupPreferences,
+} from "@/types/savings-setup";
 
 const STORAGE_PREFIX = "energy_iq_savings_setup";
 
@@ -12,7 +15,8 @@ export const savingsSetupStorage = {
     try {
       const raw = localStorage.getItem(getKey(userId));
       if (!raw) return null;
-      return JSON.parse(raw) as SavingsSetupPreferences;
+      const parsed = SavingsSetupPreferencesSchema.safeParse(JSON.parse(raw));
+      return parsed.success ? parsed.data : null;
     } catch {
       return null;
     }

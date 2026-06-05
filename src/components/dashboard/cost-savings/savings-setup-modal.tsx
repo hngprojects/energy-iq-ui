@@ -195,6 +195,7 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
 
   const handleSave = () => {
     if (!generatorType) return;
+    if (!Number.isFinite(fuelPrice) || fuelPrice <= 0) return;
 
     const prefs: SavingsSetupPreferences = {
       generatorType,
