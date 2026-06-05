@@ -57,6 +57,7 @@ export function SavingsMetricsProvider({
   const { useUserInverters } = useInverterQueries();
   const { data: inverters, isLoading: invertersLoading } = useUserInverters();
 
+  // Use the first user inverter; multi-inverter selection is out of scope here.
   const inverterId = inverters?.[0]?.id;
 
   const queryParams = useMemo(

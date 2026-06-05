@@ -7,10 +7,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Calculator,
-  Check,
   Fuel,
   Pencil,
-  Star,
 } from "lucide-react";
 import { useSavingsSetup } from "@/components/dashboard/cost-savings/savings-setup-context";
 import { DEFAULT_FUEL_PRICE } from "@/types/savings-setup";
@@ -27,14 +25,6 @@ const PERIOD_LABELS: Record<CalculationPeriod, string> = {
   "last-month": "Last Month",
   custom: "Custom Range",
 };
-
-const WHAT_WE_CALCULATE = [
-  "Daily naira savings vs diesel generator runtime",
-  "Grid electricity cost based on your tariff band",
-  "Total savings for the selected period",
-  "Cumulative savings since installation",
-  "Projected payback period",
-] as const;
 
 function parseDateString(dateString: string): Date {
   const hasTime = /[Tt]/.test(dateString) || dateString.endsWith("Z");
@@ -110,7 +100,6 @@ interface ReviewRowProps {
   description: string;
   value: string;
   meta?: string;
-  onEdit?: () => void;
 }
 
 function ReviewInputRow({
@@ -120,7 +109,6 @@ function ReviewInputRow({
   description,
   value,
   meta,
-  onEdit,
 }: ReviewRowProps) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 sm:px-5">
@@ -164,15 +152,10 @@ function formatGeneratorType(type?: "petrol" | "diesel") {
   return "Not set";
 }
 
-function formatGeneratorHours(hours?: number) {
-  if (hours == null) return "Not set";
-  return `${hours} hour${hours === 1 ? "" : "s"}`;
-}
-
 export function Step3Review({ onBack }: Step3ReviewProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data, goBack, goToStep } = useCalculator();
+  const { data, goBack } = useCalculator();
   const { preferences } = useSavingsSetup();
 
   const handleEditSetup = () => {
@@ -243,7 +226,6 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               description="This time period used for this Calculation"
               value={periodLabel}
               meta={periodRange}
-              onEdit={() => goToStep(1)}
             />
             <ReviewInputRow
               icon={<Fuel className="h-5 w-5 text-sky-600" />}
@@ -252,7 +234,6 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               description="Petrol and diesel use different calculations"
               value={formatGeneratorType(preferences?.generatorType)}
               meta="From your savings setup"
-              onEdit={handleEditSetup}
             />
             <ReviewInputRow
               icon={<Fuel className="h-5 w-5 text-violet-600" />}
@@ -261,7 +242,6 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               description="Fuel price used for this calculation"
               value={`₦${pmsPrice.toLocaleString()} / litre`}
               meta={fuelPriceMeta}
-              onEdit={() => goToStep(2)}
             />
           </div>
 

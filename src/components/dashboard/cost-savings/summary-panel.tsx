@@ -24,7 +24,7 @@ interface SummaryPanelProps {
 }
 
 function formatAxisNaira(value: number): string {
-  if (value === 0) return "₦0k";
+  if (value === 0) return "₦0";
   if (value >= 1000) return `₦${Math.round(value / 1000)}k`;
   return `₦${Math.round(value)}`;
 }
@@ -150,7 +150,7 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
         <StatCard
           label={period === "daily" ? "Generation Today" : "Solar Generation"}
           value={
-            solarGeneration != null && solarGeneration > 0
+            solarGeneration != null
               ? `${solarGeneration.toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh`
               : "—"
           }

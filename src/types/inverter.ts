@@ -33,7 +33,6 @@ export interface Inverter {
   isOffline?: boolean;
   model?: string;
   lastSyncAt?: string;
-  lastSyncedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
