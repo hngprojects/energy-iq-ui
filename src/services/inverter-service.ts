@@ -8,6 +8,7 @@ import {
   DashboardMetrics,
   EnergyUsageResponse,
   PowerConsumptionResponse,
+  CumulativeSavingsData,
 } from "@/types/inverter";
 
 export const InverterService = {
@@ -69,6 +70,14 @@ export const InverterService = {
   getPowerConsumption: async (inverterId: string) => {
     return apiFetch<PowerConsumptionResponse>(
       `/inverter-metrics/${inverterId}/power-consumption`,
+      { method: "GET" },
+      true,
+    );
+  },
+
+  getCumulativeSavings: async (inverterId: string) => {
+    return apiFetch<CumulativeSavingsData>(
+      `/inverter-metrics/${inverterId}/savings/cumulative`,
       { method: "GET" },
       true,
     );
