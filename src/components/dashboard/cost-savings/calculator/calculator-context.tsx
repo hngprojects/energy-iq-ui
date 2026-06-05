@@ -24,6 +24,7 @@ interface CalculatorContextValue {
   setData: (partial: Partial<CalculatorData>) => void;
   goNext: () => void;
   goBack: () => void;
+  goToStep: (step: number) => void;
 }
 
 const CalculatorContext = createContext<CalculatorContextValue | null>(null);
@@ -47,9 +48,16 @@ export function CalculatorProvider({
     [],
   );
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 1)), []);
+  const goToStep = useCallback(
+    (target: number) =>
+      setStep(Math.min(Math.max(target, 1), TOTAL_STEPS)),
+    [],
+  );
 
   return (
-    <CalculatorContext.Provider value={{ step, data, setData, goNext, goBack }}>
+    <CalculatorContext.Provider
+      value={{ step, data, setData, goNext, goBack, goToStep }}
+    >
       {children}
     </CalculatorContext.Provider>
   );
