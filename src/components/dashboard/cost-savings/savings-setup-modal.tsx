@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
@@ -144,40 +144,34 @@ function StepProgressBars({ currentStep }: { currentStep: number }) {
   );
 }
 
-interface SavingsSetupModalProps {
-  onDismissSession?: () => void;
+interface SavingsSetupModalWizardProps {
+  preferences: SavingsSetupPreferences | null;
+  savePreferences: (prefs: SavingsSetupPreferences) => void;
+  skipSetup: () => void;
 }
 
-export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) {
-  const { preferences, isModalOpen, closeSetup, savePreferences, skipSetup } =
-    useSavingsSetup();
-
+function SavingsSetupModalWizard({
+  preferences,
+  savePreferences,
+  skipSetup,
+}: SavingsSetupModalWizardProps) {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [generatorType, setGeneratorType] = useState<GeneratorType | null>(
-    null,
+    () => preferences?.generatorType ?? null,
   );
   const [hoursPreset, setHoursPreset] = useState<GeneratorHoursPreset | null>(
-    null,
+    () => preferences?.generatorHoursPreset ?? null,
   );
-  const [customHours, setCustomHours] = useState("");
-  const [fuelPrice, setFuelPrice] = useState(DEFAULT_FUEL_PRICE);
-
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    setStep(1);
-    setDirection(1);
-    setGeneratorType(preferences?.generatorType ?? null);
-    setHoursPreset(preferences?.generatorHoursPreset ?? null);
-    setCustomHours(
-      preferences?.generatorHoursPreset === "custom" &&
-        preferences.generatorHoursPerDay != null
-        ? String(preferences.generatorHoursPerDay)
-        : "",
-    );
-    setFuelPrice(preferences?.fuelPricePerLitre ?? DEFAULT_FUEL_PRICE);
-  }, [isModalOpen, preferences]);
+  const [customHours, setCustomHours] = useState(() =>
+    preferences?.generatorHoursPreset === "custom" &&
+    preferences.generatorHoursPerDay != null
+      ? String(preferences.generatorHoursPerDay)
+      : "",
+  );
+  const [fuelPrice, setFuelPrice] = useState(
+    () => preferences?.fuelPricePerLitre ?? DEFAULT_FUEL_PRICE,
+  );
 
   const goToStep = (next: number) => {
     setDirection(next > step ? 1 : -1);
@@ -195,6 +189,7 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
 
   const handleSave = () => {
     if (!generatorType) return;
+    if (!Number.isFinite(fuelPrice) || fuelPrice <= 0) return;
 
     const prefs: SavingsSetupPreferences = {
       generatorType,
@@ -205,11 +200,6 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
       updatedAt: new Date().toISOString(),
     };
     savePreferences(prefs);
-  };
-
-  const handleClose = () => {
-    onDismissSession?.();
-    closeSetup();
   };
 
   const fuelLabel =
@@ -231,16 +221,7 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
   };
 
   return (
-    <Dialog
-      open={isModalOpen}
-      onOpenChange={(open) => {
-        if (!open) handleClose();
-      }}
-    >
-      <DialogContent
-        className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-xl"
-        showCloseButton
-      >
+    <>
         <div className="border-b border-border px-6 pt-6 pb-4">
           <DialogHeader className="text-left">
             <DialogTitle className="text-xl font-semibold">
@@ -441,6 +422,42 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
             </button>
           </div>
         </div>
+    </>
+  );
+}
+
+interface SavingsSetupModalProps {
+  onDismissSession?: () => void;
+}
+
+export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) {
+  const { preferences, isModalOpen, closeSetup, savePreferences, skipSetup } =
+    useSavingsSetup();
+
+  const handleClose = () => {
+    onDismissSession?.();
+    closeSetup();
+  };
+
+  return (
+    <Dialog
+      open={isModalOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
+      <DialogContent
+        className="max-w-lg gap-0 overflow-hidden p-0 sm:max-w-xl"
+        showCloseButton
+      >
+        {isModalOpen ? (
+          <SavingsSetupModalWizard
+            key={preferences?.updatedAt ?? "empty"}
+            preferences={preferences}
+            savePreferences={savePreferences}
+            skipSetup={skipSetup}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   );
