@@ -42,7 +42,7 @@ export function TrackerCard({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-lg border bg-card border-amber-50",
+        "flex flex-col rounded-lg border bg-card border-border",
         "min-w-0 overflow-hidden pb-4",
       )}
     >
@@ -89,7 +89,7 @@ export function TrackerCard({
 export function TrendCard({ label, value, change, description }: TrendCardData) {
   return (
     <div
-      className="rounded-lg border bg-card min-w-0 overflow-hidden p-4 sm:p-6 lg:p-6 border-amber-80"
+      className="rounded-lg border bg-card min-w-0 overflow-hidden p-4 sm:p-6 lg:p-6 border-border"
       style={{
         minHeight: "132px",
       }}
