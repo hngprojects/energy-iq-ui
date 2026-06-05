@@ -38,8 +38,8 @@ export const FUEL_SPARKLINE_DATA = [
 
 
 export const SUMMARY_CARDS = [
-  { label: "Total Cost Saved",  value: "₦8,200",  note: "vs petrol"         },
-  { label: "Generator Cost Avoided", value: "₦240,000", note: "30-day projection" },
-  { label: "Savings Percentage", value: "60%", note: "365-day estimate"  },
+  { label: "Total Cost Saved",  value: "₦8,200",  note: "14% on running generator (₦4,057 per day)"         },
+  { label: "Generator Cost Avoided", value: "₦240,000", note: "Based on fuel usage" },
+  { label: "Savings Percentage", value: "60%", note: "You saved 60% vs generator"  },
   { label: "CO2 avoided",    value: "216kg",    note: "per month"         },
 ] as const;

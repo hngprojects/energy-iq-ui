@@ -21,27 +21,13 @@ export function DailyCostBreakdownCard() {
         Daily cost breakdown
       </h3>
 
-      {/* Subtitle */}
-      <p
-        className="leading-none text-[13px] lg:text-[14px] font-normal"
-        style={{ color: "#666666", marginTop: "8px" }}
-      >
-        Before vs after - petrol at {FUEL_PRICE}
-      </p>
 
-      <div style={{ marginTop: "20px" }}>
+      <div style={{ marginTop: "38px" }}>
         {/* Desktop column headers */}
         <div
           className="hidden lg:grid items-center w-full mb-3"
           style={{ gridTemplateColumns: "1fr 94px 55px 94px 55px" }}
         >
-          <span className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 shrink-0" aria-hidden="true" />
-          </span>
-          <span />
-          <span className="text-left text-[11px] font-medium leading-none text-grey">Before</span>
-          <span />
-          <span className="text-left text-[11px] font-medium leading-none text-grey">After</span>
         </div>
 
         {/* Mobile / Tablet column headers */}
@@ -50,8 +36,6 @@ export function DailyCostBreakdownCard() {
           style={{ gridTemplateColumns: "1fr 56px 56px", columnGap: "8px" }}
         >
           <span />
-          <span className="text-left text-[11px] font-medium leading-none text-grey">Before</span>
-          <span className="text-left text-[11px] font-medium leading-none text-grey">After</span>
         </div>
 
         {/* 4 data rows */}
