@@ -6,6 +6,15 @@ import { DashboardHeader } from "@/components/dashboard/layout/dashboard-header"
 import { OnboardingGuard } from "@/components/dashboard/onboarding-guard";
 import { cn } from "@/lib/utils";
 import { UserSync } from "@/components/dashboard/user-sync";
+import { SavingsSetupProvider } from "@/components/dashboard/cost-savings/savings-setup-context";
+import { useAuthStore } from "@/stores/auth-store";
+
+function SavingsSetupScope({ children }: { children: React.ReactNode }) {
+  const userId = useAuthStore((s) => s.user?.id);
+  return (
+    <SavingsSetupProvider key={userId ?? "guest"}>{children}</SavingsSetupProvider>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -27,7 +36,9 @@ export default function DashboardLayout({
             !isChatDetailsPage && "max-w-7xl px-6 py-6 lg:px-6 lg:py-6",
           )}
         >
-          <OnboardingGuard>{children}</OnboardingGuard>
+          <SavingsSetupScope>
+            <OnboardingGuard>{children}</OnboardingGuard>
+          </SavingsSetupScope>
         </main>
       </div>
     </div>
