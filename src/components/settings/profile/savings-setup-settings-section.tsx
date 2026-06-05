@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,28 +17,29 @@ import {
   type SavingsSetupPreferences,
 } from "@/types/savings-setup";
 
-export function SavingsSetupSettingsSection() {
-  const { preferences, savePreferences } = useSavingsSetup();
-
-  const [generatorType, setGeneratorType] = useState<GeneratorType | "">("");
-  const [hoursPreset, setHoursPreset] = useState<GeneratorHoursPreset | null>(
-    null,
+function SavingsSetupSettingsForm({
+  preferences,
+  savePreferences,
+}: {
+  preferences: SavingsSetupPreferences | null;
+  savePreferences: (prefs: SavingsSetupPreferences) => void;
+}) {
+  const [generatorType, setGeneratorType] = useState<GeneratorType | "">(
+    () => preferences?.generatorType ?? "",
   );
-  const [customHours, setCustomHours] = useState("");
-  const [fuelPrice, setFuelPrice] = useState(DEFAULT_FUEL_PRICE);
+  const [hoursPreset, setHoursPreset] = useState<GeneratorHoursPreset | null>(
+    () => preferences?.generatorHoursPreset ?? null,
+  );
+  const [customHours, setCustomHours] = useState(() =>
+    preferences?.generatorHoursPreset === "custom" &&
+    preferences.generatorHoursPerDay != null
+      ? String(preferences.generatorHoursPerDay)
+      : "",
+  );
+  const [fuelPrice, setFuelPrice] = useState(
+    () => preferences?.fuelPricePerLitre ?? DEFAULT_FUEL_PRICE,
+  );
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setGeneratorType(preferences?.generatorType ?? "");
-    setHoursPreset(preferences?.generatorHoursPreset ?? null);
-    setCustomHours(
-      preferences?.generatorHoursPreset === "custom" &&
-        preferences.generatorHoursPerDay != null
-        ? String(preferences.generatorHoursPerDay)
-        : "",
-    );
-    setFuelPrice(preferences?.fuelPricePerLitre ?? DEFAULT_FUEL_PRICE);
-  }, [preferences]);
 
   const resolvedHours = (): number | undefined => {
     if (!hoursPreset) return undefined;
@@ -82,6 +83,119 @@ export function SavingsSetupSettingsSection() {
     generatorType === "diesel" ? "Diesel (AGO) price" : "Petrol (PMS) price";
 
   return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-dark-text">
+          Generator type
+        </label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:max-w-md">
+          {(["petrol", "diesel"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setGeneratorType(type)}
+              className={cn(
+                "flex-1 rounded-lg border px-4 py-3 text-sm font-medium capitalize transition-colors",
+                generatorType === type
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted/50",
+              )}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-dark-text">
+          Daily generator runtime{" "}
+          <span className="font-normal text-[#5D5C5D]">(optional)</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {GENERATOR_HOUR_PRESETS.map((hrs) => (
+            <button
+              key={hrs}
+              type="button"
+              onClick={() => {
+                setHoursPreset(hrs);
+                setCustomHours("");
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                hoursPreset === hrs
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border hover:bg-muted/50",
+              )}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              {hrs} hrs
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setHoursPreset("custom")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+              hoursPreset === "custom"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border hover:bg-muted/50",
+            )}
+          >
+            Custom
+          </button>
+        </div>
+        {hoursPreset === "custom" && (
+          <div className="max-w-[200px]">
+            <Input
+              type="number"
+              min={0.5}
+              max={24}
+              step={0.5}
+              value={customHours}
+              onChange={(e) => setCustomHours(e.target.value)}
+              placeholder="Hours per day"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-dark-text">{fuelLabel}</label>
+        <div className="max-w-md">
+          <PriceSpinner
+            value={fuelPrice}
+            onChange={setFuelPrice}
+            autoPrice={DEFAULT_FUEL_PRICE}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
+        <Button
+          type="button"
+          disabled={saving || !generatorType}
+          onClick={handleSave}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto hover:text-white"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving
+            </>
+          ) : (
+            "Save Savings Preferences"
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function SavingsSetupSettingsSection() {
+  const { preferences, savePreferences } = useSavingsSetup();
+
+  return (
     <div className="rounded-xl border border-border bg-white p-6">
       <div className="mb-6">
         <h2 className="text-base font-semibold text-dark-text">
@@ -93,114 +207,11 @@ export function SavingsSetupSettingsSection() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-dark-text">
-            Generator type
-          </label>
-          <div className="flex flex-col gap-2 sm:flex-row sm:max-w-md">
-            {(["petrol", "diesel"] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setGeneratorType(type)}
-                className={cn(
-                  "flex-1 rounded-lg border px-4 py-3 text-sm font-medium capitalize transition-colors",
-                  generatorType === type
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:bg-muted/50",
-                )}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-dark-text">
-            Daily generator runtime{" "}
-            <span className="font-normal text-[#5D5C5D]">(optional)</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {GENERATOR_HOUR_PRESETS.map((hrs) => (
-              <button
-                key={hrs}
-                type="button"
-                onClick={() => {
-                  setHoursPreset(hrs);
-                  setCustomHours("");
-                }}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                  hoursPreset === hrs
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:bg-muted/50",
-                )}
-              >
-                <Clock className="h-3.5 w-3.5" />
-                {hrs} hrs
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setHoursPreset("custom")}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                hoursPreset === "custom"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:bg-muted/50",
-              )}
-            >
-              Custom
-            </button>
-          </div>
-          {hoursPreset === "custom" && (
-            <div className="max-w-[200px]">
-              <Input
-                type="number"
-                min={0.5}
-                max={24}
-                step={0.5}
-                value={customHours}
-                onChange={(e) => setCustomHours(e.target.value)}
-                placeholder="Hours per day"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-dark-text">
-            {fuelLabel}
-          </label>
-          <div className="max-w-md">
-            <PriceSpinner
-              value={fuelPrice}
-              onChange={setFuelPrice}
-              autoPrice={DEFAULT_FUEL_PRICE}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
-          <Button
-            type="button"
-            disabled={saving || !generatorType}
-            onClick={handleSave}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto hover:text-white"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving
-              </>
-            ) : (
-              "Save Savings Preferences"
-            )}
-          </Button>
-        </div>
-      </div>
+      <SavingsSetupSettingsForm
+        key={preferences?.updatedAt ?? "empty"}
+        preferences={preferences}
+        savePreferences={savePreferences}
+      />
     </div>
   );
 }
