@@ -20,25 +20,30 @@ interface CumulativeSavingsChartProps {
 export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
   const formattedData = useMemo(() => {
     const sortedRaw = [...chart].sort((a, b) => a.month.localeCompare(b.month));
-    let runningTotal = 0;
-    return sortedRaw.map((item) => {
-      runningTotal += item.savingsNgn;
+    return sortedRaw.reduce<{ month: string; actual: number }[]>(
+      (acc, item) => {
+        const prevTotal = acc.length > 0 ? acc[acc.length - 1].actual : 0;
+        const cumulative = prevTotal + item.savingsNgn;
 
-      let formattedMonth = item.month;
-      try {
-        const [year, month] = item.month.split("-");
-        const date = new Date(parseInt(year), parseInt(month) - 1);
-        formattedMonth = date
-          .toLocaleDateString("en-US", { month: "short", year: "2-digit" })
-          .toUpperCase();
-      } catch {
-      }
+        const parts = item.month.split("-");
+        const parsed =
+          parts.length === 2
+            ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1)
+            : null;
+        const formattedMonth =
+          parsed && !isNaN(parsed.getTime())
+            ? parsed
+                .toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "2-digit",
+                })
+                .toUpperCase()
+            : item.month;
 
-      return {
-        month: formattedMonth,
-        actual: runningTotal,
-      };
-    });
+        return [...acc, { month: formattedMonth, actual: cumulative }];
+      },
+      [],
+    );
   }, [chart]);
 
   const formatYAxis = (v: number) => {
