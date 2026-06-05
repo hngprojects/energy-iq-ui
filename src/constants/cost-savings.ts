@@ -66,3 +66,18 @@ export const STATS: Record<SummaryPeriod, SummaryStats> = {
     solarGenerationDelta: -45.8,
   },
 };
+
+export const LIFETIME_SAVINGS_DATA = [
+  { month: "JAN",  actual: 45000,  projected: 40000  },
+  { month: "FEB",  actual: 98000,  projected: 82000  },
+  { month: "MAR",  actual: 162000, projected: 125000 },
+  { month: "APR",  actual: 240000, projected: 170000 },
+  { month: "MAY",  actual: 335000, projected: 218000 },
+  { month: "JUN",  actual: 448000, projected: 268000 },
+  { month: "JUL",  actual: 572000, projected: 320000 },
+  { month: "AUG",  actual: 710000, projected: 374000 },
+  { month: "SEP",  actual: 865000, projected: 430000 },
+  { month: "OCT",  actual: 1020000,projected: 488000 },
+  { month: "NOV",  actual: 1150000,projected: 548000 },
+  { month: "DEC",  actual: 1200000,projected: 610000 },
+];

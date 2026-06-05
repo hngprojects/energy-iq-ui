@@ -83,6 +83,14 @@ export const useInverterQueries = () => {
       refetchInterval: 30_000,
     });
 
+  const useCumulativeSavings = (inverterId: string | undefined) =>
+    useQuery({
+      queryKey: ["cumulative-savings", inverterId],
+      queryFn: () => InverterService.getCumulativeSavings(inverterId!),
+      enabled: isAuthenticated && !!inverterId,
+      refetchInterval: 60_000,
+    });
+
   return {
     useSupportedBrands,
     useConnectInverter,
@@ -91,6 +99,7 @@ export const useInverterQueries = () => {
     useDashboardMetrics,
     useEnergyUsage,
     usePowerConsumption,
+    useCumulativeSavings,
   };
 };
 

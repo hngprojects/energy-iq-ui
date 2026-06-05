@@ -10,7 +10,7 @@ interface CalculatorShellProps {
 }
 
 export function CalculatorShell({ onStepChange }: CalculatorShellProps) {
-  const { step, setData, goNext } = useCalculator();
+  const { step, setData, goNext, goBack } = useCalculator();
 
   useEffect(() => {
     onStepChange?.(step);
@@ -32,8 +32,16 @@ export function CalculatorShell({ onStepChange }: CalculatorShellProps) {
           }}
         />
       )}
-      {step === 2 && <Step2Price />}
-      {step === 3 && <Step3Review />}
+      {step === 2 && (
+        <Step2Price
+          onBack={() => goBack()}
+          onContinue={(data) => {
+            setData({ pmsPricePerLitre: data.pmsPrice });
+            goNext();
+          }}
+        />
+      )}
+      {step === 3 && <Step3Review onBack={() => goBack()} />}
     </div>
   );
 }

@@ -2,7 +2,8 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
-import { Calendar, ChevronDown } from "lucide-react";
+import { Calendar, ChevronDown, Settings2 } from "lucide-react";
+import { useSavingsSetup } from "@/components/dashboard/cost-savings/savings-setup-context";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -95,6 +96,7 @@ function CostSavingsTabsInner({
   onSummaryPeriodChange?: (period: SummaryPeriod) => void;
 }) {
   const { user } = useAuthStore();
+  const { isSetupComplete, openSetup } = useSavingsSetup();
 
   const [localPeriod, setLocalPeriod] = useState<SummaryPeriod>("daily");
   const effectivePeriod = onSummaryPeriodChange ? summaryPeriod : localPeriod;
@@ -139,7 +141,20 @@ function CostSavingsTabsInner({
           </p>
         </div>
 
-        {activeTab === "summary" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {isSetupComplete ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={openSetup}
+              className="gap-2 border-primary/40 text-primary hover:bg-primary/5"
+            >
+              <Settings2 className="h-4 w-4" />
+              Savings setup
+            </Button>
+          ) : null}
+          {activeTab === "summary" ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -163,7 +178,8 @@ function CostSavingsTabsInner({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : null}
+          ) : null}
+        </div>
       </div>
 
       {/* Tab strip */}
