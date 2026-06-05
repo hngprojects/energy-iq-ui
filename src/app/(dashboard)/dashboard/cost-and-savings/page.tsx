@@ -8,6 +8,7 @@ import { CalculatorPanel } from "@/components/dashboard/cost-savings/calculator/
 import { CalculatorProvider } from "@/components/dashboard/cost-savings/calculator/calculator-context";
 import { ResultsPanel } from "@/components/dashboard/cost-savings/result/results-panel";
 import { CumulativeTrackerPanel } from "@/components/dashboard/cost-savings/cumulative/cumulative-tracker-panel";
+import { SavingsSetupGate } from "@/components/dashboard/cost-savings/savings-setup-gate";
 import { TOTAL_STEPS } from "@/components/dashboard/cost-savings/calculator/calculator-context";
 import type { SummaryPeriod } from "@/components/dashboard/cost-savings/cost-savings-tabs";
 
@@ -50,6 +51,7 @@ export default function CostAndSavingsPage() {
   return (
     <Suspense fallback={null}>
       <div className="space-y-6">
+        <SavingsSetupGate />
         <CostSavingsTabs
           useSearchParamNav
           calculatorStep={calculatorStep}

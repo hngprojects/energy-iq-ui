@@ -41,7 +41,7 @@ export function CalculatorShell({ onStepChange }: CalculatorShellProps) {
           }}
         />
       )}
-      {step === 3 && <Step3Review />}
+      {step === 3 && <Step3Review onBack={() => goBack()} />}
     </div>
   );
 }
