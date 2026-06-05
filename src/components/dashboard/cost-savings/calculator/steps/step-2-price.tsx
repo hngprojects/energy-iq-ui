@@ -6,16 +6,18 @@ import { Button } from "@/components/ui/button";
 import { AboutThisPrice } from "../../cards/about-this-price";
 import { PriceSpinner } from "../price-spinner";
 import { toast } from "sonner";
+import { useSavingsSetup } from "@/components/dashboard/cost-savings/savings-setup-context";
+import { DEFAULT_FUEL_PRICE } from "@/types/savings-setup";
 
 interface Step2PmsPriceProps {
   onBack?: () => void;
   onContinue?: (data: { pmsPrice: number }) => void;
 }
 
-const AUTO_PRICE = 870;
-
 export function Step2Price({ onBack, onContinue }: Step2PmsPriceProps) {
-  const [price, setPrice] = useState(AUTO_PRICE);
+  const { preferences } = useSavingsSetup();
+  const autoPrice = preferences?.fuelPricePerLitre ?? DEFAULT_FUEL_PRICE;
+  const [price, setPrice] = useState(autoPrice);
 
   const lastUpdated = `Today, ${new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -46,7 +48,7 @@ export function Step2Price({ onBack, onContinue }: Step2PmsPriceProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold text-amber-60">
-                ₦{AUTO_PRICE.toLocaleString()}
+                ₦{autoPrice.toLocaleString()}
               </span>
               <span className="text-xl font-bold text-foreground">/ litre</span>
             </div>
@@ -85,7 +87,7 @@ export function Step2Price({ onBack, onContinue }: Step2PmsPriceProps) {
           <PriceSpinner
             value={price}
             onChange={setPrice}
-            autoPrice={AUTO_PRICE}
+            autoPrice={autoPrice}
           />
 
           {/* Tip banner */}
