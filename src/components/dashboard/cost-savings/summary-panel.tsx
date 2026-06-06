@@ -148,11 +148,19 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
           icon={<Activity className="h-5 w-5 text-[#7c3aed]" />}
         />
         <StatCard
-          label={period === "daily" ? "Generation Today" : "Solar Generation"}
+          label={
+            data?.percentageGenerated != null
+              ? "Percentage generated"
+              : period === "daily"
+                ? "Generation Today"
+                : "Solar Generation"
+          }
           value={
-            solarGeneration != null
-              ? `${solarGeneration.toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh`
-              : "—"
+            data?.percentageGenerated != null
+              ? `${data.percentageGenerated.toFixed(0)}%`
+              : solarGeneration != null
+                ? `${solarGeneration.toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh`
+                : "—"
           }
           iconBg="bg-[#fce7f3]"
           icon={<Zap className="h-5 w-5 text-[#db2777]" />}

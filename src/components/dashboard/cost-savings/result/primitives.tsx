@@ -23,12 +23,12 @@ export function BreakdownTableRow({
   bold?: boolean;
 }) {
   const desktopValue = bold
-    ? "text-[13px] font-semibold leading-normal text-slate-100 text-right truncate"
-    : "text-[13px] font-medium leading-normal text-grey text-right truncate";
+    ? "text-[13px] font-semibold leading-snug text-slate-100 text-right shrink-0"
+    : "text-[13px] font-medium leading-snug text-grey text-right shrink-0";
 
   const mobileValue = bold
-    ? "text-[11px] font-semibold leading-normal text-slate-100 text-right truncate"
-    : "text-[11px] font-medium leading-normal text-grey text-right truncate";
+    ? "text-[11px] font-semibold leading-snug text-slate-100 text-right shrink-0"
+    : "text-[11px] font-medium leading-snug text-grey text-right shrink-0";
 
   const dotOrSpacer = dot
     ? <Dot />
@@ -41,13 +41,13 @@ export function BreakdownTableRow({
         className="hidden lg:grid items-center w-full"
         style={{ gridTemplateColumns: "1fr auto" }}
       >
-        <span className="flex items-center gap-2 min-w-0 overflow-hidden">
+        <span className="flex items-center gap-2 min-w-0">
           {dotOrSpacer}
           <span className={cn(
             bold
-              ? "text-[13px] font-semibold leading-normal text-slate-100"
-              : "text-[13px] font-medium leading-normal text-grey",
-            "truncate min-w-0",
+              ? "text-[13px] font-semibold leading-snug text-slate-100"
+              : "text-[13px] font-medium leading-snug text-grey",
+            "min-w-0",
           )}>
             {label}
           </span>
@@ -60,13 +60,13 @@ export function BreakdownTableRow({
         className="grid lg:hidden items-center w-full"
         style={{ gridTemplateColumns: "1fr auto", columnGap: "8px" }}
       >
-        <span className="flex items-center gap-2 min-w-0 overflow-hidden">
+        <span className="flex items-center gap-2 min-w-0">
           {dotOrSpacer}
           <span className={cn(
             bold
-              ? "text-[11px] font-semibold leading-normal text-slate-100"
-              : "text-[11px] font-medium leading-normal text-grey",
-            "truncate min-w-0",
+              ? "text-[11px] font-semibold leading-snug text-slate-100"
+              : "text-[11px] font-medium leading-snug text-grey",
+            "min-w-0",
           )}>
             {label}
           </span>

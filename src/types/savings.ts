@@ -20,6 +20,8 @@ export interface SavingsResults {
   generatorCostAvoidedNgn: number;
   fuelSavedLitres: number;
   co2AvoidedKg: number;
+  /** Provided by BE only — do not compute on the client */
+  savingsPercentagePercent?: number;
   breakdown: SavingsBreakdownBucket[];
 }
 
@@ -32,6 +34,7 @@ export interface SavingsSummary {
 export interface SavingsChartPoint {
   label: string;
   savingsNgn: number;
+  generatorCostNgn?: number;
 }
 
 export interface SavingsAssumptionsMeta {
@@ -49,6 +52,8 @@ export interface SavingsMetricsResponse {
   summary: SavingsSummary;
   chart: SavingsChartPoint[];
   meta: SavingsAssumptionsMeta;
-  /** Reserved for when BE adds solar generation to this payload */
+  /** Solar kWh generated for the period (BE field) */
   solarGenerationKwh?: number | null;
+  /** Share of energy from solar vs total, 0–100 (BE field) */
+  percentageGenerated?: number | null;
 }

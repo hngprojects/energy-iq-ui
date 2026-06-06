@@ -2,51 +2,48 @@ import { cn } from "@/lib/utils";
 import { BreakdownTableRow } from "./primitives";
 
 interface DailyCostBreakdownCardProps {
-  activeHours: number;
-  equivalentPowerKwh: number;
-  generatorCostSavedNgn: number;
-  generatorType?: string;
+  activeHours?: number | null;
+  equivalentPowerKwh?: number | null;
+  title?: string;
+}
+
+function formatHours(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return `${value.toFixed(1)} hrs`;
+}
+
+function formatKwh(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return `${value.toFixed(1)} kWh`;
 }
 
 export function DailyCostBreakdownCard({
   activeHours,
   equivalentPowerKwh,
-  generatorCostSavedNgn,
-  generatorType = "PMS",
+  title = "Daily cost breakdown",
 }: DailyCostBreakdownCardProps) {
-  const fuelName = generatorType.toUpperCase() === "DIESEL" || generatorType.toLowerCase() === "ago" ? "AGO" : "PMS";
-
   return (
     <div
       className={cn(
-        "flex flex-col rounded-lg border border-border bg-card overflow-hidden",
-        "w-full lg:max-w-139.75 lg:flex-1",
+        "flex flex-col rounded-lg border border-border bg-card",
+        "w-full min-w-0 lg:max-w-139.75 lg:flex-1",
         "px-3.5 pb-5",
       )}
     >
-      {/* Title */}
-      <h3
-        className="leading-none tracking-tight text-[18px] lg:text-[20px] font-medium"
-        style={{ color: "#141414", marginTop: "24px" }}
-      >
-        Daily cost breakdown
+      <h3 className="mt-6 text-[18px] font-medium leading-snug tracking-tight text-foreground lg:text-[20px]">
+        {title}
       </h3>
 
-      <div style={{ marginTop: "38px" }} className="flex flex-col gap-3">
+      <div className="mt-8 flex flex-col gap-4">
         <BreakdownTableRow
           dot
           label="Total Active hours"
-          value={`${activeHours.toFixed(1)} hrs`}
+          value={formatHours(activeHours)}
         />
         <BreakdownTableRow
           dot
           label="Equivalent power generated within active hours"
-          value={`${equivalentPowerKwh.toFixed(1)} kWh`}
-        />
-        <BreakdownTableRow
-          dot
-          label={`Equivalent ${fuelName} generator cost saved`}
-          value={`₦${Math.round(generatorCostSavedNgn).toLocaleString()}`}
+          value={formatKwh(equivalentPowerKwh)}
         />
       </div>
     </div>
