@@ -8,6 +8,7 @@ export interface SavingsSetupPreferences {
   generatorType?: GeneratorType;
   generatorHoursPerDay?: number;
   generatorHoursPreset?: GeneratorHoursPreset;
+  generatorRatedPowerKw?: number;
   fuelPricePerLitre?: number;
   /** User closed setup without saving full preferences */
   skipped?: boolean;

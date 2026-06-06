@@ -25,6 +25,13 @@ function fmtDisplayDate(date: Date): string {
   });
 }
 
+function toIsoDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function getCalculatorPeriodLabel(period: CalculationPeriod): string {
   return CALCULATOR_PERIOD_LABELS[period];
 }
@@ -61,44 +68,31 @@ export function getCalculatorPeriodDateRange(
   return "—";
 }
 
-export function getCalculatorPeriodDayCount(
-  period: CalculationPeriod,
-  customStartDate?: string,
-  customEndDate?: string,
-): number {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-
-  if (period === "custom" && customStartDate && customEndDate) {
-    const start = parseDateString(customStartDate);
-    const end = parseDateString(customEndDate);
-    const diff = end.getTime() - start.getTime();
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
-  }
-
-  if (period === "this-week") return 7;
-
-  if (period === "this-month") return now.getDate();
-
-  if (period === "last-month") return new Date(y, m, 0).getDate();
-
-  return 7;
-}
-
-function toIsoDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 export function paramsFromSummaryPeriod(
   period: SummaryPeriod,
 ): SavingsQueryParams {
+  const now = new Date();
+  const today = toIsoDate(now);
+
+  if (period === "daily") {
+    return { date: today };
+  }
+
+  if (period === "weekly") {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6);
+    return {
+      date: today,
+      startDate: toIsoDate(start),
+      endDate: today,
+    };
+  }
+
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   return {
-    period,
-    date: toIsoDate(new Date()),
+    date: today,
+    startDate: toIsoDate(monthStart),
+    endDate: today,
   };
 }
 
@@ -111,33 +105,39 @@ export function paramsFromCalculatorData(
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
+  const today = toIsoDate(now);
 
   if (calcPeriod === "this-week") {
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
     return {
-      period: "weekly",
-      date: toIsoDate(now),
+      date: today,
+      startDate: toIsoDate(weekStart),
+      endDate: today,
     };
   }
 
   if (calcPeriod === "this-month") {
     return {
-      period: "monthly",
-      date: toIsoDate(now),
+      date: today,
+      startDate: toIsoDate(new Date(y, m, 1)),
+      endDate: today,
     };
   }
 
   if (calcPeriod === "last-month") {
-    const lastDay = new Date(y, m, 0);
+    const start = new Date(y, m - 1, 1);
+    const end = new Date(y, m, 0);
     return {
-      period: "monthly",
-      date: toIsoDate(lastDay),
+      date: toIsoDate(end),
+      startDate: toIsoDate(start),
+      endDate: toIsoDate(end),
     };
   }
 
   if (calcPeriod === "custom") {
     if (!data.customStartDate || !data.customEndDate) return null;
     return {
-      period: "monthly",
       date: data.customEndDate,
       startDate: data.customStartDate,
       endDate: data.customEndDate,
@@ -148,20 +148,25 @@ export function paramsFromCalculatorData(
 }
 
 export function defaultResultsQueryParams(): SavingsQueryParams {
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+
   return {
-    period: "weekly",
-    date: toIsoDate(new Date()),
+    date: toIsoDate(now),
+    startDate: toIsoDate(weekStart),
+    endDate: toIsoDate(now),
   };
 }
 
 export function formatSavingsChartLabel(
   isoLabel: string,
-  period: SavingsQueryParams["period"],
+  granularity?: string,
 ): string {
   const date = new Date(isoLabel);
   if (Number.isNaN(date.getTime())) return isoLabel;
 
-  if (period === "daily") {
+  if (granularity === "hour") {
     return date.toLocaleTimeString("en-US", {
       hour: "numeric",
       hour12: true,
@@ -172,4 +177,12 @@ export function formatSavingsChartLabel(
     month: "short",
     day: "numeric",
   });
+}
+
+export function breakdownTitleFromGranularity(granularity?: string): string {
+  if (granularity === "hour") return "Hourly cost breakdown";
+  if (granularity === "day") return "Daily cost breakdown";
+  if (granularity === "week") return "Weekly cost breakdown";
+  if (granularity === "month") return "Monthly cost breakdown";
+  return "Period cost breakdown";
 }

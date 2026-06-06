@@ -4,12 +4,14 @@ import { AlertCircle, ArrowRight, RefreshCw, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
+  breakdownTitleFromGranularity,
   formatSavingsChartLabel,
   getCalculatorPeriodDateRange,
   getCalculatorPeriodLabel,
 } from "@/lib/savings-query-params";
 import type { CalculationPeriod } from "../calculator/calculator-context";
 import { useCalculator } from "../calculator/calculator-context";
+import { formatFuelLabel } from "@/lib/savings-personal-settings";
 import { useSavingsMetrics } from "../savings-metrics-context";
 import { SavingsCard } from "./primitives";
 import { DailyCostBreakdownCard } from "./daily-cost-breakdown-card";
@@ -40,28 +42,27 @@ export function ResultsPanel({
   onRecalculate,
 }: ResultsPanelProps = {}) {
   const { data: calcData } = useCalculator();
-  const { data, isLoading, isError, hasInverter, queryParams } =
-    useSavingsMetrics();
+  const { data, isLoading, isError, hasInverter } = useSavingsMetrics();
 
   const effectivePeriod: CalculationPeriod = calcData.period ?? "this-week";
   const periodLabel = getCalculatorPeriodLabel(effectivePeriod);
-  const periodRange = getCalculatorPeriodDateRange(
-    effectivePeriod,
-    calcData.customStartDate,
-    calcData.customEndDate,
-  );
+  const periodRange =
+    data?.startDate && data?.endDate
+      ? `${data.startDate} – ${data.endDate}`
+      : getCalculatorPeriodDateRange(
+          effectivePeriod,
+          calcData.customStartDate,
+          calcData.customEndDate,
+        );
 
   const meta = data?.meta;
-  const fuelName =
-    meta?.fuelType?.toUpperCase() === "AGO" ||
-    meta?.fuelType?.toLowerCase() === "diesel"
-      ? "AGO"
-      : "Petrol";
+  const granularity = data?.granularity;
+  const fuelName = formatFuelLabel(meta?.fuelType);
 
   const chartPoints = data?.chart ?? [];
 
   const barChartData = chartPoints.map((point) => ({
-    day: formatSavingsChartLabel(point.label, queryParams.period),
+    day: formatSavingsChartLabel(point.label, granularity),
     savings: point.savingsNgn,
     petrol: point.generatorCostNgn,
   }));
@@ -73,12 +74,7 @@ export function ResultsPanel({
         ? "Monthly Savings"
         : "Period Savings";
 
-  const breakdownTitle =
-    queryParams.period === "daily"
-      ? "Daily cost breakdown"
-      : queryParams.period === "weekly"
-        ? "Weekly cost breakdown"
-        : "Period cost breakdown";
+  const breakdownTitle = breakdownTitleFromGranularity(granularity);
 
   const chartSubtitle =
     effectivePeriod === "this-week"
@@ -179,7 +175,7 @@ export function ResultsPanel({
         <DailyCostBreakdownCard
           title={breakdownTitle}
           activeHours={summary?.totalActiveHours}
-          equivalentPowerKwh={summary?.totalEnergyConsumedKwh}
+          equivalentPowerKwh={summary?.totalEnergyGeneratedKwh}
         />
       </div>
 

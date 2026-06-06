@@ -20,9 +20,11 @@ import {
 function SavingsSetupSettingsForm({
   preferences,
   savePreferences,
+  isSaving,
 }: {
   preferences: SavingsSetupPreferences | null;
-  savePreferences: (prefs: SavingsSetupPreferences) => void;
+  savePreferences: (prefs: SavingsSetupPreferences) => Promise<void>;
+  isSaving: boolean;
 }) {
   const [generatorType, setGeneratorType] = useState<GeneratorType | "">(
     () => preferences?.generatorType ?? "",
@@ -50,7 +52,7 @@ function SavingsSetupSettingsForm({
     return hoursPreset;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!generatorType) {
       toast.error("Please select a generator type.");
       return;
@@ -70,7 +72,7 @@ function SavingsSetupSettingsForm({
         skipped: false,
         updatedAt: new Date().toISOString(),
       };
-      savePreferences(prefs);
+      await savePreferences(prefs);
       toast.success("Savings preferences saved.");
     } catch {
       toast.error("Failed to save savings preferences.");
@@ -174,7 +176,7 @@ function SavingsSetupSettingsForm({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
         <Button
           type="button"
-          disabled={saving || !generatorType}
+          disabled={saving || isSaving || !generatorType}
           onClick={handleSave}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto hover:text-white"
         >
@@ -193,7 +195,7 @@ function SavingsSetupSettingsForm({
 }
 
 export function SavingsSetupSettingsSection() {
-  const { preferences, savePreferences } = useSavingsSetup();
+  const { preferences, savePreferences, isSaving } = useSavingsSetup();
 
   return (
     <div className="rounded-xl border border-border bg-white p-6">
@@ -211,6 +213,7 @@ export function SavingsSetupSettingsSection() {
         key={preferences?.updatedAt ?? "empty"}
         preferences={preferences}
         savePreferences={savePreferences}
+        isSaving={isSaving}
       />
     </div>
   );

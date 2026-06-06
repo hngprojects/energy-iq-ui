@@ -1,6 +1,5 @@
 "use client";
 
-import { savingsSetupStorage } from "@/lib/savings-setup-storage";
 import { useMounted } from "@/hooks/use-mounted";
 import { useAuthStore } from "@/stores/auth-store";
 import { SavingsSetupModal } from "./savings-setup-modal";
@@ -19,7 +18,7 @@ function dismissSetupForSession() {
 }
 
 function SavingsSetupAutoOpen({ userId }: { userId: string }) {
-  const { openSetup } = useSavingsSetup();
+  const { openSetup, isSetupComplete, isLoading } = useSavingsSetup();
 
   if (!autoOpenCheckedForUser.has(userId)) {
     autoOpenCheckedForUser.add(userId);
@@ -27,10 +26,7 @@ function SavingsSetupAutoOpen({ userId }: { userId: string }) {
     const dismissedThisSession =
       sessionStorage.getItem(SESSION_DISMISS_KEY) === "1";
 
-    if (
-      !dismissedThisSession &&
-      !savingsSetupStorage.hasCompletedSetup(userId)
-    ) {
+    if (!dismissedThisSession && !isLoading && !isSetupComplete) {
       queueMicrotask(() => openSetup());
     }
   }
