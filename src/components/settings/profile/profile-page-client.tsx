@@ -22,6 +22,7 @@ import {
   NIGERIAN_STATES,
   CITIES_BY_STATE,
 } from "@/constants/profile";
+import { SavingsSetupSettingsSection } from "./savings-setup-settings-section";
 
 const profileSchema = z.object({
   firstName: z.string().trim().optional(),
@@ -418,6 +419,8 @@ export function ProfilePageClient() {
           </div>
         </form>
       </div>
+
+      <SavingsSetupSettingsSection />
 
       {/* ── AI Preferences ─────────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-white p-6">
