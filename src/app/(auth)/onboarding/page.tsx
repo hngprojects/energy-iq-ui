@@ -22,8 +22,7 @@ type Step = "select" | "connect";
 function GoogleAuthSync() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setAuthLocal, setTokensLocal, logout, isAuthenticated } =
-    useAuthStore();
+  const { setAuthLocal, setTokensLocal, logout } = useAuthStore();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,7 +55,7 @@ function GoogleAuthSync() {
     const refreshToken =
       searchParams.get("refreshToken") || hashParams.get("refreshToken") || "";
 
-    if (token && !isAuthenticated) {
+    if (token) {
       void (async () => {
         try {
           setTokensLocal(token, refreshToken);
@@ -74,7 +73,7 @@ function GoogleAuthSync() {
         }
       })();
     }
-  }, [searchParams, setAuthLocal, setTokensLocal, logout, isAuthenticated, router]);
+  }, [searchParams, setAuthLocal, setTokensLocal, logout, router]);
 
   return null;
 }
