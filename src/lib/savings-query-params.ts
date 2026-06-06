@@ -52,9 +52,7 @@ export function getCalculatorPeriodDateRange(
   if (period === "this-week") {
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - now.getDay());
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    return `${fmtDisplayDate(weekStart)} - ${fmtDisplayDate(weekEnd)}`;
+    return `${fmtDisplayDate(weekStart)} - ${fmtDisplayDate(now)}`;
   }
 
   if (period === "this-month") {

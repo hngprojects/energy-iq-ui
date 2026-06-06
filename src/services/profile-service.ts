@@ -8,11 +8,14 @@ import {
 
 export const ProfileService = {
   getPersonalSettings: async () => {
-    return apiFetch<PersonalSettings>(
-      "/users/settings/personal",
-      { method: "GET" },
-      true,
-    );
+    const data = await apiFetch<
+      PersonalSettings & { AiLanguage?: string | null }
+    >("/users/settings/personal", { method: "GET" }, true);
+
+    return {
+      ...data,
+      aiLanguage: data.aiLanguage ?? data.AiLanguage ?? undefined,
+    };
   },
 
   updateProfile: async (data: ProfileUpdateRequest) => {

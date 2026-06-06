@@ -31,6 +31,7 @@ export const SavingsSetupPreferencesSchema = z.object({
       z.literal("custom"),
     ])
     .optional(),
+  generatorRatedPowerKw: z.number().positive().optional(),
   fuelPricePerLitre: z.number().positive().optional(),
   skipped: z.boolean().optional(),
   updatedAt: z.string(),

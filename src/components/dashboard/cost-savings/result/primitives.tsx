@@ -85,7 +85,7 @@ export function LegendRow({ item }: { item: { label: string; value: string } }) 
 }
 
 export function NetSavingsRow({
-  value = "₦17,740",
+  value = "—",
 }: {
   value?: string;
 } = {}) {

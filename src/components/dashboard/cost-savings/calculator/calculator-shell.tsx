@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { useCalculator } from "./calculator-context";
 import { useSavingsSetup } from "../savings-setup-context";
 import { Step1Period } from "./steps/step-1-period";
@@ -37,10 +38,15 @@ export function CalculatorShell({ onStepChange }: CalculatorShellProps) {
       {step === 2 && (
         <Step2Price
           onBack={() => goBack()}
-          onContinue={(data) => {
+          onContinue={async (data) => {
             setData({ pmsPricePerLitre: data.pmsPrice });
-            void syncFuelPrice(data.pmsPrice);
-            goNext();
+            try {
+              await syncFuelPrice(data.pmsPrice);
+              goNext();
+            } catch (error) {
+              console.error("Failed to sync fuel price", error);
+              toast.error("Failed to save fuel price. Please try again.");
+            }
           }}
         />
       )}

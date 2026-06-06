@@ -26,7 +26,7 @@ export interface PersonalSettings {
   whatsappAlerts?: boolean;
   emailAlerts?: boolean;
   criticalAlerts?: boolean;
-  AiLanguage?: string;
+  aiLanguage?: string;
   chatCardsEnabled?: boolean;
   quietHoursStart?: string | null;
   quietHoursEnd?: string | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, ArrowRight, RefreshCw, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatNairaOrDash } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   breakdownTitleFromGranularity,
@@ -20,11 +20,6 @@ import { DailyBarChartCard } from "./daily-bar-chart-card";
 interface ResultsPanelProps {
   onViewCumulativeTracker?: () => void;
   onRecalculate?: () => void;
-}
-
-function formatNaira(value: number | null | undefined): string {
-  if (value == null) return "—";
-  return `₦${Math.round(value).toLocaleString()}`;
 }
 
 function formatKg(value: number | null | undefined): string {
@@ -146,12 +141,12 @@ export function ResultsPanel({
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-10 lg:grid-cols-4 lg:gap-6">
         <SavingsCard
           label={savingsCardLabel}
-          value={formatNaira(results?.totalCostSavedNgn)}
+          value={formatNairaOrDash(results?.totalCostSavedNgn)}
           note={`Sum for ${periodLabel.toLowerCase()}`}
         />
         <SavingsCard
           label="Generator Cost Avoided"
-          value={formatNaira(results?.generatorCostAvoidedNgn)}
+          value={formatNairaOrDash(results?.generatorCostAvoidedNgn)}
           note="Based on solar offset"
         />
         <SavingsCard

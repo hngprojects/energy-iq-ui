@@ -75,9 +75,14 @@ export function preferencesToPersonalSettingsPatch(
 }
 
 export function isSavingsSetupComplete(settings: PersonalSettings): boolean {
+  const fuelPrice = parseApiNumber(settings.customFuelPriceNaira);
+  const runtimeHours = settings.generatorAverageDailyRuntimeHours;
+
   return (
     settings.generatorFuelType != null &&
-    parseApiNumber(settings.customFuelPriceNaira) != null &&
-    settings.generatorAverageDailyRuntimeHours != null
+    fuelPrice != null &&
+    fuelPrice > 0 &&
+    runtimeHours != null &&
+    runtimeHours > 0
   );
 }
