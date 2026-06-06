@@ -7,10 +7,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Calculator,
-  Check,
   Fuel,
   Pencil,
-  Star,
 } from "lucide-react";
 import { useSavingsSetup } from "@/components/dashboard/cost-savings/savings-setup-context";
 import { DEFAULT_FUEL_PRICE } from "@/types/savings-setup";
@@ -27,14 +25,6 @@ const PERIOD_LABELS: Record<CalculationPeriod, string> = {
   "last-month": "Last Month",
   custom: "Custom Range",
 };
-
-const WHAT_WE_CALCULATE = [
-  "Daily naira savings vs diesel generator runtime",
-  "Grid electricity cost based on your tariff band",
-  "Total savings for the selected period",
-  "Cumulative savings since installation",
-  "Projected payback period",
-] as const;
 
 function parseDateString(dateString: string): Date {
   const hasTime = /[Tt]/.test(dateString) || dateString.endsWith("Z");
@@ -110,7 +100,6 @@ interface ReviewRowProps {
   description: string;
   value: string;
   meta?: string;
-  onEdit?: () => void;
 }
 
 function ReviewInputRow({
@@ -120,7 +109,6 @@ function ReviewInputRow({
   description,
   value,
   meta,
-  onEdit,
 }: ReviewRowProps) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 sm:px-5">
@@ -150,15 +138,6 @@ function ReviewInputRow({
           <p className="text-xs text-muted-foreground">{meta}</p>
         ) : null}
       </div>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
-      >
-        <Pencil className="h-3.5 w-3.5" />
-        Edit
-      </button>
     </div>
   );
 }
@@ -173,16 +152,15 @@ function formatGeneratorType(type?: "petrol" | "diesel") {
   return "Not set";
 }
 
-function formatGeneratorHours(hours?: number) {
-  if (hours == null) return "Not set";
-  return `${hours} hour${hours === 1 ? "" : "s"}`;
-}
-
 export function Step3Review({ onBack }: Step3ReviewProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data, goBack, goToStep } = useCalculator();
-  const { preferences, openSetup } = useSavingsSetup();
+  const { data, goBack } = useCalculator();
+  const { preferences } = useSavingsSetup();
+
+  const handleEditSetup = () => {
+    router.push("/dashboard/settings/profile");
+  };
 
   const period = data.period ?? "this-week";
   const pmsPrice =
@@ -232,7 +210,7 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={openSetup}
+              onClick={handleEditSetup}
               className="shrink-0 gap-2 border-primary text-primary hover:bg-primary/5"
             >
               <Pencil className="h-4 w-4" />
@@ -248,7 +226,6 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               description="This time period used for this Calculation"
               value={periodLabel}
               meta={periodRange}
-              onEdit={() => goToStep(1)}
             />
             <ReviewInputRow
               icon={<Fuel className="h-5 w-5 text-sky-600" />}
@@ -257,20 +234,6 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               description="Petrol and diesel use different calculations"
               value={formatGeneratorType(preferences?.generatorType)}
               meta="From your savings setup"
-              onEdit={openSetup}
-            />
-            <ReviewInputRow
-              icon={<Star className="h-5 w-5 text-amber-600" />}
-              iconClassName="bg-amber-50"
-              title="Generator Daily Runtime"
-              description="Average daily generator hours before solar"
-              value={formatGeneratorHours(preferences?.generatorHoursPerDay)}
-              meta={
-                preferences?.generatorHoursPerDay != null
-                  ? "From your savings setup"
-                  : "Optional — not provided"
-              }
-              onEdit={openSetup}
             />
             <ReviewInputRow
               icon={<Fuel className="h-5 w-5 text-violet-600" />}
@@ -279,11 +242,10 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
               description="Fuel price used for this calculation"
               value={`₦${pmsPrice.toLocaleString()} / litre`}
               meta={fuelPriceMeta}
-              onEdit={() => goToStep(2)}
             />
           </div>
 
-          <div className="flex items-start gap-3 rounded-xl bg-sky-50 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-xl bg-sky-50 px-4 py-3">
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
               <AlertCircle className="h-4 w-4 text-white" />
             </span>
@@ -293,37 +255,6 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
             </p>
           </div>
         </div>
-
-        <aside className="flex w-full flex-col gap-4 lg:w-[300px] lg:shrink-0">
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h3 className="text-base font-semibold text-foreground">
-              What we&apos;ll calculate
-            </h3>
-            <ul className="mt-4 flex flex-col gap-3">
-              {WHAT_WE_CALCULATE.map((item) => (
-                <li key={item} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <Check
-                      className="h-3 w-3 text-green-600"
-                      strokeWidth={3}
-                    />
-                  </span>
-                  <span className="text-sm text-muted-foreground">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-xl bg-green-50 px-5 py-4">
-            <p className="text-sm font-semibold text-foreground">
-              Ready to see your potential savings!
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Our Calculator will use the inputs above to estimate how much you
-              can save with solar.
-            </p>
-          </div>
-        </aside>
       </div>
 
       <div className="flex items-center justify-between border-t border-border pt-4">

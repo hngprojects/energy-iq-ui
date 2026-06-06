@@ -29,6 +29,9 @@ export interface Inverter {
   serialNumber?: string;
   capacityKw?: number;
   status?: "ACTIVE" | "ONLINE" | "INACTIVE" | "OFFLINE" | "STALE";
+  isActive?: boolean;
+  isOffline?: boolean;
+  model?: string;
   lastSyncAt?: string;
   createdAt: string;
   updatedAt: string;
