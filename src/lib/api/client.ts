@@ -83,6 +83,14 @@ export async function apiFetch<TResponse>(
     headers["Content-Type"] = "application/json";
   }
 
+  // Backend expects Bearer auth; cookies alone are not accepted on API routes.
+  if (!isServer && !headers["Authorization"] && !isAuthEndpoint(path)) {
+    const { token } = useAuthStore.getState();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   const url = resolveRequestUrl(path, proxy);
   const axiosInstance =
     proxy || isInternalApiPath(url) || !isServer
