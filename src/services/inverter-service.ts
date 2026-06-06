@@ -10,6 +10,10 @@ import {
   PowerConsumptionResponse,
   CumulativeSavingsData,
 } from "@/types/inverter";
+import type {
+  SavingsMetricsResponse,
+  SavingsQueryParams,
+} from "@/types/savings";
 
 export const InverterService = {
   getSupportedBrands: async () => {
@@ -78,6 +82,23 @@ export const InverterService = {
   getCumulativeSavings: async (inverterId: string) => {
     return apiFetch<CumulativeSavingsData>(
       `/inverter-metrics/${inverterId}/savings/cumulative`,
+      { method: "GET" },
+      true,
+    );
+  },
+
+  getSavingsMetrics: async (
+    inverterId: string,
+    params: SavingsQueryParams,
+  ) => {
+    const search = new URLSearchParams();
+    search.set("period", params.period);
+    if (params.date) search.set("date", params.date);
+    if (params.startDate) search.set("startDate", params.startDate);
+    if (params.endDate) search.set("endDate", params.endDate);
+
+    return apiFetch<SavingsMetricsResponse>(
+      `/inverter-metrics/${encodeURIComponent(inverterId)}/savings?${search.toString()}`,
       { method: "GET" },
       true,
     );
