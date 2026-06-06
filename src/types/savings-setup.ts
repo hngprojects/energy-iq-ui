@@ -8,6 +8,7 @@ export interface SavingsSetupPreferences {
   generatorType?: GeneratorType;
   generatorHoursPerDay?: number;
   generatorHoursPreset?: GeneratorHoursPreset;
+  generatorRatedPowerKw?: number;
   fuelPricePerLitre?: number;
   /** User closed setup without saving full preferences */
   skipped?: boolean;
@@ -30,6 +31,7 @@ export const SavingsSetupPreferencesSchema = z.object({
       z.literal("custom"),
     ])
     .optional(),
+  generatorRatedPowerKw: z.number().positive().optional(),
   fuelPricePerLitre: z.number().positive().optional(),
   skipped: z.boolean().optional(),
   updatedAt: z.string(),

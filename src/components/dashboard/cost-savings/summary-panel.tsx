@@ -66,13 +66,12 @@ function SummarySkeleton() {
 }
 
 export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
-  const { data, isLoading, isError, hasInverter, queryParams } =
-    useSavingsMetrics();
+  const { data, isLoading, isError, hasInverter } = useSavingsMetrics();
 
   const chart = data?.chart ?? [];
   const trendData = chart.length
     ? chart.map((point) => ({
-        label: formatSavingsChartLabel(point.label, queryParams.period),
+        label: formatSavingsChartLabel(point.label, data?.granularity),
         value: point.savingsNgn,
       }))
     : [];
@@ -88,7 +87,7 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
 
   const totalSaved = data?.results?.totalCostSavedNgn;
   const energyConsumed = data?.summary?.totalEnergyConsumedKwh;
-  const solarGeneration = data?.solarGenerationKwh;
+  const energyGenerated = data?.summary?.totalEnergyGeneratedKwh;
 
   if (!hasInverter && !isLoading) {
     return (
@@ -150,8 +149,8 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
         <StatCard
           label={period === "daily" ? "Generation Today" : "Solar Generation"}
           value={
-            solarGeneration != null
-              ? `${solarGeneration.toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh`
+            energyGenerated != null
+              ? `${energyGenerated.toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh`
               : "—"
           }
           iconBg="bg-[#fce7f3]"

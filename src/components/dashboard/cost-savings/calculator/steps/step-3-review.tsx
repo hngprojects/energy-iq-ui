@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import { useSavingsSetup } from "@/components/dashboard/cost-savings/savings-setup-context";
 import { DEFAULT_FUEL_PRICE } from "@/types/savings-setup";
+import {
+  getCalculatorPeriodDateRange,
+  getCalculatorPeriodLabel,
+} from "@/lib/savings-query-params";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -20,65 +24,11 @@ import {
 } from "../calculator-context";
 
 const PERIOD_LABELS: Record<CalculationPeriod, string> = {
-  "this-week": "This Week",
-  "this-month": "This Month",
-  "last-month": "Last Month",
-  custom: "Custom Range",
+  "this-week": getCalculatorPeriodLabel("this-week"),
+  "this-month": getCalculatorPeriodLabel("this-month"),
+  "last-month": getCalculatorPeriodLabel("last-month"),
+  custom: getCalculatorPeriodLabel("custom"),
 };
-
-function parseDateString(dateString: string): Date {
-  const hasTime = /[Tt]/.test(dateString) || dateString.endsWith("Z");
-  return new Date(hasTime ? dateString : `${dateString}T00:00:00`);
-}
-
-function fmtDate(dateString: string) {
-  const d = parseDateString(dateString);
-  if (Number.isNaN(d.getTime())) return dateString;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function getPeriodDateRange(
-  period: CalculationPeriod,
-  customStartDate?: string,
-  customEndDate?: string,
-): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-  if (period === "custom" && customStartDate && customEndDate) {
-    return `${fmtDate(customStartDate)} - ${fmtDate(customEndDate)}`;
-  }
-
-  if (period === "this-week") {
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    return `${fmt(weekStart)} - ${fmt(weekEnd)}`;
-  }
-
-  if (period === "this-month") {
-    return `${fmt(new Date(y, m, 1))} - ${fmt(new Date(y, m + 1, 0))}`;
-  }
-
-  if (period === "last-month") {
-    return `${fmt(new Date(y, m - 1, 1))} - ${fmt(new Date(y, m, 0))}`;
-  }
-
-  return "—";
-}
 
 function formatSavedTimestamp(savedAt?: string) {
   if (!savedAt) return "From your savings setup";
@@ -181,7 +131,7 @@ export function Step3Review({ onBack }: Step3ReviewProps) {
         );
 
   const periodLabel = PERIOD_LABELS[period];
-  const periodRange = getPeriodDateRange(
+  const periodRange = getCalculatorPeriodDateRange(
     period,
     data.customStartDate,
     data.customEndDate,
