@@ -1,7 +1,4 @@
-export type SavingsPeriod = "daily" | "weekly" | "monthly";
-
 export interface SavingsQueryParams {
-  period: SavingsPeriod;
   date?: string;
   startDate?: string;
   endDate?: string;
@@ -11,6 +8,7 @@ export interface SavingsBreakdownBucket {
   bucket: string;
   activeHours: number;
   energyKwh: number;
+  solarKwh?: number;
   generatorCostSavedNgn: number;
   fuelSavedLitres: number;
 }
@@ -20,35 +18,39 @@ export interface SavingsResults {
   generatorCostAvoidedNgn: number;
   fuelSavedLitres: number;
   co2AvoidedKg: number;
+  savingsPercentagePercent?: number;
   breakdown: SavingsBreakdownBucket[];
 }
 
 export interface SavingsSummary {
-  averageCostSavedNgn: number;
+  totalCostSavedNgn: number;
+  averageCostSavedPerBucketNgn: number;
   totalEnergyConsumedKwh: number;
+  totalEnergyGeneratedKwh: number;
   totalActiveHours: number;
 }
 
 export interface SavingsChartPoint {
   label: string;
   savingsNgn: number;
+  generatorCostNgn?: number;
 }
 
 export interface SavingsAssumptionsMeta {
   fuelType: string;
   fuelPricePerLitreNgn: number;
-  fuelPriceLastUpdated: string;
   assumedGeneratorRatedPowerKw: number;
   assumedConsumptionRateLPerHr: number;
+  fuelPriceLastUpdated?: string;
 }
 
 export interface SavingsMetricsResponse {
-  period: SavingsPeriod;
-  date: string;
+  startDate: string;
+  endDate: string;
+  spanDays: number;
+  granularity: string;
   results: SavingsResults;
   summary: SavingsSummary;
   chart: SavingsChartPoint[];
   meta: SavingsAssumptionsMeta;
-  /** Reserved for when BE adds solar generation to this payload */
-  solarGenerationKwh?: number | null;
 }

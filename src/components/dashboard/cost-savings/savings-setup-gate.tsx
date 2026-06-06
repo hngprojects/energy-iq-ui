@@ -1,6 +1,6 @@
 "use client";
 
-import { savingsSetupStorage } from "@/lib/savings-setup-storage";
+import { useEffect } from "react";
 import { useMounted } from "@/hooks/use-mounted";
 import { useAuthStore } from "@/stores/auth-store";
 import { SavingsSetupModal } from "./savings-setup-modal";
@@ -19,21 +19,19 @@ function dismissSetupForSession() {
 }
 
 function SavingsSetupAutoOpen({ userId }: { userId: string }) {
-  const { openSetup } = useSavingsSetup();
+  const { openSetup, isSetupComplete, isLoading } = useSavingsSetup();
 
-  if (!autoOpenCheckedForUser.has(userId)) {
+  useEffect(() => {
+    if (isLoading || autoOpenCheckedForUser.has(userId)) return;
     autoOpenCheckedForUser.add(userId);
 
     const dismissedThisSession =
       sessionStorage.getItem(SESSION_DISMISS_KEY) === "1";
 
-    if (
-      !dismissedThisSession &&
-      !savingsSetupStorage.hasCompletedSetup(userId)
-    ) {
-      queueMicrotask(() => openSetup());
+    if (!dismissedThisSession && !isSetupComplete) {
+      openSetup();
     }
-  }
+  }, [userId, isLoading, isSetupComplete, openSetup]);
 
   return null;
 }

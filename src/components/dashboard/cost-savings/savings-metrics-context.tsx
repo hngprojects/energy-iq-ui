@@ -15,6 +15,7 @@ import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import {
   paramsFromCalculatorData,
   paramsFromSummaryPeriod,
+  defaultResultsQueryParams,
 } from "@/lib/savings-query-params";
 import { InverterService } from "@/services/inverter-service";
 import type { SavingsMetricsResponse, SavingsQueryParams } from "@/types/savings";
@@ -36,7 +37,11 @@ function resolveQueryParams(
   summaryPeriod: SummaryPeriod,
   calculatorData: ReturnType<typeof useCalculator>["data"],
 ): SavingsQueryParams {
-  if (activeTab === "calculator" || activeTab === "results") {
+  if (activeTab === "results") {
+    return paramsFromCalculatorData(calculatorData) ?? defaultResultsQueryParams();
+  }
+
+  if (activeTab === "calculator") {
     const fromCalculator = paramsFromCalculatorData(calculatorData);
     if (fromCalculator) return fromCalculator;
   }
@@ -67,8 +72,8 @@ export function SavingsMetricsProvider({
 
   const savingsQuery = useQuery({
     queryKey: ["savings-metrics", inverterId, queryParams],
-    queryFn: () => InverterService.getSavingsMetrics(inverterId!, queryParams),
-    enabled: Boolean(inverterId),
+    queryFn: () => InverterService.getSavingsMetrics(inverterId!, queryParams!),
+    enabled: Boolean(inverterId && queryParams),
     staleTime: 60_000,
     placeholderData: (prev) => prev,
   });
