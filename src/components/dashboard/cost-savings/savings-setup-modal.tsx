@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { PriceSpinner } from "./calculator/price-spinner";
 import { useSavingsSetup } from "./savings-setup-context";
+import { toast } from "sonner";
 import {
   DEFAULT_FUEL_PRICE,
   GENERATOR_HOUR_PRESETS,
@@ -146,14 +147,16 @@ function StepProgressBars({ currentStep }: { currentStep: number }) {
 
 interface SavingsSetupModalWizardProps {
   preferences: SavingsSetupPreferences | null;
-  savePreferences: (prefs: SavingsSetupPreferences) => void;
+  savePreferences: (prefs: SavingsSetupPreferences) => Promise<void>;
   skipSetup: () => void;
+  isSaving: boolean;
 }
 
 function SavingsSetupModalWizard({
   preferences,
   savePreferences,
   skipSetup,
+  isSaving,
 }: SavingsSetupModalWizardProps) {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
@@ -187,7 +190,7 @@ function SavingsSetupModalWizard({
     return hoursPreset;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!generatorType) return;
     if (!Number.isFinite(fuelPrice) || fuelPrice <= 0) return;
 
@@ -199,7 +202,13 @@ function SavingsSetupModalWizard({
       skipped: false,
       updatedAt: new Date().toISOString(),
     };
-    savePreferences(prefs);
+
+    try {
+      await savePreferences(prefs);
+      toast.success("Savings preferences saved.");
+    } catch {
+      toast.error("Failed to save savings preferences.");
+    }
   };
 
   const fuelLabel =
@@ -387,8 +396,8 @@ function SavingsSetupModalWizard({
             ) : (
               <Button
                 type="button"
-                disabled={!generatorType || fuelPrice <= 0}
-                onClick={handleSave}
+                disabled={!generatorType || fuelPrice <= 0 || isSaving}
+                onClick={() => void handleSave()}
                 className="gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/90"
               >
                 Save & continue
@@ -431,7 +440,7 @@ interface SavingsSetupModalProps {
 }
 
 export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) {
-  const { preferences, isModalOpen, closeSetup, savePreferences, skipSetup } =
+  const { preferences, isModalOpen, closeSetup, savePreferences, skipSetup, isSaving } =
     useSavingsSetup();
 
   const handleClose = () => {
@@ -456,6 +465,7 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
             preferences={preferences}
             savePreferences={savePreferences}
             skipSetup={skipSetup}
+            isSaving={isSaving}
           />
         ) : null}
       </DialogContent>

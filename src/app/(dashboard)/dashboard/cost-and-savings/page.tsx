@@ -5,7 +5,10 @@ import { useActiveCostSavingsTab } from "@/components/dashboard/cost-savings/cos
 import { CostSavingsTabs } from "@/components/dashboard/cost-savings/cost-savings-tabs";
 import { SummaryPanel } from "@/components/dashboard/cost-savings/summary-panel";
 import { CalculatorPanel } from "@/components/dashboard/cost-savings/calculator/calculator-panel";
-import { CalculatorProvider } from "@/components/dashboard/cost-savings/calculator/calculator-context";
+import {
+  CalculatorProvider,
+  useCalculator,
+} from "@/components/dashboard/cost-savings/calculator/calculator-context";
 import { ResultsPanel } from "@/components/dashboard/cost-savings/result/results-panel";
 import { CumulativeTrackerPanel } from "@/components/dashboard/cost-savings/cumulative/cumulative-tracker-panel";
 import { SavingsSetupGate } from "@/components/dashboard/cost-savings/savings-setup-gate";
@@ -23,12 +26,30 @@ function TabPanels({
   const activeTab = useActiveCostSavingsTab();
   const router = useRouter();
   const pathname = usePathname();
+  const { goToStep } = useCalculator();
+
+  const navigateToTab = useCallback(
+    (tab: string) => {
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", tab);
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [router, pathname],
+  );
 
   const handleCheckCalculator = useCallback(() => {
-    const params = new URLSearchParams(window.location.search);
-    params.set("tab", "calculator");
-    router.push(`${pathname}?${params.toString()}`);
-  }, [router, pathname]);
+    navigateToTab("calculator");
+  }, [navigateToTab]);
+
+  const handleRecalculate = useCallback(() => {
+    goToStep(1);
+    onCalculatorStepChange(1);
+    navigateToTab("calculator");
+  }, [goToStep, navigateToTab, onCalculatorStepChange]);
+
+  const handleViewCumulativeTracker = useCallback(() => {
+    navigateToTab("cumulative-tracker");
+  }, [navigateToTab]);
 
   if (activeTab === "summary")
     return (
@@ -39,7 +60,13 @@ function TabPanels({
     );
   if (activeTab === "calculator")
     return <CalculatorPanel onStepChange={onCalculatorStepChange} />;
-  if (activeTab === "results") return <ResultsPanel />;
+  if (activeTab === "results")
+    return (
+      <ResultsPanel
+        onRecalculate={handleRecalculate}
+        onViewCumulativeTracker={handleViewCumulativeTracker}
+      />
+    );
   if (activeTab === "cumulative-tracker") return <CumulativeTrackerPanel />;
   return null;
 }
