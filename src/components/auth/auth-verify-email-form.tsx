@@ -14,6 +14,8 @@ import { useAuthQueries } from "@/hooks/use-auth-queries";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { useAuthStore } from "@/stores/auth-store";
 
+const OTP_VALIDITY_SECONDS = 299;
+
 export function AuthVerifyEmailForm() {
   const router = useRouter();
   const tempEmail = useAuthStore((state) => state.tempEmail);
@@ -31,7 +33,7 @@ export function AuthVerifyEmailForm() {
   const [otp, setOtp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(119);
+  const [timeLeft, setTimeLeft] = useState(OTP_VALIDITY_SECONDS);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -56,17 +58,12 @@ export function AuthVerifyEmailForm() {
 
   const isComplete = otp.length === 6;
 
-  const handleBack = () => {
-    setTempEmail(null);
-    localStorage.removeItem("temp_email");
-  };
-
   const handleResend = () => {
     resendMutation.mutate(
       { email },
       {
         onSuccess: () => {
-          setTimeLeft(119);
+          setTimeLeft(OTP_VALIDITY_SECONDS);
         },
       },
     );
@@ -236,7 +233,6 @@ export function AuthVerifyEmailForm() {
           size="lg"
           asChild
           className="text-md h-14 rounded-xl border border-slate-200 bg-transparent font-medium text-slate-900 shadow-none transition-colors hover:bg-slate-50 md:order-1 md:text-lg"
-          onClick={handleBack}
         >
           <Link href="/signup">Back</Link>
         </Button>

@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { ApiError } from "./error";
 // import { env as serverEnv } from "@/env/server";
+import { refreshAuthSession } from "@/lib/auth-session";
 import { useAuthStore } from "@/stores/auth-store";
 import { AUTH_PUBLIC_PATHS } from "@/constants/auth";
 import { RefreshTokenResponse } from "@/types/auth";
@@ -8,6 +9,11 @@ import { RefreshTokenResponse } from "@/types/auth";
 const isAbsoluteUrl = (path: string): boolean => /^https?:\/\//i.test(path);
 const isInternalApiPath = (path: string): boolean => path.startsWith("/api/");
 const isServer = typeof window === "undefined";
+
+if (!isServer) {
+  // Ensure browser requests send cookies (HttpOnly token cookie)
+  axios.defaults.withCredentials = true;
+}
 
 let refreshingPromise: Promise<RefreshTokenResponse | null> | null = null;
 
@@ -68,15 +74,6 @@ export async function apiFetch<TResponse>(
     ...((config.headers as Record<string, string>) || {}),
   };
 
-  // Automatically attach Authorization header if not present
-  if (!headers["Authorization"]) {
-    const token = !isServer ? useAuthStore.getState().token : null;
-
-    if (token && token !== "undefined" && token !== "null") {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
-
   const isJson =
     config.data &&
     !(config.data instanceof FormData) &&
@@ -84,6 +81,14 @@ export async function apiFetch<TResponse>(
 
   if (!headers["Content-Type"] && isJson) {
     headers["Content-Type"] = "application/json";
+  }
+
+  // Backend expects Bearer auth; cookies alone are not accepted on API routes.
+  if (!isServer && !headers["Authorization"] && !isAuthEndpoint(path)) {
+    const { token } = useAuthStore.getState();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
   }
 
   const url = resolveRequestUrl(path, proxy);
@@ -128,67 +133,45 @@ export async function apiFetch<TResponse>(
         !isAuthEndpoint(path) &&
         !isRefreshPath
       ) {
-        const refreshToken = useAuthStore.getState().refreshToken;
-
-        if (refreshToken) {
-          try {
-            if (!refreshingPromise) {
-              const refreshUrl = resolveRequestUrl("/auth/refresh", proxy);
-              refreshingPromise = axios
-                .request<
-                  RefreshTokenResponse | { data: RefreshTokenResponse }
-                >({
-                  url: refreshUrl,
-                  method: "POST",
-                  data: { refreshToken },
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                })
-                .then((res) => {
-                  const data =
-                    "data" in res.data ? res.data.data : res.data;
-                  const { accessToken: newToken, refreshToken: newRefreshToken } =
-                    data;
-
-                  const user = useAuthStore.getState().user;
-                  if (user && newToken && newRefreshToken) {
-                    useAuthStore.getState().setAuth(
-                      user,
-                      newToken,
-                      newRefreshToken,
-                      localStorage.getItem("remember_me") === "1",
-                    );
-                  }
-                  return data;
-                })
-                .catch((error) => {
-                  throw error;
-                })
-                .finally(() => {
-                  refreshingPromise = null;
-                });
-            }
-
-            const refreshData = await refreshingPromise;
-            if (refreshData?.accessToken) {
-              // Retry the original request with new token
-              const newHeaders = {
-                ...headers,
-                Authorization: `Bearer ${refreshData.accessToken}`,
-              };
-              return apiFetch<TResponse>(
-                path,
-                { ...config, headers: newHeaders },
-                proxy,
-              );
-            }
-          } catch (refreshErr) {
-            // Refresh failed, fall through to logout
+        try {
+          if (!refreshingPromise) {
+            refreshingPromise = refreshAuthSession()
+              .then((ok) => {
+                if (!ok) {
+                  throw new Error("Session refresh failed");
+                }
+                const { token, refreshToken } = useAuthStore.getState();
+                if (!token || !refreshToken) {
+                  throw new Error("Session refresh missing tokens");
+                }
+                return {
+                  accessToken: token,
+                  refreshToken,
+                } satisfies RefreshTokenResponse;
+              })
+              .finally(() => {
+                refreshingPromise = null;
+              });
           }
+
+          const refreshData = await refreshingPromise;
+          if (refreshData?.accessToken) {
+            // Retry the original request with new token
+            const newHeaders = {
+              ...headers,
+              Authorization: `Bearer ${refreshData.accessToken}`,
+            };
+            return apiFetch<TResponse>(
+              path,
+              { ...config, headers: newHeaders },
+              proxy,
+            );
+          }
+        } catch {
+          // Refresh failed, fall through to logout
         }
 
-        // Clear auth tokens via Zustand on 401 if refresh failed or no refresh token
+        // Clear auth tokens via Zustand on 401 if refresh failed.
         useAuthStore.getState().logout();
         window.location.replace("/login");
       }

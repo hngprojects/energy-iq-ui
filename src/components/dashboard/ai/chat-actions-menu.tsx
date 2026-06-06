@@ -1,15 +1,14 @@
 "use client";
-
 import * as React from "react";
 import {
   FolderArchive,
+  Globe,
   MoreVertical,
   Pencil,
+  Pin,
   Share2,
-  ShieldAlert,
-  Trash2,
-  Globe,
   Shield,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,98 +24,165 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+// Added clean Input import for the rename dialog fields
+import { Input } from "@/components/ui/input";
 interface ChatActionsMenuProps {
   chatId: string;
+  title?: string;
   triggerClassName?: string;
+  isPinned?: boolean;
+  onRename?: (chatId: string, title: string) => void;
+  onPin?: (chatId: string) => void;
+  onArchive?: (chatId: string) => void;
+  onDelete?: (chatId: string) => void;
 }
 
 export function ChatActionsMenu({
   chatId,
+  title,
   triggerClassName,
+  isPinned = false,
+  onRename,
+  onPin,
+  onArchive,
+  onDelete,
 }: ChatActionsMenuProps) {
   const [isShareOpen, setIsShareOpen] = React.useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isRenameOpen, setIsRenameOpen] = React.useState(false);
+  const [renameTitle, setRenameTitle] = React.useState("");
   const [shareMode, setShareMode] = React.useState<"private" | "public">(
     "private",
   );
   const [copied, setCopied] = React.useState(false);
-
-  const shareUrl = `https://energiiqchat/share/ffuu4jt-${chatId}`;
-
+  const shareUrl = React.useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/dashboard/ai-assistant/${chatId}`;
+  }, [chatId]);
+  const stopMenuEvent = (
+    event: React.MouseEvent<HTMLElement> | React.PointerEvent<HTMLElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
   const handleCopy = async () => {
+    if (!shareUrl) return;
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy text", err);
+      console.error("Failed to copy chat link:", err);
     }
   };
-
+  const handleRenameClick = () => {
+    setRenameTitle(title ?? "");
+    window.setTimeout(() => setIsRenameOpen(true), 0);
+  };
+  const handleConfirmRename = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTitle = renameTitle.trim();
+    if (cleanTitle) {
+      onRename?.(chatId, cleanTitle);
+      setIsRenameOpen(false);
+    }
+  };
+  const handleConfirmDelete = () => {
+    onDelete?.(chatId);
+    setIsDeleteOpen(false);
+  };
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
+            aria-label="Open chat actions"
             className={cn(
               "h-7 w-7 text-muted-foreground hover:bg-muted hover:text-foreground",
               triggerClassName,
             )}
-            onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-40 bg-card border border-border p-1 shadow-md"
+          className="w-40 border border-border bg-card p-1 shadow-md"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
         >
           <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsShareOpen(true);
+            onClick={(event) => {
+              stopMenuEvent(event);
+              window.setTimeout(() => setIsShareOpen(true), 0);
             }}
-            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer text-foreground hover:bg-muted rounded-md"
+            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
           >
-            <Share2 className="h-4 w-4 text-muted-foreground" />
-            <span>Share</span>
+            <Share2 className="h-4 w-4" />
+            Share
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer text-foreground hover:bg-muted rounded-md"
+            onClick={(event) => {
+              stopMenuEvent(event);
+              handleRenameClick();
+            }}
+            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
           >
-            <Pencil className="h-4 w-4 text-muted-foreground" />
-            <span>Rename</span>
+            <Pencil className="h-4 w-4" />
+            Rename
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer text-foreground hover:bg-muted rounded-md"
+            onClick={(event) => {
+              stopMenuEvent(event);
+              onPin?.(chatId);
+            }}
+            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
           >
-            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-            <span>Pin Chat</span>
+            <Pin className="h-4 w-4" />
+            {isPinned ? "Unpin Chat" : "Pin Chat"}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer text-foreground hover:bg-muted rounded-md"
+            onClick={(event) => {
+              stopMenuEvent(event);
+              onArchive?.(chatId);
+            }}
+            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
           >
-            <FolderArchive className="h-4 w-4 text-muted-foreground" />
-            <span>Archive</span>
+            <FolderArchive className="h-4 w-4" />
+            Archive
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium cursor-pointer text-destructive hover:bg-destructive/10 rounded-md border-t border-border mt-1 pt-2"
+            onClick={(event) => {
+              stopMenuEvent(event);
+              window.setTimeout(() => setIsDeleteOpen(true), 0);
+            }}
+            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50"
           >
             <Trash2 className="h-4 w-4" />
-            <span>Delete</span>
+            Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {/* ─── FIGMA SPEC SHARE DIALOG ─── */}
       <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-        <DialogContent className="sm:max-w-110 p-6 rounded-2xl border border-border bg-card shadow-lg gap-0">
+        <DialogContent
+          className="sm:max-w-110 max-w-[90vw] overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-lg gap-0"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
           <DialogHeader className="flex flex-row items-start gap-3 space-y-0 pb-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
               <Share2 className="h-5 w-5" />
@@ -130,9 +196,7 @@ export function ChatActionsMenu({
               </p>
             </div>
           </DialogHeader>
-
           <div className="flex flex-col gap-3 py-3">
-            {/* Private Visibility Selector */}
             <div
               onClick={() => setShareMode("private")}
               className={cn(
@@ -159,8 +223,6 @@ export function ChatActionsMenu({
                 </span>
               )}
             </div>
-
-            {/* Public Link Selector */}
             <div
               onClick={() => setShareMode("public")}
               className={cn(
@@ -178,7 +240,7 @@ export function ChatActionsMenu({
                   Create public link
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Anyone can the link can view
+                  Anyone with the link can view
                 </p>
               </div>
               {shareMode === "public" && (
@@ -188,15 +250,16 @@ export function ChatActionsMenu({
               )}
             </div>
           </div>
-
-          {/* Conditional Copy Actions Wrapper */}
-          <div className="pt-4 border-t border-border mt-2">
+          <div className="pt-4 border-t border-border mt-2 w-full max-w-full overflow-hidden">
             {shareMode === "public" ? (
-              <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-1.5 pl-3">
-                <span className="flex-1 truncate text-xs text-muted-foreground selection:bg-primary/20">
-                  {shareUrl}
-                </span>
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-muted/30 p-1.5 pl-3 w-full max-w-full overflow-hidden">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <span className="block truncate break-all text-xs text-muted-foreground selection:bg-primary/20">
+                    {shareUrl}
+                  </span>
+                </div>
                 <Button
+                  type="button"
                   size="sm"
                   onClick={handleCopy}
                   className="rounded-lg bg-foreground text-background px-4 py-1.5 text-xs font-medium hover:opacity-90 shadow-none border-0 h-8 shrink-0"
@@ -211,6 +274,7 @@ export function ChatActionsMenu({
                   without permission, and see our Usage Policy.
                 </p>
                 <Button
+                  type="button"
                   size="sm"
                   onClick={handleCopy}
                   className="w-full sm:w-auto rounded-lg bg-foreground text-background px-4 py-1.5 text-xs font-medium hover:opacity-90 shadow-none border-0 h-8 shrink-0"
@@ -219,6 +283,98 @@ export function ChatActionsMenu({
                 </Button>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* NEW: Rename Dialog component implementation matching layout bounds perfectly */}
+      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+        <DialogContent
+          className="sm:max-w-110 max-w-[90vw] overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-lg gap-0"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <form onSubmit={handleConfirmRename}>
+            <DialogHeader className="flex flex-row items-start gap-3 space-y-0 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                <Pencil className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-0.5 w-full">
+                <DialogTitle className="text-base font-semibold text-foreground">
+                  Rename Chat
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground">
+                  Enter a new descriptive title for this conversation history.
+                </p>
+              </div>
+            </DialogHeader>
+            <div className="py-3">
+              <Input
+                type="text"
+                value={renameTitle}
+                onChange={(e) => setRenameTitle(e.target.value)}
+                placeholder="Chat title"
+                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 focus:border-border"
+                autoFocus
+              />
+            </div>
+            <div className="pt-4 border-t border-border mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsRenameOpen(false)}
+                className="rounded-lg px-4 py-1.5 text-xs font-medium shadow-none border-0 h-8"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!renameTitle.trim()}
+                className="rounded-lg bg-foreground text-background px-4 py-1.5 text-xs font-medium hover:opacity-90 shadow-none border-0 h-8 shrink-0 disabled:opacity-50"
+              >
+                Save changes
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent
+          className="sm:max-w-110 max-w-[90vw] overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-lg gap-0"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <DialogHeader className="flex flex-row items-start gap-3 space-y-0 pb-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-red-500">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <DialogTitle className="text-base font-semibold text-foreground">
+                Delete Chat
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground">
+                This conversation will be removed from your chat history.
+              </p>
+            </div>
+          </DialogHeader>
+          <div className="pt-4 border-t border-border mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsDeleteOpen(false)}
+              className="rounded-lg px-4 py-1.5 text-xs font-medium shadow-none border-0 h-8"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={handleConfirmDelete}
+              className="rounded-lg bg-red-500 text-white px-4 py-1.5 text-xs font-medium shadow-none border-0 h-8 shrink-0"
+            >
+              Delete
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

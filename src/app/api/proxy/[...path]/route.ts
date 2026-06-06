@@ -43,6 +43,23 @@ const extractBody = async (
   return textBody.length > 0 ? textBody : undefined;
 };
 
+const buildForwardHeaders = (req: Request): Headers => {
+  const headers = new Headers();
+  const forwardedHeaderNames = [
+    "accept",
+    "authorization",
+    "cookie",
+    "content-type",
+  ];
+
+  for (const name of forwardedHeaderNames) {
+    const value = req.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+
+  return headers;
+};
+
 export async function GET(
   req: Request,
   context: { params: Promise<{ path: string[] }> },
@@ -112,14 +129,7 @@ async function proxyRequest(req: Request, paramSegments?: string[]) {
     const { search } = new URL(req.url);
     const backendUrl = buildBackendUrl(pathname, search);
     const rawBody = await extractBody(req);
-    const headers = new Headers();
-    for (const [key, value] of req.headers.entries()) {
-      const lower = key.toLowerCase();
-      if (["host", "connection", "content-length", "expect"].includes(lower)) {
-        continue;
-      }
-      headers.set(key, value);
-    }
+    const headers = buildForwardHeaders(req);
     const backendRes = await forwardRequest(backendUrl, req, rawBody, headers);
     // If the backend returns a 4xx or 5xx error, we still want to forward the response body
     // so the client can display the specific error message (e.g., "Invalid email or password").

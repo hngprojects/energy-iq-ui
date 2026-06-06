@@ -9,15 +9,20 @@ import { Pencil, Check, Loader2, Upload } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileQueries } from "@/hooks/use-profile-queries";
+import { useCurrentUserSync } from "@/hooks/use-current-user-sync";
 import { SelectField } from "@/components/settings/select-field";
 import { PhotoUploadDialog } from "./photo-upload-dialog";
 import { PhotoSuccessDialog } from "./photo-success-dialog";
 import { ProfileUpdateRequest } from "@/types/profile";
+import { ProfileService } from "@/services/profile-service";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   BUSINESS_TYPES,
   NIGERIAN_STATES,
   CITIES_BY_STATE,
 } from "@/constants/profile";
+import { SavingsSetupSettingsSection } from "./savings-setup-settings-section";
 
 const profileSchema = z.object({
   firstName: z.string().trim().optional(),
@@ -33,27 +38,68 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export function ProfilePageClient() {
   const { user } = useAuthStore();
   const { useUpdateProfile } = useProfileQueries();
+  const { isLoading: isSyncingUser } = useCurrentUserSync();
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [profileSaved, setProfileSaved] = React.useState(false);
   const [photoDialogOpen, setPhotoDialogOpen] = React.useState(false);
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
 
-  const { control, register, handleSubmit, watch, reset, setValue, formState: { errors } } =
-    useForm<ProfileFormValues>({
-      resolver: zodResolver(profileSchema),
-      defaultValues: {
-        firstName: user?.firstName ?? "",
-        lastName: user?.lastName ?? "",
-        businessName: user?.businessName ?? "",
-        businessType: user?.businessType ?? "",
-        state: user?.state ?? "",
-        city: user?.city ?? "",
-      },
-    });
+  const { setUser } = useAuthStore();
+  const resolvedLang = (user?.aiLanguage ?? "").toLowerCase();
+  const initialLang =
+    resolvedLang === "pidgin" || resolvedLang === "english" ? resolvedLang : "";
+  const [aiLanguage, setAiLanguage] = React.useState(initialLang);
+  const [langSaving, setLangSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setAiLanguage(initialLang);
+  }, [initialLang]);
+
+  const handleLanguageSave = async () => {
+    if (!aiLanguage || langSaving) return;
+    setLangSaving(true);
+    try {
+      const updated = await ProfileService.updateProfile({ aiLanguage });
+      if (user) {
+        setUser({
+          ...user,
+          aiLanguage,
+          ...updated,
+        });
+      }
+      toast.success("AI Preferred Language updated successfully", { duration: 4000 });
+    } catch {
+      toast.error("Failed to save language preference. Please try again.");
+    } finally {
+      setLangSaving(false);
+    }
+  };
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      businessName: user?.businessName ?? "",
+      businessType: user?.businessType ?? "",
+      state: user?.state ?? "",
+      city: user?.city ?? "",
+    },
+  });
 
   const selectedState = watch("state");
-  const cityOptions = selectedState ? (CITIES_BY_STATE[selectedState] ?? []) : [];
+  const cityOptions = selectedState
+    ? (CITIES_BY_STATE[selectedState] ?? [])
+    : [];
 
   React.useEffect(() => {
     if (!isEditing) {
@@ -74,9 +120,17 @@ export function ProfilePageClient() {
   });
 
   const onSubmit = (values: ProfileFormValues) => {
-    // We send all values (including empty strings) to the backend
-    // so that users can explicitly clear optional fields like business name.
-    updateProfile.mutate(values as ProfileUpdateRequest);
+    // Only send fields with non-empty values to avoid backend errors
+    const updatedFields: Partial<ProfileUpdateRequest> = {};
+    
+    if (values.firstName?.trim()) updatedFields.firstName = values.firstName.trim();
+    if (values.lastName?.trim()) updatedFields.lastName = values.lastName.trim();
+    if (values.businessName?.trim()) updatedFields.businessName = values.businessName.trim();
+    if (values.businessType?.trim()) updatedFields.businessType = values.businessType.trim();
+    if (values.state?.trim()) updatedFields.state = values.state.trim();
+    if (values.city?.trim()) updatedFields.city = values.city.trim();
+    
+    updateProfile.mutate(updatedFields as ProfileUpdateRequest);
   };
 
   const handleEdit = () => setIsEditing(true);
@@ -93,8 +147,34 @@ export function ProfilePageClient() {
     });
   };
 
-  const sectionTitle = profileSaved ? "User Profile" : "Personal Business and Information.";
+  const sectionTitle = profileSaved
+    ? "User Profile"
+    : "Personal and Business Information.";
   const hasPhoto = !!user?.profilePhoto;
+
+  if (isSyncingUser && !user) {
+    return (
+      <div className="space-y-4">
+        <div className="mb-6">
+          <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
+          <div className="mt-2 h-4 w-72 animate-pulse rounded-lg bg-muted/70" />
+        </div>
+        <div className="rounded-xl border border-border bg-white p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 animate-pulse rounded-full bg-muted" />
+            <div className="h-10 w-36 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-white p-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="h-14 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -107,7 +187,9 @@ export function ProfilePageClient() {
 
       {/* Profile Photo Section */}
       <div className="mb-4 rounded-xl border border-border bg-white p-6">
-        <h2 className="text-base font-semibold text-dark-text">Profile Photo</h2>
+        <h2 className="text-base font-semibold text-dark-text">
+          Profile Photo
+        </h2>
         <p className="mt-0.5 text-sm text-[#5D5C5D]">PNG or JPG, up to 2MB.</p>
 
         <div className="mt-4 flex items-center gap-4">
@@ -123,7 +205,8 @@ export function ProfilePageClient() {
             ) : (
               <span className="text-xl font-semibold text-[#374151]">
                 {user
-                  ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() || "AA"
+                  ? `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() ||
+                    "AA"
                   : "AA"}
               </span>
             )}
@@ -144,19 +227,20 @@ export function ProfilePageClient() {
       {/* Personal Business and Information */}
       <div className="rounded-xl border border-border bg-white p-6">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-dark-text">{sectionTitle}</h2>
+              <h2 className="text-base font-semibold text-dark-text">
+                {sectionTitle}
+              </h2>
               <p className="mt-0.5 text-sm text-[#5D5C5D]">
                 This information is used across your EnergyIQ account.
               </p>
             </div>
-
             {!isEditing ? (
               <button
                 type="button"
                 onClick={handleEdit}
-                className="flex items-center gap-2 rounded-lg bg-secondary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary/90 transition-colors"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 sm:w-auto"
               >
                 <Pencil className="h-4 w-4" />
                 Edit
@@ -171,7 +255,7 @@ export function ProfilePageClient() {
                 Saving
               </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
                 <button
                   type="button"
                   onClick={handleCancel}
@@ -193,7 +277,9 @@ export function ProfilePageClient() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* First name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">First name</label>
+              <label className="text-sm font-medium text-dark-text">
+                First name
+              </label>
               <input
                 {...register("firstName")}
                 disabled={!isEditing}
@@ -201,13 +287,17 @@ export function ProfilePageClient() {
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
               {errors.firstName && (
-                <p className="text-xs text-red-500">{errors.firstName.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.firstName.message}
+                </p>
               )}
             </div>
 
             {/* Last name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Last name</label>
+              <label className="text-sm font-medium text-dark-text">
+                Last name
+              </label>
               <input
                 {...register("lastName")}
                 disabled={!isEditing}
@@ -215,13 +305,17 @@ export function ProfilePageClient() {
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
               {errors.lastName && (
-                <p className="text-xs text-red-500">{errors.lastName.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.lastName.message}
+                </p>
               )}
             </div>
 
             {/* Email */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Email</label>
+              <label className="text-sm font-medium text-dark-text">
+                Email
+              </label>
               <input
                 value={user?.email ?? ""}
                 disabled
@@ -233,7 +327,9 @@ export function ProfilePageClient() {
 
             {/* Business name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Business name</label>
+              <label className="text-sm font-medium text-dark-text">
+                Business name
+              </label>
               <input
                 {...register("businessName")}
                 disabled={!isEditing}
@@ -241,13 +337,17 @@ export function ProfilePageClient() {
                 className="h-14 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-60 disabled:cursor-default"
               />
               {errors.businessName && (
-                <p className="text-xs text-red-500">{errors.businessName.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.businessName.message}
+                </p>
               )}
             </div>
 
             {/* Business type */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">Business type</label>
+              <label className="text-sm font-medium text-dark-text">
+                Business type
+              </label>
               <Controller
                 name="businessType"
                 control={control}
@@ -262,13 +362,17 @@ export function ProfilePageClient() {
                 )}
               />
               {errors.businessType && (
-                <p className="text-xs text-red-500">{errors.businessType.message}</p>
+                <p className="text-xs text-red-500">
+                  {errors.businessType.message}
+                </p>
               )}
             </div>
 
             {/* State */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-dark-text">State</label>
+              <label className="text-sm font-medium text-dark-text">
+                State
+              </label>
               <Controller
                 name="state"
                 control={control}
@@ -301,7 +405,9 @@ export function ProfilePageClient() {
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     options={cityOptions}
-                    placeholder={selectedState ? "Select city" : "Select state first"}
+                    placeholder={
+                      selectedState ? "Select city" : "Select state first"
+                    }
                     disabled={!isEditing || !selectedState}
                   />
                 )}
@@ -312,6 +418,67 @@ export function ProfilePageClient() {
             </div>
           </div>
         </form>
+      </div>
+
+      <SavingsSetupSettingsSection />
+
+      {/* ── AI Preferences ─────────────────────────────────────── */}
+      <div className="rounded-xl border border-border bg-white p-6">
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-dark-text">
+            AI Preferences
+          </h2>
+          <p className="mt-0.5 text-sm text-[#5D5C5D]">
+            Choose the language EnergyIQ AI responds in.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="w-full max-w-xs">
+            <label className="mb-1.5 block text-sm font-medium text-dark-text">
+              Response language
+            </label>
+            <SelectField
+              value={
+                aiLanguage === "english"
+                  ? "English"
+                  : aiLanguage === "pidgin"
+                  ? "Nigerian Pidgin"
+                  : ""
+              }
+              onChange={(val) => {
+                if (val === "English") {
+                  setAiLanguage("english");
+                } else if (val === "Nigerian Pidgin") {
+                  setAiLanguage("pidgin");
+                } else {
+                  setAiLanguage("");
+                }
+              }}
+              options={["English", "Nigerian Pidgin"]}
+              placeholder="Select language (default: auto-detect)"
+            />
+          </div>
+
+          <Button
+            type="button"
+            disabled={!aiLanguage || langSaving || initialLang === aiLanguage}
+            onClick={() => void handleLanguageSave()}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-medium text-white transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto hover:text-white"
+          >
+            {langSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving
+              </>
+            ) : (
+              "Save Preference"
+            )}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-[#5D5C5D]">
+          If not set, the AI detects the language from each message automatically.
+        </p>
       </div>
 
       <PhotoUploadDialog

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { User } from "@/types/auth";
 import { cn } from "@/lib/utils";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
@@ -11,18 +12,38 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ user, className }: UserAvatarProps) {
-  const initial = user.firstName?.charAt(0).toUpperCase() || "";
+  const initials =
+    `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() ||
+    user.email?.charAt(0).toUpperCase() ||
+    "U";
+
+  if (user.profilePhoto) {
+    return (
+      <div
+        className={cn(
+          "relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border/10",
+          className,
+        )}
+      >
+        <Image
+          src={user.profilePhoto}
+          alt={`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Profile photo"}
+          fill
+          sizes="2.5rem"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
       className={cn(
         "bg-primary flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/10",
-        className
+        className,
       )}
     >
-      <span className="text-primary-foreground text-sm font-bold">
-        {initial}
-      </span>
+      <span className="text-primary-foreground text-sm font-bold">{initials}</span>
     </div>
   );
 }

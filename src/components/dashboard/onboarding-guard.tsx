@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
+import { onboardingStorage } from "@/lib/onboarding-storage";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const pathname = usePathname();
+  const { isAuthenticated, _hasHydrated, user } = useAuthStore();
   const { useOnboardingStatus } = useInverterQueries();
   const { data: status, isLoading, isError } = useOnboardingStatus();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const currentUrl = `${pathname}${search ? `?${search}` : ""}`;
 
   const isFullyOnboarded =
     status?.onboardingComplete === true &&
@@ -18,16 +23,53 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     status?.steps?.inverterConnected === true;
 
   useEffect(() => {
+    if (!_hasHydrated) return;
+
     if (!isAuthenticated) {
-      router.replace("/login");
+      router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
       return;
     }
-    if (!isLoading && !isError && !isFullyOnboarded) {
-      router.replace("/onboarding");
-    }
-  }, [isAuthenticated, isLoading, isError, isFullyOnboarded, router]);
 
-  if (!isAuthenticated || isLoading || (!isError && !isFullyOnboarded)) {
+    if (!isLoading && !isError) {
+      // Check localStorage flag first before redirecting
+      const isStorageMarkedComplete =
+        user?.id && onboardingStorage.isCompleted(user.id);
+
+      if (!isFullyOnboarded && !isStorageMarkedComplete) {
+        router.replace("/onboarding");
+      }
+    }
+  }, [
+    _hasHydrated,
+    isAuthenticated,
+    isLoading,
+    isError,
+    isFullyOnboarded,
+    user?.id,
+    router,
+    currentUrl,
+  ]);
+
+  useEffect(() => {
+    if (isFullyOnboarded && user?.id) {
+      onboardingStorage.setCompleted(user.id);
+    }
+  }, [isFullyOnboarded, user?.id]);
+
+  // IMPORTANT: Wait for hydration before rendering anything or redirecting
+  if (!_hasHydrated) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
@@ -46,7 +88,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isFullyOnboarded) return null;
+  if (!isFullyOnboarded) {
+    // If localStorage says completed but query says otherwise, still allow (avoid redirect loop)
+    const isStorageMarkedComplete =
+      user?.id && onboardingStorage.isCompleted(user.id);
+    if (!isStorageMarkedComplete) {
+      return null;
+    }
+  }
 
   return <>{children}</>;
 }
+

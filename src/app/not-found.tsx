@@ -70,7 +70,6 @@ export default function NotFound() {
             Oops! Page not found.
           </h1>
 
-          {/* Corrected: Button passes props directly to MotionLink */}
           <Button
             asChild
             className="bg-[#0F1C2E] hover:bg-[#1A2E48] text-white px-10 py-6 text-base font-medium rounded-md shadow-sm transition-colors duration-200"

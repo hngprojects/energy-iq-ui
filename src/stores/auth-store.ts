@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { persistTokensToSession } from "@/lib/auth-session";
 import { User } from "@/types/auth";
 
 const SESSION_COOKIE = "auth_session";
+const AUTH_STORAGE_KEY = "auth-storage";
 
 function setSessionCookie(persist = false) {
   if (typeof document === "undefined") return;
@@ -16,21 +18,72 @@ function clearSessionCookie() {
   document.cookie = `${SESSION_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`;
 }
 
+function scrubPersistedAuthStorage() {
+  if (typeof window === "undefined") return;
+
+  try {
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!stored) return;
+
+    const parsed = JSON.parse(stored) as {
+      state?: Record<string, unknown>;
+      version?: number;
+    };
+    if (!parsed.state) return;
+
+    const safeState = { ...parsed.state };
+    delete safeState.token;
+    delete safeState.refreshToken;
+
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ ...parsed, state: safeState }),
+    );
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
   tempEmail: string | null;
+  _hasHydrated: boolean;
   setAuth: (
     user: User,
     token: string,
     refreshToken: string,
     rememberMe?: boolean,
+  ) => Promise<void>;
+  setAuthLocal: (
+    user: User,
+    token: string,
+    refreshToken: string,
+    rememberMe?: boolean,
   ) => void;
+  setTokens: (token: string, refreshToken: string) => Promise<void>;
+  setTokensLocal: (token: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   setTempEmail: (email: string | null) => void;
   logout: () => void;
+  setHasHydrated: (value: boolean) => void;
+}
+
+function normalizeUser(user: User | null): User | null {
+  if (!user) return null;
+  const rawUser = user as unknown as Record<string, unknown>;
+  if ("AiLanguage" in rawUser && typeof rawUser.AiLanguage === "string") {
+    const normalized: User = {
+      ...user,
+      aiLanguage: user.aiLanguage ?? rawUser.AiLanguage,
+    };
+    const cleaned = { ...normalized } as unknown as Record<string, unknown>;
+    delete cleaned.AiLanguage;
+    return cleaned as unknown as User;
+  }
+  return user;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -41,7 +94,8 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       tempEmail: null,
-      setAuth: (user, token, refreshToken, rememberMe = false) => {
+      _hasHydrated: false,
+      setAuthLocal: (user, token, refreshToken, rememberMe = false) => {
         if (typeof window !== "undefined") {
           sessionStorage.setItem("session_active", "1");
           if (rememberMe) {
@@ -52,21 +106,44 @@ export const useAuthStore = create<AuthState>()(
         }
         setSessionCookie(rememberMe);
         set({
-          user,
+          user: normalizeUser(user),
           token,
           refreshToken,
           isAuthenticated: true,
           tempEmail: null,
         });
       },
-      setUser: (user) => set({ user }),
+      setAuth: async (user, token, refreshToken, rememberMe = false) => {
+        await persistTokensToSession(token, refreshToken);
+        useAuthStore.getState().setAuthLocal(
+          user,
+          token,
+          refreshToken,
+          rememberMe,
+        );
+      },
+      setTokensLocal: (token, refreshToken) => {
+        set({ token, refreshToken });
+      },
+      setTokens: async (token, refreshToken) => {
+        await persistTokensToSession(token, refreshToken);
+        useAuthStore.getState().setTokensLocal(token, refreshToken);
+      },
+      setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
+      setHasHydrated: (value) => set({ _hasHydrated: value }),
       logout: () => {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("session_active");
           localStorage.removeItem("remember_me");
         }
         clearSessionCookie();
+        // Also clear server-side HttpOnly token cookie
+        if (typeof window !== "undefined") {
+          void fetch("/api/session", { method: "DELETE" }).catch((error) => {
+            console.error("Failed to clear auth session cookies", error);
+          });
+        }
         set({
           user: null,
           token: null,
@@ -77,17 +154,41 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "auth-storage",
+      name: AUTH_STORAGE_KEY,
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        tempEmail: state.tempEmail,
+      }),
+      merge: (persistedState, currentState) => {
+        const persisted =
+          persistedState && typeof persistedState === "object"
+            ? (persistedState as Partial<AuthState>)
+            : {};
+
+        return {
+          ...currentState,
+          ...persisted,
+          token: null,
+          refreshToken: null,
+        };
+      },
       onRehydrateStorage: () => (state) => {
+        scrubPersistedAuthStorage();
         if (typeof window === "undefined" || !state) return;
+        if (state.user) {
+          state.user = normalizeUser(state.user);
+        }
         const rememberMe = localStorage.getItem("remember_me") === "1";
         const sessionActive = sessionStorage.getItem("session_active") === "1";
+
         if (state.isAuthenticated && !rememberMe && !sessionActive) {
           state.logout();
         } else if (state.isAuthenticated) {
-          // Recreate the cookie in case it expired or was cleared (e.g. after browser restart)
           setSessionCookie(rememberMe);
         }
+
+        state.setHasHydrated(true);
       },
     },
   ),

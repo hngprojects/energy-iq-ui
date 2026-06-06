@@ -9,6 +9,10 @@ export interface SupportedBrandsResponse {
 
 export interface ConnectInverterRequest {
   brand: string;
+  // Do not send yet:
+  // systemCapacityKw?: number;
+  // hardwareSerialNumber?: string;
+  // accessApiToken?: string;
   victronAccessToken?: string;
   growattApiToken?: string;
   solarmanEmail?: string;
@@ -22,6 +26,13 @@ export interface Inverter {
   brand: string;
   userId: string;
   accessToken?: string;
+  serialNumber?: string;
+  capacityKw?: number;
+  status?: "ACTIVE" | "ONLINE" | "INACTIVE" | "OFFLINE" | "STALE";
+  isActive?: boolean;
+  isOffline?: boolean;
+  model?: string;
+  lastSyncAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -100,3 +111,37 @@ export interface PowerConsumptionResponse {
   zones?: PowerZone[];
   totalWatts?: number;
 }
+
+// GET /inverter-metrics/{inverterId}/savings/cumulative
+export interface CumulativeSavingsChartPoint {
+  month: string;
+  savingsNgn: number;
+}
+
+export interface CumulativeSavingsData {
+  lifetimeSavingsNgn: number;
+  lifetimeEnergyKwh: number;
+  lifetimeFuelSavedLitres: number;
+  co2AvoidedKg: number;
+  generatorHoursAvoided: number;
+  totalSavingsToDateNgn: number;
+  averageMonthlySavingsNgn: number;
+  chart: CumulativeSavingsChartPoint[];
+  meta: {
+    fuelType: string;
+    fuelPricePerLitreNgn: number;
+    fuelPriceLastUpdated: string;
+    assumedGeneratorRatedPowerKw: number;
+    assumedConsumptionRateLPerHr: number;
+  };
+}
+
+export interface CumulativeSavingsResponse {
+  success: boolean;
+  message: string;
+  data: CumulativeSavingsData;
+  meta: {
+    timestamp: string;
+  };
+}
+
