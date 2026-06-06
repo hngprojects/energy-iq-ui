@@ -10,25 +10,34 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { WEEKLY_BAR_DATA } from "@/lib/mocks/cost-savings-results";
 
+interface DailyBarChartCardProps {
+  data: {
+    day: string;
+    savings: number;
+    petrol: number;
+  }[];
+  generatorType?: string;
+  subtitle?: string;
+}
 
-export function DailyBarChartCard() {
+export function DailyBarChartCard({ data, generatorType = "PMS", subtitle }: DailyBarChartCardProps) {
+  const fuelName = generatorType.toUpperCase() === "DIESEL" || generatorType.toLowerCase() === "ago" ? "AGO" : "Petrol";
+
   return (
     <div
       className={cn(
-        "flex flex-col rounded-lg border bg-card overflow-hidden",
+        "flex flex-col rounded-lg border border-border bg-card overflow-hidden",
         "w-full lg:flex-1",
         "px-3.75 pb-4",
       )}
-      style={{ borderColor: "#D8DBE2", borderWidth: "1px" }}
     >
       {/* Title */}
       <h3
         className="leading-none tracking-tight text-[18px] lg:text-[20px] font-medium"
         style={{ color: "#141414", marginTop: "24px" }}
       >
-        Daily cost breakdown
+        Savings vs Generator Cost
       </h3>
 
       {/* Subtitle */}
@@ -36,14 +45,14 @@ export function DailyBarChartCard() {
         className="leading-none text-[13px] lg:text-[14px] font-normal"
         style={{ color: "#666666", marginTop: "4px" }}
       >
-        Daily ₦ savings this week vs petrol gen cost
+        {subtitle ?? `Daily ₦ savings this week vs ${fuelName.toLowerCase()} gen cost`}
       </p>
 
       {/* Chart */}
       <div className="mt-6 w-full h-35 sm:h-40">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={WEEKLY_BAR_DATA}
+            data={data}
             barGap={4}
             barCategoryGap="30%"
             margin={{ top: 4, right: 0, left: -28, bottom: 0 }}
@@ -64,8 +73,8 @@ export function DailyBarChartCard() {
             <Tooltip
               cursor={{ fill: "var(--muted)", opacity: 0.4 }}
               formatter={(value: string | number | readonly (string | number)[] | undefined, name: string | number | undefined): [string, string] => [
-                `₦${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toLocaleString()}`,
-                name === "savings" ? "Solar savings" : "Petrol cost",
+                `₦${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+                name === "savings" ? "Solar savings" : `${fuelName} cost`,
               ]}
               contentStyle={{
                 borderRadius: "8px",
@@ -74,7 +83,7 @@ export function DailyBarChartCard() {
                 fontSize: "11px",
               }}
             />
-            {/* Petrol gen cost */}
+            {/* Petrol AGO AGO AGO AGO AGO/PMS cost */}
             <Bar dataKey="petrol"  fill="var(--color-amber-60)" radius={[3, 3, 0, 0]} />
             {/* Solar savings — amber-30 */}
             <Bar dataKey="savings" fill="var(--color-amber-30)" radius={[3, 3, 0, 0]} />
@@ -86,7 +95,7 @@ export function DailyBarChartCard() {
       <div className="flex items-center gap-4 mt-2">
         <span className="flex items-center gap-1.5 text-[11px] text-grey">
           <span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-60" />
-          Petrol cost
+          {fuelName} cost
         </span>
         <span className="flex items-center gap-1.5 text-[11px] text-grey">
           <span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-30" />
