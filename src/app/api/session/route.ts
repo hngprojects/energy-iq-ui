@@ -12,6 +12,19 @@ const cookieOptions = {
   httpOnly: true,
 };
 
+const expiredCookieOptions = {
+  maxAge: 0,
+  path: "/",
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  httpOnly: true,
+};
+
+function expireTokenCookies(response: NextResponse) {
+  response.cookies.set(TOKEN_COOKIE, "", expiredCookieOptions);
+  response.cookies.set(REFRESH_TOKEN_COOKIE, "", expiredCookieOptions);
+}
+
 function setTokenCookies(
   response: NextResponse,
   token: string,
@@ -20,12 +33,21 @@ function setTokenCookies(
   response.cookies.set(TOKEN_COOKIE, token, cookieOptions);
   if (refreshToken) {
     response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, cookieOptions);
+  } else {
+    response.cookies.set(REFRESH_TOKEN_COOKIE, "", expiredCookieOptions);
   }
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    if (body?.clear === true) {
+      const response = NextResponse.json({ ok: true });
+      expireTokenCookies(response);
+      return response;
+    }
+
     const token = body?.token;
     const refreshToken = body?.refreshToken;
 
@@ -127,14 +149,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ ok: true });
-  const expiredCookieOptions = {
-    maxAge: 0,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  } as const;
-  response.cookies.set(TOKEN_COOKIE, "", expiredCookieOptions);
-  response.cookies.set(REFRESH_TOKEN_COOKIE, "", expiredCookieOptions);
+  expireTokenCookies(response);
   return response;
 }
 
