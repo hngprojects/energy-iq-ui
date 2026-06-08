@@ -120,12 +120,12 @@ export default function OnboardingPage() {
     isFullyOnboarded;
 
   useEffect(() => {
-    if (isFullyOnboarded && isAuthenticated && user?.id) {
+    if (isFullyOnboarded && user?.id) {
       onboardingStorage.setCompleted(user.id);
       isCompleted.current = true;
       router.replace("/dashboard");
     }
-  }, [isFullyOnboarded, isAuthenticated, user?.id, router]);
+  }, [isFullyOnboarded, user?.id, router]);
 
   useEffect(() => {
     stepRef.current = step;
@@ -169,6 +169,7 @@ export default function OnboardingPage() {
       .then((realUser) => {
         if (realUser?.id) {
           setUser(realUser);
+          useAuthStore.setState({ isAuthenticated: true });
           return;
         }
 
