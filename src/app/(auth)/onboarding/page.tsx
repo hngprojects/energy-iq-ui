@@ -11,7 +11,10 @@ import { OnboardingSuccessDialog } from "@/components/onboarding/onboarding-succ
 import { INVERTER_CONFIG } from "@/components/onboarding/inverter-config";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
-import { persistTokensToSession } from "@/lib/auth-session";
+import {
+  persistTokensToSession,
+  resetAuthForOAuthCallback,
+} from "@/lib/auth-session";
 import { trackEvent, identifyUser } from "@/lib/analytics";
 import { onboardingStorage } from "@/lib/onboarding-storage";
 import { useOnboardingStore } from "@/stores/onboarding-store";
@@ -58,6 +61,7 @@ function GoogleAuthSync() {
     if (token) {
       void (async () => {
         try {
+          resetAuthForOAuthCallback();
           setTokensLocal(token, refreshToken);
           await persistTokensToSession(token, refreshToken);
           const realUser = await AuthService.me();
@@ -73,7 +77,13 @@ function GoogleAuthSync() {
         }
       })();
     }
-  }, [searchParams, setAuthLocal, setTokensLocal, logout, router]);
+  }, [
+    searchParams,
+    setAuthLocal,
+    setTokensLocal,
+    logout,
+    router,
+  ]);
 
   return null;
 }
@@ -110,12 +120,12 @@ export default function OnboardingPage() {
     isFullyOnboarded;
 
   useEffect(() => {
-    if (isFullyOnboarded && user?.id) {
+    if (isFullyOnboarded && isAuthenticated && user?.id) {
       onboardingStorage.setCompleted(user.id);
       isCompleted.current = true;
       router.replace("/dashboard");
     }
-  }, [isFullyOnboarded, user?.id, router]);
+  }, [isFullyOnboarded, isAuthenticated, user?.id, router]);
 
   useEffect(() => {
     stepRef.current = step;

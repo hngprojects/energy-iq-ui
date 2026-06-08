@@ -13,6 +13,22 @@ function setSessionCookie(persist = false) {
   document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax${maxAge}${secure}`;
 }
 
+function hasIncomingOAuthToken(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const hashParams = new URLSearchParams(
+    window.location.hash.replace(/^#/, ""),
+  );
+  const searchParams = new URLSearchParams(window.location.search);
+
+  return Boolean(
+    hashParams.get("token") ||
+      hashParams.get("accessToken") ||
+      searchParams.get("token") ||
+      searchParams.get("accessToken"),
+  );
+}
+
 function clearSessionCookie() {
   if (typeof document === "undefined") return;
   document.cookie = `${SESSION_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`;
@@ -44,6 +60,13 @@ function scrubPersistedAuthStorage() {
   }
 }
 
+function wipePersistedAuthSnapshot() {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  localStorage.removeItem("remember_me");
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -67,6 +90,7 @@ interface AuthState {
   setTokensLocal: (token: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   setTempEmail: (email: string | null) => void;
+  clearClientAuth: () => void;
   logout: () => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -132,15 +156,33 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ user: normalizeUser(user) }),
       setTempEmail: (email) => set({ tempEmail: email }),
       setHasHydrated: (value) => set({ _hasHydrated: value }),
+      clearClientAuth: () => {
+        wipePersistedAuthSnapshot();
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("session_active");
+        }
+        clearSessionCookie();
+        set({
+          user: null,
+          token: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          tempEmail: null,
+        });
+      },
       logout: () => {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("session_active");
           localStorage.removeItem("remember_me");
         }
         clearSessionCookie();
-        // Also clear server-side HttpOnly token cookie
         if (typeof window !== "undefined") {
-          void fetch("/api/session", { method: "DELETE" }).catch((error) => {
+          void fetch("/api/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ clear: true }),
+          }).catch((error) => {
             console.error("Failed to clear auth session cookies", error);
           });
         }
@@ -175,7 +217,22 @@ export const useAuthStore = create<AuthState>()(
       },
       onRehydrateStorage: () => (state) => {
         scrubPersistedAuthStorage();
+
         if (typeof window === "undefined" || !state) return;
+
+        // OAuth callback: ignore stale persisted session before effects run.
+        if (hasIncomingOAuthToken()) {
+          wipePersistedAuthSnapshot();
+          clearSessionCookie();
+          state.user = null;
+          state.token = null;
+          state.refreshToken = null;
+          state.isAuthenticated = false;
+          state.tempEmail = null;
+          state.setHasHydrated(true);
+          return;
+        }
+
         if (state.user) {
           state.user = normalizeUser(state.user);
         }
@@ -193,4 +250,3 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
-

@@ -1,6 +1,11 @@
 import { useAuthStore } from "@/stores/auth-store";
 import type { RefreshTokenResponse } from "@/types/auth";
 
+/** Wipe stale client state before applying a new OAuth callback token. */
+export function resetAuthForOAuthCallback(): void {
+  useAuthStore.getState().clearClientAuth();
+}
+
 export async function persistTokensToSession(
   token: string,
   refreshToken: string,
