@@ -43,8 +43,8 @@ const pricingTiers: PricingTier[] = [
   {
     id: "pro",
     label: "PRO",
-    monthlyPrice: "₦9,900",
-    yearlyPrice: "₦99,000",
+    monthlyPrice: "₦500",
+    yearlyPrice: "₦5,900",
     monthlyPeriod: "/ Mo",
     yearlyPeriod: "/ Yr",
     description:
@@ -66,10 +66,10 @@ const pricingTiers: PricingTier[] = [
   {
     id: "enterprise",
     label: "ENTERPRISE",
-    monthlyPrice: "Custom",
-    yearlyPrice: "Custom",
-    monthlyPeriod: "",
-    yearlyPeriod: "",
+    monthlyPrice: "₦1,500",
+    yearlyPrice: "₦17,000",
+    monthlyPeriod: "/ Mo",
+    yearlyPeriod: "/ Yr",
     description: "for installers, EPC Contractors and mini-grids",
     features: [
       "Multi - Site/ System Management",
@@ -193,15 +193,17 @@ export function PricingSection() {
                     ? tier.monthlyPrice
                     : tier.yearlyPrice}
                 </span>
-                <span
-                  className={`text-base font-medium md:text-2xl ${
-                    tier.highlighted ? "text-[#F6F6F6]" : "text-secondary"
-                  }`}
-                >
-                  {billingPeriod === "monthly"
-                    ? tier.monthlyPeriod
-                    : tier.yearlyPeriod}
-                </span>
+                {tier.id !== "free" && (
+                  <span
+                    className={`text-base font-medium md:text-2xl ${
+                      tier.highlighted ? "text-[#F6F6F6]" : "text-secondary"
+                    }`}
+                  >
+                    {billingPeriod === "monthly"
+                      ? tier.monthlyPeriod
+                      : tier.yearlyPeriod}
+                  </span>
+                )}
               </div>
 
               <h3
