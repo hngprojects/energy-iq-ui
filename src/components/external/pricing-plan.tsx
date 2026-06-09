@@ -324,8 +324,8 @@ export function PricingSection() {
                 <span className="t text-3xl font-bold tracking-tight lg:text-5xl">
                   {tier.id === "enterprise"
                     ? billingPeriod === "monthly"
-                      ? tier.customMonthlyPrice
-                      : tier.customYearlyPrice
+                      ? (tier.customMonthlyPrice ?? tier.monthlyPrice)
+                      : (tier.customYearlyPrice ?? tier.yearlyPrice)
                     : billingPeriod === "monthly"
                       ? tier.monthlyPrice
                       : tier.yearlyPrice}
@@ -335,8 +335,8 @@ export function PricingSection() {
                   <span className="text-base font-medium md:text-2xl">
                     {tier.id === "enterprise"
                       ? billingPeriod === "monthly"
-                        ? "/ Mo"
-                        : "/ Yr"
+                        ? (tier.customMonthlyPeriod ?? tier.monthlyPeriod)
+                        : (tier.customYearlyPeriod ?? tier.yearlyPeriod)
                       : billingPeriod === "monthly"
                         ? tier.monthlyPeriod
                         : tier.yearlyPeriod}
