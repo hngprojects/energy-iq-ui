@@ -21,6 +21,10 @@ interface PricingTier {
   ctaVariant: "outline" | "primary" | "secondary"
   badge?: string
   highlighted?: boolean
+  customMonthlyPrice?: string;
+  customYearlyPrice?: string;
+  customMonthlyPeriod?: string;
+  customYearlyPeriod?: string;
 }
 
 const CheckIcon = () => (
@@ -169,8 +173,8 @@ const pricingTiers: PricingTier[] = [
   {
     id: "pro",
     label: "PRO",
-    monthlyPrice: "₦9,900",
-    yearlyPrice: "₦99,000",
+    monthlyPrice: "₦500",
+    yearlyPrice: "₦5,900",
     monthlyPeriod: "/ Mo",
     yearlyPeriod: "/ Yr",
     description: "For Full AI agent + alerts + reports, up to 3 systems per month.",
@@ -188,13 +192,18 @@ const pricingTiers: PricingTier[] = [
     badge: "✦ Most Popular",
     highlighted: true,
   },
-  {
+    {
     id: "enterprise",
     label: "ENTERPRISE",
     monthlyPrice: "Custom",
     yearlyPrice: "Custom",
-    monthlyPeriod: "",
-    yearlyPeriod: "",
+
+    customMonthlyPrice: "₦1,500",
+    customYearlyPrice: "₦17,000",
+
+    monthlyPeriod: "/ Mo",
+    yearlyPeriod: "/ Yr",
+
     description: "for installers, EPC Contractors and mini-grids",
     features: [
       "Multi - Site/ System Management",
@@ -313,15 +322,26 @@ export function PricingSection() {
 
               <div className="mb-7 flex items-baseline gap-1">
                 <span className="t text-3xl font-bold tracking-tight lg:text-5xl">
-                  {billingPeriod === "monthly" ? tier.monthlyPrice : tier.yearlyPrice}
+                  {tier.id === "enterprise"
+                    ? billingPeriod === "monthly"
+                      ? tier.customMonthlyPrice
+                      : tier.customYearlyPrice
+                    : billingPeriod === "monthly"
+                      ? tier.monthlyPrice
+                      : tier.yearlyPrice}
                 </span>
-                <span
-                  className={`text-base font-medium md:text-2xl ${
-                    tier.highlighted ? "text-slate-10" : "text-secondary"
-                  }`}
-                >
-                  {billingPeriod === "monthly" ? tier.monthlyPeriod : tier.yearlyPeriod}
-                </span>
+
+                {tier.id !== "free" && (
+                  <span className="text-base font-medium md:text-2xl">
+                    {tier.id === "enterprise"
+                      ? billingPeriod === "monthly"
+                        ? "/ Mo"
+                        : "/ Yr"
+                      : billingPeriod === "monthly"
+                        ? tier.monthlyPeriod
+                        : tier.yearlyPeriod}
+                  </span>
+                )}
               </div>
 
               <h3
