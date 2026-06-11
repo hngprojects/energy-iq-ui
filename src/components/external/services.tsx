@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { motion } from "motion/react";
 import { useAuthStore } from "@/stores/auth-store";
 import Image from "next/image";
@@ -59,43 +60,44 @@ const ServiceCard = ({ title, description, image, href }: ServiceCardProps) => {
   );
 };
 
+// Fix 7: Moved outside the component — no longer recreated on every render
+const SERVICES = [
+  {
+    title: "AI Energy Agent",
+    description: "Ask questions in plain english",
+    image: "/images/services_3.jpg",
+    route: "/dashboard/ai-assistant",
+  },
+  {
+    title: "Naira Savings Tracker",
+    description: "Track daily savings vs diesel payback",
+    image: "/images/services_2.jpg",
+    route: "/dashboard/cost-and-savings",
+  },
+  {
+    title: "Native Alerts",
+    description: "Get Alerts on battery and panel fault",
+    image: "/images/services_1.jpg",
+    route: "/dashboard/alerts",
+  },
+] as const;
+
 export const Services = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // Fix 6: Destructure _hasHydrated to guard against hydration mismatch
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
 
-  const services = [
-    {
-      title: "AI Energy Agent",
-      description: "Ask questions in plain english",
-      image: "/images/services_3.jpg",
+  // Fix 4 + 5: getLink now accepts a service object (not a fragile index),
+  // and is memoised with useCallback so it isn't recreated on every render.
+  const getLink = useCallback(
+    (service: (typeof SERVICES)[number]) => {
+      const target = service.route ?? "/coming-soon";
+      if (!_hasHydrated || !isAuthenticated) {
+        return `/login?redirect=${encodeURIComponent(target)}`;
+      }
+      return target;
     },
-    {
-      title: "Naira Savings Tracker",
-      description: "Track daily savings vs diesel payback",
-      image: "/images/services_2.jpg",
-    },
-    {
-      // title: "WhatsApp Native Alerts",
-      title: "Native Alerts",
-      description: "Get Alerts on battery and panel fault",
-      image: "/images/services_1.jpg",
-    },
-  ];
-
-  const getLink = (index: number) => {
-    const routes = [
-      "/dashboard/ai-assistant",
-      "/dashboard/cost-and-savings",
-      "/dashboard/alerts",
-    ];
-
-    const target = routes[index] ?? "/coming-soon";
-
-    if (!isAuthenticated) {
-      return `/login?redirect=${encodeURIComponent(target)}`;
-    }
-
-    return target;
-  };
+    [isAuthenticated, _hasHydrated],
+  );
 
   return (
     <section className="section-padding text-foreground w-full bg-[#F7F7F799] py-16 md:py-24">
@@ -122,7 +124,7 @@ export const Services = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, index) => (
+          {SERVICES.map((service, index) => (
             <motion.div
               key={service.title}
               initial={{ opacity: 0, y: 20 }}
@@ -134,7 +136,7 @@ export const Services = () => {
                 title={service.title}
                 description={service.description}
                 image={service.image}
-                href={getLink(index)}
+                href={getLink(service)}
               />
             </motion.div>
           ))}

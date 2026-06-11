@@ -715,50 +715,43 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       (m) => m.role === "user" && m.content.trim() === text,
     );
 
+    // Fix 8: Early return when duplicate — avoids creating a streaming
+    // placeholder that can never be resolved, keeping the UI clean.
     pendingMessageSentRef.current = true;
+
+    if (isDuplicate) {
+      streamingMessageIdRef.current = null;
+      setSending(false);
+      return;
+    }
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
 
-    setMessages((prev) => {
-      const alreadyExists = prev.some(
-        (message) => message.role === "user" && message.content.trim() === text,
-      );
-
-      return [
-        ...(alreadyExists
-          ? prev
-          : [
-              ...prev,
-              {
-                id: `pending-${chatId}`,
-                role: "user" as const,
-                content: text,
-                timestamp: formatMessageTime(timestamp),
-                userInitials,
-              },
-            ]),
-        {
-          id: assistantMessageId,
-          role: "assistant" as const,
-          content: "",
-          timestamp: formatMessageTime(),
-          isStreaming: true,
-          awaitingCards: true,
-        },
-      ];
-    });
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `pending-${chatId}`,
+        role: "user" as const,
+        content: text,
+        timestamp: formatMessageTime(timestamp),
+        userInitials,
+      },
+      {
+        id: assistantMessageId,
+        role: "assistant" as const,
+        content: "",
+        timestamp: formatMessageTime(),
+        isStreaming: true,
+        awaitingCards: true,
+      },
+    ]);
 
     setSending(true);
 
     try {
-      if (!isDuplicate) {
-        sendMessage(text);
-        startSendingTimeout(assistantMessageId);
-      } else {
-        streamingMessageIdRef.current = null;
-        setSending(false);
-      }
+      sendMessage(text);
+      startSendingTimeout(assistantMessageId);
     } catch (error) {
       sessionStorage.setItem(
         key,

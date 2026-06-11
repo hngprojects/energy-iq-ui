@@ -151,7 +151,7 @@ const faqData = [
   {
     question: "Do I need to install new hardware?",
     answer:
-      "No, you don’t need to install any new hardware. EnergyIQ works with your existing inverter and solar setup. You simply connect your system details or integrate with supported inverter platforms to start monitoring your energy in real time.",
+      "No, you don't need to install any new hardware. EnergyIQ works with your existing inverter and solar setup. You simply connect your system details or integrate with supported inverter platforms to start monitoring your energy in real time.",
   },
   {
     question: "Which inverter brands are supported?",
@@ -284,9 +284,8 @@ export function PricingSection() {
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="max-w-3xl text-base text-balance text-slate-50 md:text-lg"
           >
-            Start free upgrade when you are ready. No hidden fees, no contracts,
-            just clear
-            <br /> visibility over your solar system.
+            Start free. Upgrade when you are ready. No hidden fees, no
+            contracts, just clear visibility over your solar system.
           </motion.p>
         </div>
       </header>
@@ -526,16 +525,19 @@ export function PricingSection() {
               key={index}
               className="border-slate-30 flex flex-col justify-center rounded-[10px] border px-5"
             >
-              <div
-                className="flex cursor-pointer items-center justify-between py-5"
+              <button
+                type="button"
                 onClick={() =>
                   setOpenFaqIndex(openFaqIndex === index ? null : index)
                 }
+                aria-expanded="false"
+                aria-controls="faq-panel"
+                className="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent py-5"
               >
-                <h2 className="text-secondary text-xl font-semibold">
+                <h2 className="text-secondary text-left text-xl font-semibold">
                   {faq.question}
                 </h2>
-                <div className="relative">
+                <div className="relative shrink-0">
                   {openFaqIndex === index ? (
                     <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-black">
                       <div className="relative h-3 w-3">
@@ -553,10 +555,11 @@ export function PricingSection() {
                     />
                   )}
                 </div>
-              </div>
+              </button>
               <AnimatePresence initial={false}>
                 {openFaqIndex === index && (
                   <motion.div
+                    id={`faq-panel-${index}`}
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
