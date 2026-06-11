@@ -372,8 +372,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             const idx = prev.length - 1 - lastAssistantIdx;
             const lastAssistant = prev[idx];
 
-            // Clean-text replacement: when new_system_msg arrives with
-            // complete text after streaming, replace streamed content
             if (incoming.isFinal && incoming.text) {
               const lastAssistant = prev[idx];
               const realId =
@@ -691,7 +689,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     const raw = sessionStorage.getItem(key);
     if (!raw) return;
 
-    // Immediately remove from storage to prevent double-send on remount
     sessionStorage.removeItem(key);
 
     let text = "";
@@ -711,39 +708,39 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     if (!text) return;
 
+    const isDuplicate = messages.some(
+      (m) => m.role === "user" && m.content.trim() === text,
+    );
+
     pendingMessageSentRef.current = true;
+
+    if (isDuplicate) {
+      streamingMessageIdRef.current = null;
+      setSending(false);
+      return;
+    }
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
 
-    setMessages((prev) => {
-      const alreadyExists = prev.some(
-        (message) => message.role === "user" && message.content.trim() === text,
-      );
-
-      return [
-        ...(alreadyExists
-          ? prev
-          : [
-              ...prev,
-              {
-                id: `pending-${chatId}`,
-                role: "user" as const,
-                content: text,
-                timestamp: formatMessageTime(timestamp),
-                userInitials,
-              },
-            ]),
-        {
-          id: assistantMessageId,
-          role: "assistant" as const,
-          content: "",
-          timestamp: formatMessageTime(),
-          isStreaming: true,
-          awaitingCards: true,
-        },
-      ];
-    });
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `pending-${chatId}`,
+        role: "user" as const,
+        content: text,
+        timestamp: formatMessageTime(timestamp),
+        userInitials,
+      },
+      {
+        id: assistantMessageId,
+        role: "assistant" as const,
+        content: "",
+        timestamp: formatMessageTime(),
+        isStreaming: true,
+        awaitingCards: true,
+      },
+    ]);
 
     setSending(true);
 
@@ -1081,11 +1078,22 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 pb-32 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">Today</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
+        {chatInfo && (
+          <div className="mb-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">
+              {
+                formatChatHeaderDateTime(
+                  chatInfo?.updatedAt ??
+                    chatInfo?.createdAt ??
+                    chatInfo?.dateLabel,
+                ).split(",")[0]
+              }
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+        )}
+
         {error ? (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error.message}
@@ -1215,4 +1223,3 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
-

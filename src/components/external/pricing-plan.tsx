@@ -1,26 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, useScroll, useSpring, AnimatePresence } from "motion/react"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import {
+  motion,
+  useScroll,
+  useSpring,
+  AnimatePresence,
+  type Variants,
+} from "motion/react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-type BillingPeriod = "monthly" | "yearly"
+type BillingPeriod = "monthly" | "yearly";
 
 interface PricingTier {
-  id: string
-  label: string
-  monthlyPrice: string
-  yearlyPrice: string
-  monthlyPeriod: string
-  yearlyPeriod: string
-  description: string
-  features: string[]
-  cta: string
-  ctaVariant: "outline" | "primary" | "secondary"
-  badge?: string
-  highlighted?: boolean
+  id: string;
+  label: string;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  monthlyPeriod: string;
+  yearlyPeriod: string;
+  description: string;
+  features: string[];
+  cta: string;
+  ctaVariant: "outline" | "primary" | "secondary";
+  badge?: string;
+  highlighted?: boolean;
   customMonthlyPrice?: string;
   customYearlyPrice?: string;
   customMonthlyPeriod?: string;
@@ -47,7 +53,24 @@ const CheckIcon = () => (
       </svg>
     </div>
   </div>
-)
+);
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 },
+  },
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 15 },
+  },
+};
 
 const comparisonData = [
   {
@@ -57,7 +80,7 @@ const comparisonData = [
     enterprise: "Unlimited",
   },
   {
-    feature: "Live monitoring (Battery, Sola, Looad)",
+    feature: "Live monitoring (Battery, Solar, Load)",
     free: <CheckIcon />,
     pro: <CheckIcon />,
     enterprise: <CheckIcon />,
@@ -81,7 +104,7 @@ const comparisonData = [
     enterprise: "Advanced",
   },
   {
-    feature: "Ai assistant (English + Pidgin)",
+    feature: "AI assistant (English + Pidgin)",
     free: "—",
     pro: <CheckIcon />,
     enterprise: <CheckIcon />,
@@ -122,13 +145,13 @@ const comparisonData = [
     pro: "—",
     enterprise: <CheckIcon />,
   },
-]
+];
 
 const faqData = [
   {
     question: "Do I need to install new hardware?",
     answer:
-      "No, you don’t need to install any new hardware. EnergyIQ works with your existing inverter and solar setup. You simply connect your system details or integrate with supported inverter platforms to start monitoring your energy in real time.",
+      "No, you don't need to install any new hardware. EnergyIQ works with your existing inverter and solar setup. You simply connect your system details or integrate with supported inverter platforms to start monitoring your energy in real time.",
   },
   {
     question: "Which inverter brands are supported?",
@@ -150,7 +173,7 @@ const faqData = [
     answer:
       "Yes, we offer white-label solutions for solar installers and distributors. Contact our sales team for more information on our partner programs.",
   },
-]
+];
 
 const pricingTiers: PricingTier[] = [
   {
@@ -177,7 +200,8 @@ const pricingTiers: PricingTier[] = [
     yearlyPrice: "₦5,900",
     monthlyPeriod: "/ Mo",
     yearlyPeriod: "/ Yr",
-    description: "For Full AI agent + alerts + reports, up to 3 systems per month.",
+    description:
+      "For Full AI agent + alerts + reports, up to 3 systems per month.",
     features: [
       "Multi - Site/ System Management",
       "White label dashboard",
@@ -192,7 +216,7 @@ const pricingTiers: PricingTier[] = [
     badge: "✦ Most Popular",
     highlighted: true,
   },
-    {
+  {
     id: "enterprise",
     label: "ENTERPRISE",
     monthlyPrice: "Custom",
@@ -217,17 +241,17 @@ const pricingTiers: PricingTier[] = [
     cta: "Get started free",
     ctaVariant: "outline",
   },
-]
+];
 
 export function PricingSection() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
-  const { scrollYProgress } = useScroll()
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001,
-  })
+  });
 
   return (
     <div className="bg-background selection:bg-amber-10 min-h-screen font-sans text-slate-100 selection:text-amber-800">
@@ -260,21 +284,26 @@ export function PricingSection() {
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="max-w-3xl text-base text-balance text-slate-50 md:text-lg"
           >
-            Start free upgrade when you are ready. No hidden fees, no contracts, just
-            clear
-            <br /> visibility over your solar system.
+            Start free. Upgrade when you are ready. No hidden fees, no
+            contracts, just clear visibility over your solar system.
           </motion.p>
         </div>
       </header>
 
       <section className="bg-background w-full px-4 py-24">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-12 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="mb-12 text-center"
+          >
             <h2 className="text-title1 mx-auto w-full max-w-180 leading-tight font-bold lg:text-5xl">
-              Start free. <br /> <span className="text-amber-60">Upgrade</span> when it
-              pays for itself.
+              Start free. <br /> <span className="text-amber-60">Upgrade</span>{" "}
+              when it pays for itself.
             </h2>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mb-12 flex justify-center">
@@ -302,10 +331,22 @@ export function PricingSection() {
           </button>
         </div>
 
-        <div className="mx-auto grid w-full max-w-240 grid-cols-1 items-center gap-6 md:grid-cols-3">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto grid w-full max-w-240 grid-cols-1 items-center gap-6 md:grid-cols-3"
+        >
           {pricingTiers.map((tier) => (
-            <div
+            <motion.div
               key={tier.id}
+              variants={cardVariants}
+              whileHover={{
+                y: -8,
+                scale: 1.02,
+                transition: { duration: 0.2 },
+              }}
               className={`flex flex-col overflow-hidden rounded-3xl p-8 transition-all md:min-h-129.75 ${
                 tier.highlighted
                   ? "bg-secondary text-white shadow-2xl ring-2 ring-transparent hover:ring-amber-600"
@@ -402,14 +443,20 @@ export function PricingSection() {
                   <Link href="/signup">{tier.cta}</Link>
                 </Button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Comparison Section */}
       <section className="bg-background mx-auto flex w-full max-w-360 flex-col items-center gap-2.5 px-4 pt-12 pb-12 md:px-30 md:pt-20 md:pb-20">
-        <div className="flex w-full max-w-300 flex-col items-center gap-8 md:gap-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="flex w-full max-w-300 flex-col items-center gap-8 md:gap-12"
+        >
           {/* Header */}
           <div className="flex flex-col items-center">
             <h2 className="w-full max-w-87.25 text-center text-3xl leading-none font-bold tracking-[-1%] text-slate-900 md:text-[48px]">
@@ -461,7 +508,7 @@ export function PricingSection() {
               </table>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* (FAQ) */}
@@ -478,12 +525,19 @@ export function PricingSection() {
               key={index}
               className="border-slate-30 flex flex-col justify-center rounded-[10px] border px-5"
             >
-              <div
-                className="flex cursor-pointer items-center justify-between py-5"
-                onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenFaqIndex(openFaqIndex === index ? null : index)
+                }
+                aria-expanded="false"
+                aria-controls="faq-panel"
+                className="flex w-full cursor-pointer items-center justify-between border-0 bg-transparent py-5"
               >
-                <h2 className="text-secondary text-xl font-semibold">{faq.question}</h2>
-                <div className="relative">
+                <h2 className="text-secondary text-left text-xl font-semibold">
+                  {faq.question}
+                </h2>
+                <div className="relative shrink-0">
                   {openFaqIndex === index ? (
                     <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-black">
                       <div className="relative h-3 w-3">
@@ -501,10 +555,11 @@ export function PricingSection() {
                     />
                   )}
                 </div>
-              </div>
+              </button>
               <AnimatePresence initial={false}>
                 {openFaqIndex === index && (
                   <motion.div
+                    id={`faq-panel-${index}`}
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -520,5 +575,5 @@ export function PricingSection() {
         </div>
       </section>
     </div>
-  )
+  );
 }
