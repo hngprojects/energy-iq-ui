@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  Menu,
-  Bell,
-  Search,
-  ChevronDown,
-  LayoutDashboard,
-  LogOut,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Menu, Bell, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { useUIStore } from "@/stores/ui-stores";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAuthActions } from "@/hooks/use-auth-actions";
@@ -97,7 +89,11 @@ export function DashboardHeader() {
           >
             <Bell className="text-secondary h-5 w-5" strokeWidth={1.2} />
           </button>
-          <div className={notificationsOpen ? "fixed inset-x-3 top-16 z-50" : "hidden"}>
+          <div
+            className={
+              notificationsOpen ? "fixed inset-x-3 top-16 z-50" : "hidden"
+            }
+          >
             <NotificationsDropdown />
           </div>
         </div>
@@ -136,25 +132,8 @@ export function DashboardHeader() {
         </div>
       </div>
 
-      {/* Desktop Search */}
-      <div className="hidden flex-1 items-center lg:flex">
-        <div className="relative mt-3 mb-3 ml-6 flex h-11.25 w-100.5 items-center">
-          <Search
-            className="text-secondary absolute left-3.75 z-10 h-4 w-4"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          />
-          <Input
-            type="text"
-            placeholder="Search"
-            aria-label="Search"
-            className="bg-background border-border-active placeholder:text-muted-foreground h-full w-full rounded-lg pl-10.5 placeholder:select-none"
-          />
-        </div>
-      </div>
-
       {/* Desktop Profile, Notification & Dropdown */}
-      <div className="hidden items-center gap-3 pr-6 lg:flex">
+      <div className="hidden items-center gap-6 pr-6 lg:flex lg:ml-auto">
         <div className="relative" ref={desktopNotificationsRef}>
           <button
             type="button"
@@ -165,7 +144,13 @@ export function DashboardHeader() {
           >
             <Bell className="text-secondary h-5 w-5" strokeWidth={1.2} />
           </button>
-          <div className={notificationsOpen ? "absolute right-0 top-full z-50 mt-3 w-95" : "hidden"}>
+          <div
+            className={
+              notificationsOpen
+                ? "absolute right-0 top-full z-50 mt-3 w-95"
+                : "hidden"
+            }
+          >
             <NotificationsDropdown />
           </div>
         </div>
@@ -207,4 +192,3 @@ export function DashboardHeader() {
     </header>
   );
 }
-

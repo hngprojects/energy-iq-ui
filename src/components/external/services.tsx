@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import { useCallback } from "react";
 import { motion } from "motion/react";
-
+import { useAuthStore } from "@/stores/auth-store";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -11,9 +11,10 @@ interface ServiceCardProps {
   title: string;
   description: string;
   image: string;
+  href: string;
 }
 
-const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
+const ServiceCard = ({ title, description, image, href }: ServiceCardProps) => {
   return (
     <div className="group bg-dark-alt flex h-full flex-col overflow-hidden rounded-[12px] shadow-xl">
       <div className="relative aspect-video w-full overflow-hidden md:aspect-4/3">
@@ -25,6 +26,7 @@ const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
           className="object-cover transition-transform duration-500 group-hover:scale-110"
         />
       </div>
+
       <div className="bg-secondary flex flex-1 items-center justify-between gap-4 p-8 pb-10">
         <div className="space-y-2">
           <h3 className="text-xl font-bold tracking-tight text-white">
@@ -38,7 +40,7 @@ const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
           className="bg-primary text-secondary flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
           aria-label={`Learn more about ${title}`}
         >
-          <Link href="/coming-soon">
+          <Link href={href}>
             <svg
               width="24"
               height="24"
@@ -58,24 +60,40 @@ const ServiceCard = ({ title, description, image }: ServiceCardProps) => {
   );
 };
 
+const SERVICES = [
+  {
+    title: "AI Energy Agent",
+    description: "Ask questions in plain english",
+    image: "/images/services_3.jpg",
+    route: "/dashboard/ai-assistant",
+  },
+  {
+    title: "Naira Savings Tracker",
+    description: "Track daily savings vs diesel payback",
+    image: "/images/services_2.jpg",
+    route: "/dashboard/cost-and-savings",
+  },
+  {
+    title: "Native Alerts",
+    description: "Get Alerts on battery and panel fault",
+    image: "/images/services_1.jpg",
+    route: "/dashboard/alerts",
+  },
+] as const;
+
 export const Services = () => {
-  const services = [
-    {
-      title: "AI Energy Agent",
-      description: "Ask questions in plain english",
-      image: "/images/services_3.jpg",
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
+
+  const getLink = useCallback(
+    (service: (typeof SERVICES)[number]) => {
+      const target = service.route ?? "/coming-soon";
+      if (!_hasHydrated || !isAuthenticated) {
+        return `/login?redirect=${encodeURIComponent(target)}`;
+      }
+      return target;
     },
-    {
-      title: "Naira Savings Tracker",
-      description: "Track daily savings vs diesel payback",
-      image: "/images/services_2.jpg",
-    },
-    {
-      title: "Whatsapp Native Alerts",
-      description: "GetAlerts on battery and panel fault",
-      image: "/images/services_1.jpg",
-    },
-  ];
+    [isAuthenticated, _hasHydrated],
+  );
 
   return (
     <section className="section-padding text-foreground w-full bg-[#F7F7F799] py-16 md:py-24">
@@ -91,6 +109,7 @@ export const Services = () => {
             Everything your <br />
             <span className="text-primary">Energy</span> System Needs
           </h2>
+
           <Button
             asChild
             size="lg"
@@ -99,10 +118,11 @@ export const Services = () => {
             <Link href="/coming-soon">Services</Link>
           </Button>
         </motion.div>
+
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, index) => (
+          {SERVICES.map((service, index) => (
             <motion.div
-              key={index}
+              key={service.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
@@ -112,6 +132,7 @@ export const Services = () => {
                 title={service.title}
                 description={service.description}
                 image={service.image}
+                href={getLink(service)}
               />
             </motion.div>
           ))}
