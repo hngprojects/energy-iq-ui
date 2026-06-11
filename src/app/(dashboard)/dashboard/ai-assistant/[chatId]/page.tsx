@@ -372,8 +372,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             const idx = prev.length - 1 - lastAssistantIdx;
             const lastAssistant = prev[idx];
 
-            // Clean-text replacement: when new_system_msg arrives with
-            // complete text after streaming, replace streamed content
             if (incoming.isFinal && incoming.text) {
               const lastAssistant = prev[idx];
               const realId =
@@ -691,7 +689,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     const raw = sessionStorage.getItem(key);
     if (!raw) return;
 
-    // Immediately remove from storage to prevent double-send on remount
     sessionStorage.removeItem(key);
 
     let text = "";
@@ -715,8 +712,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       (m) => m.role === "user" && m.content.trim() === text,
     );
 
-    // Fix 8: Early return when duplicate — avoids creating a streaming
-    // placeholder that can never be resolved, keeping the UI clean.
     pendingMessageSentRef.current = true;
 
     if (isDuplicate) {

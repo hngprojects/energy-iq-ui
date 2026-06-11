@@ -60,7 +60,6 @@ const ServiceCard = ({ title, description, image, href }: ServiceCardProps) => {
   );
 };
 
-// Fix 7: Moved outside the component — no longer recreated on every render
 const SERVICES = [
   {
     title: "AI Energy Agent",
@@ -83,11 +82,8 @@ const SERVICES = [
 ] as const;
 
 export const Services = () => {
-  // Fix 6: Destructure _hasHydrated to guard against hydration mismatch
   const { isAuthenticated, _hasHydrated } = useAuthStore();
 
-  // Fix 4 + 5: getLink now accepts a service object (not a fragile index),
-  // and is memoised with useCallback so it isn't recreated on every render.
   const getLink = useCallback(
     (service: (typeof SERVICES)[number]) => {
       const target = service.route ?? "/coming-soon";
