@@ -127,7 +127,7 @@ export function PricingSection() {
           className="mb-12 text-center"
         >
           <h2 className="text-title1 mx-auto w-full max-w-180 leading-tight font-semibold lg:text-5xl">
-            Start free. <br /> <span className="text-primary">Upgrade</span>
+            Start free. <br /> <span className="text-primary">Upgrade </span>
             when it pays for itself.
           </h2>
         </motion.div>
@@ -254,7 +254,7 @@ export function PricingSection() {
                         : "secondary"
                   }
                   className={`w-full cursor-pointer p-3 text-base font-medium transition-all ${
-                    tier.ctaVariant === "primary" 
+                    tier.ctaVariant === "primary"
                       ? "bg-primary text-[#F6F6F6] hover:bg-[#D07A0E]"
                       : tier.ctaVariant === "outline" && tier.highlighted
                         ? "border border-white text-white hover:border-gray-200 hover:bg-white hover:text-gray-900"
