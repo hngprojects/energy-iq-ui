@@ -711,6 +711,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     if (!text) return;
 
+    const isDuplicate = messages.some(
+      (m) => m.role === "user" && m.content.trim() === text,
+    );
+
     pendingMessageSentRef.current = true;
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
@@ -748,8 +752,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     setSending(true);
 
     try {
-      sendMessage(text);
-      startSendingTimeout(assistantMessageId);
+      if (!isDuplicate) {
+        sendMessage(text);
+        startSendingTimeout(assistantMessageId);
+      } else {
+        streamingMessageIdRef.current = null;
+        setSending(false);
+      }
     } catch (error) {
       sessionStorage.setItem(
         key,

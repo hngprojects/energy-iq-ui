@@ -47,12 +47,15 @@ const SUGGESTIONS: SuggestionCard[] = [
   },
 ];
 
-function isStackOverflowCreateError(error: unknown) {
+function isRecoverableCreateError(error: unknown) {
   if (!(error instanceof Error)) return false;
-
   const message = error.message.toLowerCase();
   return (
-    message.includes("maximum call stack") || message.includes("rangeerror")
+    message.includes("maximum call stack") ||
+    message.includes("rangeerror") ||
+    message.includes("timeout") ||
+    message.includes("504") ||
+    message.includes("econnaborted")
   );
 }
 
@@ -98,7 +101,7 @@ export default function NewChatPage() {
           startingMessage: cleanText,
         });
       } catch (createError) {
-        if (!isStackOverflowCreateError(createError)) {
+        if (!isRecoverableCreateError(createError)) {
           throw createError;
         }
 
@@ -135,7 +138,9 @@ export default function NewChatPage() {
     } catch (err) {
       const message =
         err instanceof Error
-          ? err.message
+          ? err.message.includes("504")
+            ? "This is taking longer than usual. Check your chat list or try again."
+            : err.message
           : "Failed to start chat. Please try again.";
 
       console.error("Failed to start chat:", message);
@@ -316,4 +321,3 @@ export default function NewChatPage() {
     </div>
   );
 }
-
