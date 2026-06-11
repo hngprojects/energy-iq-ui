@@ -1081,11 +1081,22 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 pb-32 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">Today</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
+        {chatInfo && (
+          <div className="mb-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">
+              {
+                formatChatHeaderDateTime(
+                  chatInfo?.updatedAt ??
+                    chatInfo?.createdAt ??
+                    chatInfo?.dateLabel,
+                ).split(",")[0]
+              }
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+        )}
+
         {error ? (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error.message}
@@ -1215,4 +1226,3 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
-
