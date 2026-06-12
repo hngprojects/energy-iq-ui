@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Pencil, Check, Loader2, Upload } from "lucide-react";
@@ -56,9 +56,11 @@ export function ProfilePageClient() {
   });
 
   const handleDeleteConfirm = () => {
-    if (user?.id) {
-      deleteAccount(user.id);
+    if (!user?.id) {
+      toast.error("Unable to delete account right now. Please refresh and try again.");
+      return;
     }
+    deleteAccount(user.id);
   };
   const resolvedLang = (user?.aiLanguage ?? "").toLowerCase();
   const initialLang =
@@ -66,9 +68,11 @@ export function ProfilePageClient() {
   const [aiLanguage, setAiLanguage] = React.useState(initialLang);
   const [langSaving, setLangSaving] = React.useState(false);
 
-  React.useEffect(() => {
+  const [prevInitialLang, setPrevInitialLang] = React.useState(initialLang);
+  if (initialLang !== prevInitialLang) {
     setAiLanguage(initialLang);
-  }, [initialLang]);
+    setPrevInitialLang(initialLang);
+  }
 
   const handleLanguageSave = async () => {
     if (!aiLanguage || langSaving) return;
@@ -94,7 +98,6 @@ export function ProfilePageClient() {
     control,
     register,
     handleSubmit,
-    watch,
     reset,
     setValue,
     formState: { errors },
@@ -110,7 +113,7 @@ export function ProfilePageClient() {
     },
   });
 
-  const selectedState = watch("state");
+  const selectedState = useWatch({ control, name: "state" });
   const cityOptions = selectedState
     ? (CITIES_BY_STATE[selectedState] ?? [])
     : [];

@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { X, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -25,32 +24,42 @@ export function DeleteAccountDialog({
   onConfirm,
   isPending,
 }: DeleteAccountDialogProps) {
+  const handleInteractOutside = (e: Event) => {
+    if (isPending) {
+      e.preventDefault();
+    }
+  };
+
+  const handleEscapeKeyDown = (e: KeyboardEvent) => {
+    if (isPending) {
+      e.preventDefault();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isPending) {
+          onOpenChange(isOpen);
+        }
+      }}
+    >
       <DialogContent
-        showCloseButton={false}
+        showCloseButton={!isPending}
+        onPointerDownOutside={handleInteractOutside}
+        onEscapeKeyDown={handleEscapeKeyDown}
         className="w-full max-w-[calc(100%-2rem)] sm:max-w-md p-6 rounded-2xl"
       >
         <div className="flex flex-col gap-4">
           {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <DialogTitle className="text-lg font-semibold text-dark-text">
-                Delete Account
-              </DialogTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
             </div>
-            <DialogClose asChild>
-              <button
-                aria-label="Close"
-                type="button"
-                className="rounded-full p-1 text-[#6B7280] hover:bg-muted transition-colors cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </DialogClose>
+            <DialogTitle className="text-lg font-semibold text-dark-text">
+              Delete Account
+            </DialogTitle>
           </div>
 
           {/* Description */}
@@ -60,15 +69,15 @@ export function DeleteAccountDialog({
 
           {/* Footer / Actions */}
           <DialogFooter className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto h-11 px-5 text-sm font-medium text-dark-text border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
-              >
-                Cancel
-              </Button>
-            </DialogClose>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto h-11 px-5 text-sm font-medium text-dark-text border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
+            >
+              Cancel
+            </Button>
             <Button
               type="button"
               disabled={isPending}
