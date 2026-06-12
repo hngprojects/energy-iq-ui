@@ -37,4 +37,12 @@ export const ProfileService = {
 
     return { profilePhoto: response.profilePhoto ?? profileUrl };
   },
+
+  deleteAccount: async (id: string) => {
+    return apiFetch<void>(
+      `/users/${id}`,
+      { method: "DELETE" },
+      true,
+    );
+  },
 };
