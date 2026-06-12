@@ -42,5 +42,21 @@ export const useProfileQueries = () => {
       },
     });
 
-  return { useUpdateProfile, useUploadAvatar };
+  const useDeleteAccount = (onSuccess?: () => void) =>
+    useMutation({
+      mutationFn: (id: string) => ProfileService.deleteAccount(id),
+      onSuccess: () => {
+        toast.success("Account deleted successfully", { duration: 4000 });
+        onSuccess?.();
+      },
+      onError: (error: unknown) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to delete account. Please try again.";
+        toast.error(message);
+      },
+    });
+
+  return { useUpdateProfile, useUploadAvatar, useDeleteAccount };
 };
