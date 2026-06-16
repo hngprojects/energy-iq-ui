@@ -74,20 +74,18 @@ export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
 
   const chart = data?.chart ?? [];
   const now = new Date();
-const trendData = chart.length
+  const trendData = chart.length
     ? chart
         .filter((point) => {
-            if (data?.granularity === "hour") {
-                const pt = new Date(point.label);
-                if (!Number.isNaN(pt.getTime())) {
-                    return pt <= now;
-                }
-            }
-            return true;
+          if (data?.granularity === "hour") {
+            const pt = new Date(point.label);
+            return !Number.isNaN(pt.getTime()) && pt <= now;
+          }
+          return true;
         })
         .map((point) => ({
-            label: formatSavingsChartLabel(point.label, data?.granularity),
-            value: point.savingsNgn,
+          label: formatSavingsChartLabel(point.label, data?.granularity),
+          value: point.savingsNgn,
         }))
     : [];
 
@@ -145,9 +143,7 @@ const trendData = chart.length
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Total Saved"
-          value={
-            totalSaved != null ? formatNaira(totalSaved) : "—"
-          }
+          value={totalSaved != null ? formatNaira(totalSaved) : "—"}
           iconBg="bg-amber-light"
           icon={<Fuel className="h-5 w-5 text-amber-60" />}
         />

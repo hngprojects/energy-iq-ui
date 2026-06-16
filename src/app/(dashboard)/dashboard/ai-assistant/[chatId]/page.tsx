@@ -625,12 +625,25 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       return;
     }
     if (!text) return;
-    const isDuplicate = messages.some(
-      (m) => m.role === "user" && m.content.trim() === text,
-    );
+    let duplicateUserIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].role === "user" && messages[i].content.trim() === text) {
+        duplicateUserIndex = i;
+        break;
+      }
+    }
+    const isDuplicate = duplicateUserIndex !== -1;
     pendingMessageSentRef.current = true;
     if (isDuplicate) {
-      const hasAssistantResponse = messages.some(
+      const messagesAfterDuplicate = messages.slice(duplicateUserIndex + 1);
+      const nextUserIndex = messagesAfterDuplicate.findIndex(
+        (m) => m.role === "user",
+      );
+      const responseWindow =
+        nextUserIndex === -1
+          ? messagesAfterDuplicate
+          : messagesAfterDuplicate.slice(0, nextUserIndex);
+      const hasAssistantResponse = responseWindow.some(
         (m) =>
           (m.role === "assistant" || m.role === "ai") &&
           (m.content?.trim() || (m.cards && m.cards.length > 0)),
@@ -659,6 +672,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         sendMessage(text);
         startSendingTimeout(assistantMessageId);
       } catch (error) {
+        sessionStorage.setItem(
+          key,
+          JSON.stringify({
+            content: text,
+            timestamp,
+          }),
+        );
+        pendingMessageSentRef.current = false;
+
         streamingMessageIdRef.current = null;
         setSending(false);
         setMessages((prev) =>
@@ -673,6 +695,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                       ? error.message
                       : "Unable to resend message. Please try again.",
                   isStreaming: false,
+                  awaitingCards: false,
                   failed: true,
                 }
               : message,
@@ -684,24 +707,36 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `pending-${chatId}`,
-        role: "user" as const,
-        content: text,
-        timestamp: formatMessageTime(timestamp),
-        userInitials,
-      },
-      {
-        id: assistantMessageId,
-        role: "assistant" as const,
-        content: "",
-        timestamp: formatMessageTime(),
-        isStreaming: true,
-        awaitingCards: true,
-      },
-    ]);
+    setMessages((prev) => {
+      const alreadyExists = prev.some(
+        (m) => m.role === "user" && m.content.trim() === text,
+      );
+
+      const newMessages: ChatMessage[] = alreadyExists
+        ? []
+        : [
+            {
+              id: `pending-${chatId}`,
+              role: "user" as const,
+              content: text,
+              timestamp: formatMessageTime(timestamp),
+              userInitials,
+            },
+          ];
+
+      return [
+        ...prev,
+        ...newMessages,
+        {
+          id: assistantMessageId,
+          role: "assistant" as const,
+          content: "",
+          timestamp: formatMessageTime(),
+          isStreaming: true,
+          awaitingCards: true,
+        },
+      ];
+    });
     setSending(true);
     try {
       sendMessage(text);

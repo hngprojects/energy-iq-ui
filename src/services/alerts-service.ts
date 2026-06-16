@@ -24,6 +24,14 @@ const formatAlertTime = (value: string) =>
 const mapApiAlert = (alert: ApiAlert): Alert => {
   const alertTime = alert.triggeredAt || alert.createdAt;
 
+  const ALERT_TYPE_TO_ICON: Record<string, Alert["iconType"]> = {
+    battery_percentage: "battery_low",
+    power_high: "power_high",
+    battery_full: "battery_full",
+    check: "check",
+    solar: "solar",
+  };
+
   return {
     id: alert.id,
     title: toTitleCase(alert.type),
@@ -40,7 +48,7 @@ const mapApiAlert = (alert: ApiAlert): Alert => {
       : "unresolved",
     time: formatAlertTime(alertTime),
     sortTime: alertTime,
-    iconType: alert.type === "BATTERY_PERCENTAGE" ? "battery_low" : "clock",
+    iconType: ALERT_TYPE_TO_ICON[alert.type.toLowerCase()] ?? "clock",
     modalDetail: {
       metrics: [
         { label: "Severity", value: toTitleCase(alert.severity ?? "warning") },
@@ -67,19 +75,21 @@ const mapApiSummary = (
   unresolved: { count: summary.unresolved, label: "Still open" },
 });
 
+const DEFAULT_PAGE_NUMBER = 1;
+const DEFAULT_PAGE_SIZE = 100;
+
 export const alertsService = {
-  getAllAlerts: async (): Promise<Alert[]> => {
+  getAllAlerts: async (
+    page: number = DEFAULT_PAGE_NUMBER,
+    pageSize: number = DEFAULT_PAGE_SIZE,
+  ): Promise<Alert[]> => {
     const alerts = await apiFetch<ApiAlert[]>(
       "/alerts",
       {
-        params: {
-          page_number: 1,
-          page_size: 100,
-        },
+        params: { page_number: page, page_size: pageSize },
       },
       true,
     );
-
     return alerts.map(mapApiAlert);
   },
 

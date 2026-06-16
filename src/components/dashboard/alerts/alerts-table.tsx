@@ -368,6 +368,7 @@ function PaginationBar({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           className="size-8 rounded-lg"
+          aria-label="Previous page"
         >
           <ChevronLeft className="size-4" />
         </Button>
@@ -404,6 +405,7 @@ function PaginationBar({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="size-8 rounded-lg"
+          aria-label="Next page"
         >
           <ChevronRight className="size-4" />
         </Button>

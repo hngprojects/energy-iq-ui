@@ -30,9 +30,9 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
 
         if (parts.length === 3) {
           const parsed = new Date(
-            parseInt(parts[0]),
-            parseInt(parts[1]) - 1,
-            parseInt(parts[2]),
+            parseInt(parts[0], 10),
+            parseInt(parts[1], 10) - 1,
+            parseInt(parts[2], 10),
           );
           if (!isNaN(parsed.getTime())) {
             formattedMonth = parsed
@@ -40,7 +40,10 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
               .toUpperCase();
           }
         } else if (parts.length === 2) {
-          const parsed = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1);
+          const parsed = new Date(
+            parseInt(parts[0], 10),
+            parseInt(parts[1], 10) - 1,
+          );
           if (!isNaN(parsed.getTime())) {
             formattedMonth = parsed
               .toLocaleDateString("en-US", { month: "short", year: "numeric" })
