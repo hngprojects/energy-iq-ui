@@ -270,7 +270,9 @@ export function DashboardContent() {
                   : "Active"
                 : d.running.note
             }
-            pillTone="muted"
+            pillTone={
+              metrics ? (metrics.systemOffline ? "muted" : "success") : "muted"
+            }
           />
         </div>
       )}

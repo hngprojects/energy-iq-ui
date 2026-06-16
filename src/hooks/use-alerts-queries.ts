@@ -11,14 +11,14 @@ export const ALERT_QUERY_KEYS = {
 export function useAlerts() {
   return useQuery({
     queryKey: ALERT_QUERY_KEYS.lists(),
-    queryFn: alertsService.getAllAlerts,
+    queryFn: () => alertsService.getAllAlerts(),
   });
 }
 
 export function useAlertSummary() {
   return useQuery({
     queryKey: ALERT_QUERY_KEYS.summary(),
-    queryFn: alertsService.getAlertSummary,
+    queryFn: () => alertsService.getAlertSummary(),
   });
 }
 
@@ -33,9 +33,8 @@ export function useAlertDetail(id: string | null) {
 export function useResolveAlert() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: alertsService.resolveAlert,
+    mutationFn: (id: string) => alertsService.resolveAlert(id),
     onSuccess: (_, id) => {
-      // Invalidate queries to trigger background refreshes across panels
       queryClient.invalidateQueries({ queryKey: ALERT_QUERY_KEYS.lists() });
       queryClient.invalidateQueries({ queryKey: ALERT_QUERY_KEYS.summary() });
       queryClient.invalidateQueries({ queryKey: ALERT_QUERY_KEYS.detail(id) });
