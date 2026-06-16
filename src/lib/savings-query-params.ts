@@ -73,8 +73,12 @@ export function paramsFromSummaryPeriod(
   const today = toIsoDate(now);
 
   if (period === "daily") {
-    return { date: today };
-  }
+    return {
+        date: today,
+        startDate: today,
+        endDate: today,
+    };
+}
 
   if (period === "weekly") {
     const start = new Date(now);
