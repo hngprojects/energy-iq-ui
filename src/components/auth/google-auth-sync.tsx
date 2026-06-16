@@ -94,10 +94,12 @@ function GoogleAuthSyncInner() {
             setAuthLocal(realUser, token, refreshToken);
             cleanOAuthParamsFromUrl();
           } else {
+            cleanOAuthParamsFromUrl();
             logout();
           }
         } catch (err) {
           console.error("Failed to fetch user profile", err);
+          cleanOAuthParamsFromUrl();
           logout();
         }
       })();
