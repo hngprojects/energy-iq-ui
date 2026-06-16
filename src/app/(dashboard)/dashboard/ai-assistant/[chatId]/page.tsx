@@ -269,10 +269,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       } else {
         dedupKey = `${incoming.chatId || chatId}:${incoming.text}`;
       }
-      if (dedupKey && processedSocketIdsRef.current.has(dedupKey)) return;
-      if (dedupKey) processedSocketIdsRef.current.add(dedupKey);
       if (!incoming.text && !incoming.isFinal && !streamingMessageIdRef.current)
         return;
+      if (dedupKey && processedSocketIdsRef.current.has(dedupKey)) return;
+      if (dedupKey) processedSocketIdsRef.current.add(dedupKey);
+
       const activeStreamingId = streamingMessageIdRef.current;
       const isCompleteMessage = incoming.isFinal;
       // === JSON data dump handler (runs BEFORE word-by-word) ===
@@ -409,6 +410,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return prev.map((message) => {
           if (message.id !== activeStreamingId) return message;
           if (isCompleteMessage) {
+            sessionStorage.removeItem(`pending-chat-message:${chatId}`);
+
+            streamingMessageIdRef.current = null;
+            setSending(false);
+            clearSendingTimeout();
+
             const rawContent = incoming.text || message.content;
             const existingCards = message.cards || [];
             let parsedContent = rawContent;
@@ -611,7 +618,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
     if (!raw) return;
+
+    pendingMessageSentRef.current = true;
     sessionStorage.removeItem(key);
+
     let text = "";
     let timestamp: string | undefined;
     try {
@@ -625,6 +635,20 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       return;
     }
     if (!text) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const lastIsCompleteAI =
+      (lastMessage?.role === "assistant" || lastMessage?.role === "ai") &&
+      !lastMessage?.isStreaming &&
+      !lastMessage?.failed &&
+      (lastMessage?.content?.trim() || lastMessage?.cards?.length);
+
+    if (lastIsCompleteAI) {
+      sessionStorage.removeItem(key);
+      pendingMessageSentRef.current = false;
+      return;
+    }
+
     let duplicateUserIndex = -1;
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       if (messages[i].role === "user" && messages[i].content.trim() === text) {
@@ -633,7 +657,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       }
     }
     const isDuplicate = duplicateUserIndex !== -1;
-    pendingMessageSentRef.current = true;
     if (isDuplicate) {
       const messagesAfterDuplicate = messages.slice(duplicateUserIndex + 1);
       const nextUserIndex = messagesAfterDuplicate.findIndex(
@@ -650,6 +673,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       );
       if (hasAssistantResponse) {
         streamingMessageIdRef.current = null;
+        pendingMessageSentRef.current = false;
         setSending(false);
         return;
       }
@@ -738,6 +762,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       ];
     });
     setSending(true);
+    lastUserMessageRef.current = text;
     try {
       sendMessage(text);
       startSendingTimeout(assistantMessageId);
@@ -764,6 +789,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                     ? error.message
                     : "Unable to send your first message. Please try again.",
                 isStreaming: false,
+                awaitingCards: false,
                 failed: true,
               }
             : message,
@@ -858,6 +884,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                     ? error.message
                     : "Unable to send message. Please try again.",
                 isStreaming: false,
+                awaitingCards: false,
                 failed: true,
               }
             : message,
@@ -866,7 +893,16 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
   const handleRetry = (failedAssistantId: string) => {
-    const text = lastUserMessageRef.current;
+    const failedIndex = messages.findIndex((m) => m.id === failedAssistantId);
+    const previousUserMessage =
+      failedIndex === -1
+        ? undefined
+        : messages
+            .slice(0, failedIndex)
+            .reverse()
+            .find((m) => m.role === "user");
+    const text =
+      previousUserMessage?.content.trim() || lastUserMessageRef.current;
     if (!text) return;
     if (!connected) {
       setMessages((prev) => [
@@ -897,6 +933,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       },
     ]);
     setSending(true);
+    lastUserMessageRef.current = text;
     try {
       sendMessage(text);
       startSendingTimeout(assistantMessageId);
@@ -927,6 +964,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (!input.trim() || sending || connecting || !connected) return;
       void handleSend();
     }
   };
@@ -944,6 +982,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       wrapper.classList.add("items-center");
     }
   };
+
   const renderHeaderIcon = () => {
     switch (chatInfo?.iconType) {
       case "solar":
@@ -954,13 +993,33 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return <Battery className="h-4 w-4 text-destructive" />;
     }
   };
+
+  function sanitizeChatTitle(raw: string | undefined): string | undefined {
+    if (!raw) return undefined;
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) return undefined;
+    return (
+      trimmed
+        .replace(/^```[a-z]*\n?/i, "")
+        .replace(/```$/, "")
+        .trim() || undefined
+    );
+  }
+
+  const firstUserMessage = messages
+    .find((m) => m.role === "user")
+    ?.content.trim();
+
   const title =
     actions.renamedTitles[chatId] ??
-    chatInfo?.title ??
+    sanitizeChatTitle(chatInfo?.title) ??
+    firstUserMessage?.slice(0, 60) ??
     (loading ? "Loading chat..." : "Chat");
+
   const dateLabel = formatChatHeaderDateTime(
     chatInfo?.updatedAt ?? chatInfo?.createdAt ?? chatInfo?.dateLabel,
   );
+
   return (
     <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
       <div className="border-b border-border bg-card px-3 py-3 md:px-6 md:py-4 shadow-sm">
