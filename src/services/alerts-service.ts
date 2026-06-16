@@ -73,7 +73,8 @@ export const alertsService = {
       "/alerts",
       {
         params: {
-          alert_type: "BATTERY_PERCENTAGE",
+          page_number: 1,
+          page_size: 100,
         },
       },
       true,

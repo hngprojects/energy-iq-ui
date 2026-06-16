@@ -8,6 +8,8 @@ import {
   CheckCircle,
   Sun,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   RefreshCw,
   Unplug,
 } from "lucide-react";
@@ -36,7 +38,9 @@ const FILTER_OPTIONS: { value: AlertFilterType; label: string }[] = [
   { value: "unresolved", label: "Unresolved" },
 ];
 
+const PER_PAGE_OPTIONS = [10, 20, 50];
 const REFRESH_INTERVAL_MS = 30_000;
+
 const ICON_MAP = {
   battery_low: AlertTriangle,
   power_high: Unplug,
@@ -139,6 +143,7 @@ function InspectModal({
   const sev = alert?.severity
     ? SEVERITY_STYLES[alert.severity]
     : SEVERITY_STYLES.warning;
+
   return (
     <Dialog open={!!alertId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md gap-5">
@@ -278,6 +283,135 @@ function FilterDropdown({
   );
 }
 
+function PaginationBar({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  onPerPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onPerPageChange: (perPage: number) => void;
+}) {
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, totalItems);
+
+  const pages: (number | "ellipsis")[] = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push("ellipsis");
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
+      pages.push(i);
+    }
+    if (currentPage < totalPages - 2) pages.push("ellipsis");
+    pages.push(totalPages);
+  }
+
+  if (totalItems === 0) return null;
+
+  return (
+    <div className="border-border flex flex-col items-start justify-between gap-3 border-t px-4 py-3 sm:flex-row sm:items-center">
+      {/* Left: count + per-page */}
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <span>
+          Showing {start}–{end} of {totalItems}
+        </span>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+              <span className="text-muted-foreground">Per page:</span>
+              <span className="text-foreground">{itemsPerPage}</span>
+              <ChevronDown className="text-muted-foreground h-4 w-4" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              sideOffset={4}
+              align="start"
+              className="bg-card border-border z-50 min-w-28 overflow-hidden rounded-xl border py-1 shadow-lg"
+            >
+              {PER_PAGE_OPTIONS.map((n) => (
+                <DropdownMenu.Item
+                  key={n}
+                  onSelect={() => onPerPageChange(n)}
+                  className={cn(
+                    "cursor-pointer px-4 py-2.5 text-sm outline-none transition-colors",
+                    itemsPerPage === n
+                      ? "bg-muted text-foreground font-semibold"
+                      : "text-foreground hover:bg-muted",
+                  )}
+                >
+                  {n}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
+
+      {/* Right: page buttons */}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="size-8 rounded-lg"
+        >
+          <ChevronLeft className="size-4" />
+        </Button>
+
+        {pages.map((p, idx) =>
+          p === "ellipsis" ? (
+            <span
+              key={`ellipsis-${idx}`}
+              className="text-muted-foreground px-1 text-sm"
+            >
+              …
+            </span>
+          ) : (
+            <Button
+              key={p}
+              variant="ghost"
+              size="icon"
+              onClick={() => onPageChange(p)}
+              className={cn(
+                "size-8 rounded-lg text-sm",
+                p === currentPage
+                  ? "bg-muted text-foreground font-semibold"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {p}
+            </Button>
+          ),
+        )}
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="size-8 rounded-lg"
+        >
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function filterAlerts(alerts: Alert[], filter: AlertFilterType): Alert[] {
   if (filter === "all") return alerts;
   if (filter === "resolved")
@@ -298,32 +432,31 @@ interface AlertsTableProps {
   initialData?: Alert[];
   isLoading: boolean;
 }
+
 export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<AlertFilterType>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [secondsAgo, setSecondsAgo] = useState(0);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
-
   const [refreshError, setRefreshError] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const isPendingRef = useRef(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsAgo((prev) => prev + 1);
-    }, 1000);
+    const interval = setInterval(() => setSecondsAgo((prev) => prev + 1), 1000);
     return () => clearInterval(interval);
   }, []);
 
   const handleRefresh = useCallback(async () => {
     if (isPendingRef.current) return;
     isPendingRef.current = true;
-
     setIsRefreshing(true);
     try {
       await queryClient.invalidateQueries({ queryKey: ALERT_QUERY_KEYS.all });
-
       setSecondsAgo(0);
       setRefreshError(false);
     } catch {
@@ -335,25 +468,40 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
   }, [queryClient]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      handleRefresh();
-    }, REFRESH_INTERVAL_MS);
+    const interval = setInterval(handleRefresh, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [handleRefresh]);
 
+  // Reset to page 1 when filter changes
+  const handleFilterChange = (newFilter: AlertFilterType) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
+
+  const handlePerPageChange = (perPage: number) => {
+    setItemsPerPage(perPage);
+    setCurrentPage(1);
+  };
+
   const displayed = sortAlertsByNewest(filterAlerts(initialData, filter));
+  const totalPages = Math.max(1, Math.ceil(displayed.length / itemsPerPage));
+
+  const paginatedAlerts = displayed.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   const unreadCount = initialData.filter(
     (a) => a.status === "unresolved",
   ).length;
-
   const showLoadingSkeleton = isLoading;
 
-  const showRefreshSpinner = isRefreshing;
   return (
     <>
       <div className="bg-card border-border overflow-hidden rounded-xl border">
+        {/* Header bar */}
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-          <FilterDropdown value={filter} onChange={setFilter} />
+          <FilterDropdown value={filter} onChange={handleFilterChange} />
           <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-[#EDEDED] px-3 py-2">
             <span className="flex items-center gap-1.5 text-sm">
               <span className="bg-secondary inline-block h-1.5 w-1.5 rounded-full" />
@@ -374,19 +522,20 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
             <Button
               variant="ghost"
               onClick={handleRefresh}
-              disabled={showRefreshSpinner}
+              disabled={isRefreshing}
               className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors disabled:pointer-events-none"
             >
               <RefreshCw
                 className={cn(
                   "size-4 transition-transform duration-500",
-
-                  showRefreshSpinner && "animate-spin",
+                  isRefreshing && "animate-spin",
                 )}
               />
             </Button>
           </div>
         </div>
+
+        {/* Desktop table */}
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-160 table-fixed">
             <colgroup>
@@ -420,7 +569,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <SkeletonRow key={i} />
                   ))
-                : displayed.map((alert) => {
+                : paginatedAlerts.map((alert) => {
                     const Icon = ICON_MAP[alert.iconType] || AlertTriangle;
                     const isActionable = alert.status === "unresolved";
                     return (
@@ -476,7 +625,7 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                       </tr>
                     );
                   })}
-              {!showLoadingSkeleton && displayed.length === 0 && (
+              {!showLoadingSkeleton && paginatedAlerts.length === 0 && (
                 <tr>
                   <td
                     colSpan={5}
@@ -490,11 +639,11 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
           </table>
         </div>
 
+        {/* Mobile cards */}
         <div className="grid gap-4 md:hidden">
-          {displayed.map((alert) => {
+          {paginatedAlerts.map((alert) => {
             const Icon = ICON_MAP[alert.iconType] || AlertTriangle;
             const isActionable = alert.status === "unresolved";
-
             return (
               <article
                 key={alert.id}
@@ -503,12 +652,10 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                 <div className="mb-7">
                   <SeverityBadge severity={alert.severity} />
                 </div>
-
                 <div className="flex items-center gap-4">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#E8E8E8]">
                     <Icon className="size-4 text-[#121212]" />
                   </div>
-
                   <div className="min-w-0">
                     <h3 className="truncate text-base font-semibold text-foreground">
                       {alert.title}
@@ -518,10 +665,8 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                     </p>
                   </div>
                 </div>
-
                 <div className="mt-8 flex items-center justify-between gap-4">
                   <p className="text-sm text-muted-foreground">{alert.time}</p>
-
                   <Button
                     onClick={() => isActionable && setSelectedAlertId(alert.id)}
                     disabled={!isActionable}
@@ -536,14 +681,27 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
                       ? "Inspect"
                       : alert.status === "resolved"
                         ? "Resolved"
-                        : "No action needed"}{" "}
+                        : "No action needed"}
                   </Button>
                 </div>
               </article>
             );
           })}
         </div>
+
+        {/* Pagination bar — shared for both desktop + mobile */}
+        {!showLoadingSkeleton && (
+          <PaginationBar
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={displayed.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onPerPageChange={handlePerPageChange}
+          />
+        )}
       </div>
+
       <InspectModal
         alertId={selectedAlertId}
         onClose={() => setSelectedAlertId(null)}
