@@ -43,7 +43,7 @@ function ChartTooltip({
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md text-xs">
       <p className="text-muted-foreground mb-0.5">{label}</p>
       <p className="font-semibold text-foreground">
-        {formatNaira(payload[0].value)}
+        {formatExactNaira(payload[0].value)}
       </p>
     </div>
   );
@@ -65,15 +65,30 @@ function SummarySkeleton() {
   );
 }
 
+function formatExactNaira(value: number): string {
+  return `₦${Math.round(value).toLocaleString()}`;
+}
+
 export function SummaryPanel({ period, onCheckCalculator }: SummaryPanelProps) {
   const { data, isLoading, isError, hasInverter } = useSavingsMetrics();
 
   const chart = data?.chart ?? [];
-  const trendData = chart.length
-    ? chart.map((point) => ({
-        label: formatSavingsChartLabel(point.label, data?.granularity),
-        value: point.savingsNgn,
-      }))
+  const now = new Date();
+const trendData = chart.length
+    ? chart
+        .filter((point) => {
+            if (data?.granularity === "hour") {
+                const pt = new Date(point.label);
+                if (!Number.isNaN(pt.getTime())) {
+                    return pt <= now;
+                }
+            }
+            return true;
+        })
+        .map((point) => ({
+            label: formatSavingsChartLabel(point.label, data?.granularity),
+            value: point.savingsNgn,
+        }))
     : [];
 
   const minLabel = trendData.length
