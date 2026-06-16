@@ -26,19 +26,27 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
         const cumulative = prevTotal + item.savingsNgn;
 
         const parts = item.month.split("-");
-        const parsed =
-          parts.length === 2
-            ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1)
-            : null;
-        const formattedMonth =
-          parsed && !isNaN(parsed.getTime())
-            ? parsed
-                .toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                })
-                .toUpperCase()
-            : item.month;
+        let formattedMonth = item.month;
+
+        if (parts.length === 3) {
+          const parsed = new Date(
+            parseInt(parts[0]),
+            parseInt(parts[1]) - 1,
+            parseInt(parts[2]),
+          );
+          if (!isNaN(parsed.getTime())) {
+            formattedMonth = parsed
+              .toLocaleDateString("en-US", { month: "short", day: "numeric" })
+              .toUpperCase();
+          }
+        } else if (parts.length === 2) {
+          const parsed = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1);
+          if (!isNaN(parsed.getTime())) {
+            formattedMonth = parsed
+              .toLocaleDateString("en-US", { month: "short", year: "numeric" })
+              .toUpperCase();
+          }
+        }
 
         return [...acc, { month: formattedMonth, actual: cumulative }];
       },
@@ -78,10 +86,7 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
       </div>
 
       <div className="relative w-full mt-[37.7px] h-55 sm:h-70 lg:h-88.75">
-        <p
-          className="absolute left-0 text-[11px] font-medium leading-none pointer-events-none z-10 whitespace-nowrap text-amber-30"
-          style={{ top: "58px" }}
-        >
+        <p className="absolute left-0 top-14.5 text-[11px] font-medium leading-none pointer-events-none z-10 whitespace-nowrap text-amber-30">
           Historical performance tracker
         </p>
 
@@ -97,8 +102,16 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
             >
               <defs>
                 <linearGradient id="actualFade" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-amber-50)" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="var(--color-amber-50)" stopOpacity={0} />
+                  <stop
+                    offset="0%"
+                    stopColor="var(--color-amber-50)"
+                    stopOpacity={0.35}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="var(--color-amber-50)"
+                    stopOpacity={0}
+                  />
                 </linearGradient>
               </defs>
 
@@ -117,7 +130,7 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
                         new Set([
                           formattedData[0].month,
                           formattedData[formattedData.length - 1].month,
-                        ])
+                        ]),
                       )
                     : undefined
                 }
@@ -142,7 +155,11 @@ export function CumulativeSavingsChart({ chart }: CumulativeSavingsChartProps) {
               />
               <Tooltip
                 formatter={(
-                  value: string | number | readonly (string | number)[] | undefined,
+                  value:
+                    | string
+                    | number
+                    | readonly (string | number)[]
+                    | undefined,
                 ): [string, string] => [
                   `₦${Number(Array.isArray(value) ? value[0] : (value ?? 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
                   "Actual savings",
