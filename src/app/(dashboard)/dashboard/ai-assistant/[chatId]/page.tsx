@@ -326,6 +326,14 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           return;
         }
       }
+
+      if (isCompleteMessage && activeStreamingId) {
+        sessionStorage.removeItem(`pending-chat-message:${chatId}`);
+        streamingMessageIdRef.current = null;
+        setSending(false);
+        clearSendingTimeout();
+      }
+
       setMessages((prev) => {
         if (!activeStreamingId) {
           if (incoming.isChunk) return prev;
@@ -410,12 +418,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return prev.map((message) => {
           if (message.id !== activeStreamingId) return message;
           if (isCompleteMessage) {
-            sessionStorage.removeItem(`pending-chat-message:${chatId}`);
-
-            streamingMessageIdRef.current = null;
-            setSending(false);
-            clearSendingTimeout();
-
             const rawContent = incoming.text || message.content;
             const existingCards = message.cards || [];
             let parsedContent = rawContent;
@@ -515,11 +517,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       });
       if (incoming.sessionId) {
         localStorage.setItem(`chat-session:${chatId}`, incoming.sessionId);
-      }
-      if (isCompleteMessage) {
-        streamingMessageIdRef.current = null;
-        setSending(false);
-        clearSendingTimeout();
       }
     });
   }, [
@@ -644,7 +641,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       (lastMessage?.content?.trim() || lastMessage?.cards?.length);
 
     if (lastIsCompleteAI) {
-      sessionStorage.removeItem(key);
       pendingMessageSentRef.current = false;
       return;
     }
