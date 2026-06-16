@@ -3,14 +3,10 @@ import { motion } from "motion/react";
 import Image from "next/image";
 
 const logos = [
-  { src: "/images/logo1.svg", alt: "Logoipsum" },
-  { src: "/images/logo2.svg", alt: "Quantum" },
-  { src: "/images/logo3.svg", alt: "Hexalink" },
-  { src: "/images/logo4.svg", alt: "Apex" },
-  { src: "/images/logo5.svg", alt: "Logoipsum 2" },
-  { src: "/images/logo6.svg", alt: "Bubbles" },
-  { src: "/images/logo7.svg", alt: "Predator" },
-  { src: "/images/logo8.svg", alt: "Brand Standard" },
+  { src: "/images/logo1.png", alt: "Victron" },
+  { src: "/images/logo2.png", alt: "Sunsynk" },
+  { src: "/images/logo3.png", alt: "Growatt" },
+  { src: "/images/logo4.png", alt: "Deye" },
 ];
 
 export function WorksWith() {
