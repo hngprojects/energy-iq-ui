@@ -17,6 +17,30 @@ if (!isServer) {
 
 let refreshingPromise: Promise<RefreshTokenResponse | null> | null = null;
 
+function getRefreshPromise(): Promise<RefreshTokenResponse | null> {
+  if (!refreshingPromise) {
+    refreshingPromise = refreshAuthSession()
+      .then((ok) => {
+        if (!ok) {
+          throw new Error("Session refresh failed");
+        }
+        const { token, refreshToken } = useAuthStore.getState();
+        if (!token || !refreshToken) {
+          throw new Error("Session refresh missing tokens");
+        }
+        return {
+          accessToken: token,
+          refreshToken,
+        } satisfies RefreshTokenResponse;
+      })
+      .finally(() => {
+        refreshingPromise = null;
+      });
+  }
+
+  return refreshingPromise;
+}
+
 function getBaseUrl(): string | undefined {
   return isServer
     ? process.env.API_BASE_URL
@@ -88,6 +112,11 @@ export async function apiFetch<TResponse>(
     const { token } = useAuthStore.getState();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+    } else if (useAuthStore.getState().isAuthenticated) {
+      const refreshData = await getRefreshPromise();
+      if (refreshData?.accessToken) {
+        headers["Authorization"] = `Bearer ${refreshData.accessToken}`;
+      }
     }
   }
 
@@ -134,27 +163,7 @@ export async function apiFetch<TResponse>(
         !isRefreshPath
       ) {
         try {
-          if (!refreshingPromise) {
-            refreshingPromise = refreshAuthSession()
-              .then((ok) => {
-                if (!ok) {
-                  throw new Error("Session refresh failed");
-                }
-                const { token, refreshToken } = useAuthStore.getState();
-                if (!token || !refreshToken) {
-                  throw new Error("Session refresh missing tokens");
-                }
-                return {
-                  accessToken: token,
-                  refreshToken,
-                } satisfies RefreshTokenResponse;
-              })
-              .finally(() => {
-                refreshingPromise = null;
-              });
-          }
-
-          const refreshData = await refreshingPromise;
+          const refreshData = await getRefreshPromise();
           if (refreshData?.accessToken) {
             // Retry the original request with new token
             const newHeaders = {
