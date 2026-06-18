@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
 import { InverterTypeStep } from "@/components/onboarding/inverter-type-step";
