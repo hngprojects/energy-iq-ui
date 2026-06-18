@@ -15,9 +15,15 @@ if (!isServer) {
   axios.defaults.withCredentials = true;
 }
 
-let refreshingPromise: Promise<RefreshTokenResponse | null> | null = null;
+let refreshingPromise: Promise<RefreshTokenResponse> | null = null;
 
-function getRefreshPromise(): Promise<RefreshTokenResponse | null> {
+function handleSessionRefreshFailure(): never {
+  useAuthStore.getState().logout();
+  window.location.replace("/login");
+  throw new ApiError("Your session has expired. Please sign in again.", 401);
+}
+
+function getRefreshPromise(): Promise<RefreshTokenResponse> {
   if (!refreshingPromise) {
     refreshingPromise = refreshAuthSession()
       .then((ok) => {
@@ -113,9 +119,11 @@ export async function apiFetch<TResponse>(
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     } else if (useAuthStore.getState().isAuthenticated) {
-      const refreshData = await getRefreshPromise();
-      if (refreshData?.accessToken) {
+      try {
+        const refreshData = await getRefreshPromise();
         headers["Authorization"] = `Bearer ${refreshData.accessToken}`;
+      } catch {
+        handleSessionRefreshFailure();
       }
     }
   }
@@ -164,18 +172,16 @@ export async function apiFetch<TResponse>(
       ) {
         try {
           const refreshData = await getRefreshPromise();
-          if (refreshData?.accessToken) {
-            // Retry the original request with new token
-            const newHeaders = {
-              ...headers,
-              Authorization: `Bearer ${refreshData.accessToken}`,
-            };
-            return apiFetch<TResponse>(
-              path,
-              { ...config, headers: newHeaders },
-              proxy,
-            );
-          }
+          // Retry the original request with new token
+          const newHeaders = {
+            ...headers,
+            Authorization: `Bearer ${refreshData.accessToken}`,
+          };
+          return apiFetch<TResponse>(
+            path,
+            { ...config, headers: newHeaders },
+            proxy,
+          );
         } catch {
           // Refresh failed, fall through to logout
         }
