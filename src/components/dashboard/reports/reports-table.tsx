@@ -24,6 +24,8 @@ import {
   FILTER_OPTIONS,
 } from "@/lib/mocks/reports-data";
 import { Button } from "@/components/ui/button";
+import { ReportViewModal } from "@/components/dashboard/reports/report-view-modal";
+import { ShareReportModal } from "@/components/dashboard/reports/share-report-modal";
 
 const ICON_MAP = {
   battery_low: AlertTriangle,
@@ -66,7 +68,6 @@ function ReportCard({
   return (
     <div className="bg-card border-border flex w-86.25 flex-col rounded-[8px] border p-6 sm:hidden">
       <div className="flex flex-col gap-4">
-        {/* Status */}
         <div className="flex items-center gap-1.5">
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
@@ -80,7 +81,6 @@ function ReportCard({
           </span>
         </div>
 
-        {/* Icon + Title/Subtitle */}
         <div className="flex items-center gap-3">
           <div className="bg-[#E8E8E8] flex size-10 shrink-0 items-center justify-center rounded-full">
             <Icon className="text-[#121212] size-4" />
@@ -95,7 +95,6 @@ function ReportCard({
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex items-center justify-between gap-3">
           <Button
             onClick={() => onView()}
@@ -116,7 +115,6 @@ function ReportCard({
   );
 }
 
-// Row skeleton
 function SkeletonRow() {
   return (
     <tr className="border-border border-b last:border-0">
@@ -151,7 +149,6 @@ function SkeletonRow() {
   );
 }
 
-// Filter dropdown
 function FilterDropdown({
   value,
   onChange,
@@ -167,7 +164,6 @@ function FilterDropdown({
       <DropdownMenu.Trigger asChild>
         <button className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
           <span className="text-muted-foreground">Report Type:</span>
-          {/* Show selected value on desktop only */}
           <span className="text-foreground hidden sm:inline">{currentLabel}</span>
           <ChevronDown className="text-muted-foreground h-4 w-4" />
         </button>
@@ -209,6 +205,8 @@ export function ReportsTable() {
   const [reports] = useState<Report[]>(reportsMock);
   const [filter, setFilter] = useState<ReportFilterType>("all");
   const [isRefreshing] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [shareReport, setShareReport] = useState<Report | null>(null);
 
   const displayed = filterReports(reports, filter);
 
@@ -248,7 +246,7 @@ export function ReportsTable() {
                 <ReportCard
                   key={report.id}
                   report={report}
-                  onView={() => {}}
+                  onView={() => setSelectedReport(report)}
                 />
               ))}
           {!isRefreshing && displayed.length === 0 && (
@@ -374,7 +372,7 @@ export function ReportsTable() {
                         <td className="w-40.5 p-[12px_24px] text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <Button
-                              onClick={() => {}}
+                              onClick={() => setSelectedReport(report)}
                               className="bg-secondary text-primary-foreground hover:bg-secondary/80 w-16.5 h-10 rounded-lg gap-1.5 py-2 px-4 text-sm font-medium transition-colors"
                             >
                               View
@@ -406,6 +404,18 @@ export function ReportsTable() {
           </table>
         </div>
       </div>
+
+      <ReportViewModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+        onShare={(report) => setShareReport(report)}
+      />
+
+      <ShareReportModal
+        report={shareReport}
+        open={!!shareReport}
+        onClose={() => setShareReport(null)}
+      />
     </>
   );
 }
