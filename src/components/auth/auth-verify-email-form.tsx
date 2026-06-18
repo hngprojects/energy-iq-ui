@@ -52,7 +52,6 @@ export function AuthVerifyEmailForm() {
   };
 
   const { useVerifyEmail, useResendEmailOtp } = useAuthQueries();
-  const { setTempEmail } = useAuthStore();
   const verifyMutation = useVerifyEmail();
   const resendMutation = useResendEmailOtp();
 

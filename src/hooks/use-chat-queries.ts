@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { chatService } from "@/services/chat-service";
 import { useAuthStore } from "@/stores/auth-store";
-import { ChatMessage, ChatSession } from "@/types/chat";
+import { ChatMessage } from "@/types/chat";
 import { getUserInitials } from "@/lib/user-initials";
 import {
   extractCardsFromApiMessage,
@@ -107,8 +108,10 @@ export function useActiveChat(chatId: string) {
   const userId = user?.id;
   const userInitials = getUserInitials(user);
 
-  const [chatInfo, setChatInfo] = useState<Partial<ChatSession> | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messageOverride, setMessageOverride] = useState<{
+    chatId: string;
+    messages: ChatMessage[];
+  } | null>(null);
 
   const validChatId = useMemo(() => isValidChatId(chatId), [chatId]);
 
@@ -139,20 +142,32 @@ export function useActiveChat(chatId: string) {
     },
   });
 
-  useEffect(() => {
-    if (!validChatId || !userId) {
-      setChatInfo(null);
-      setMessages([]);
-      return;
-    }
+  const baseMessages = useMemo(
+    () => (validChatId && userId ? (query.data?.messages ?? []) : []),
+    [query.data?.messages, userId, validChatId],
+  );
+  const messages =
+    messageOverride?.chatId === chatId
+      ? messageOverride.messages
+      : baseMessages;
+  const setMessages = useCallback<Dispatch<SetStateAction<ChatMessage[]>>>(
+    (value) => {
+      setMessageOverride((currentOverride) => {
+        const currentMessages =
+          currentOverride?.chatId === chatId
+            ? currentOverride.messages
+            : baseMessages;
+        const nextMessages =
+          typeof value === "function" ? value(currentMessages) : value;
 
-    if (!query.data) return;
-    setChatInfo(query.data.info);
-    setMessages(query.data.messages);
-  }, [query.data, setMessages, userId, validChatId]);
+        return { chatId, messages: nextMessages };
+      });
+    },
+    [baseMessages, chatId],
+  );
 
   return {
-    chatInfo,
+    chatInfo: validChatId && userId ? (query.data?.info ?? null) : null,
     messages,
     setMessages,
     loading: query.isLoading,
