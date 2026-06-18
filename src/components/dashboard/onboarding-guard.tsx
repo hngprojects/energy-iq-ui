@@ -15,8 +15,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const search = searchParams.toString();
   const currentUrl = `${pathname}${search ? `?${search}` : ""}`;
+  const hashParams =
+    typeof window === "undefined"
+      ? new URLSearchParams()
+      : new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const hasIncomingOAuthToken =
-    searchParams.has("accessToken") || searchParams.has("token");
+    searchParams.has("accessToken") ||
+    searchParams.has("token") ||
+    hashParams.has("accessToken") ||
+    hashParams.has("token");
 
   const isFullyOnboarded =
     status?.onboardingComplete === true &&
