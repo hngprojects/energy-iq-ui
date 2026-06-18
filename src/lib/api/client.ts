@@ -15,7 +15,37 @@ if (!isServer) {
   axios.defaults.withCredentials = true;
 }
 
-let refreshingPromise: Promise<RefreshTokenResponse | null> | null = null;
+let refreshingPromise: Promise<RefreshTokenResponse> | null = null;
+
+function handleSessionRefreshFailure(): never {
+  useAuthStore.getState().logout();
+  window.location.replace("/login");
+  throw new ApiError("Your session has expired. Please sign in again.", 401);
+}
+
+function getRefreshPromise(): Promise<RefreshTokenResponse> {
+  if (!refreshingPromise) {
+    refreshingPromise = refreshAuthSession()
+      .then((ok) => {
+        if (!ok) {
+          throw new Error("Session refresh failed");
+        }
+        const { token, refreshToken } = useAuthStore.getState();
+        if (!token || !refreshToken) {
+          throw new Error("Session refresh missing tokens");
+        }
+        return {
+          accessToken: token,
+          refreshToken,
+        } satisfies RefreshTokenResponse;
+      })
+      .finally(() => {
+        refreshingPromise = null;
+      });
+  }
+
+  return refreshingPromise;
+}
 
 function getBaseUrl(): string | undefined {
   return isServer
@@ -88,6 +118,13 @@ export async function apiFetch<TResponse>(
     const { token } = useAuthStore.getState();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+    } else if (useAuthStore.getState().isAuthenticated) {
+      try {
+        const refreshData = await getRefreshPromise();
+        headers["Authorization"] = `Bearer ${refreshData.accessToken}`;
+      } catch {
+        handleSessionRefreshFailure();
+      }
     }
   }
 
@@ -134,39 +171,17 @@ export async function apiFetch<TResponse>(
         !isRefreshPath
       ) {
         try {
-          if (!refreshingPromise) {
-            refreshingPromise = refreshAuthSession()
-              .then((ok) => {
-                if (!ok) {
-                  throw new Error("Session refresh failed");
-                }
-                const { token, refreshToken } = useAuthStore.getState();
-                if (!token || !refreshToken) {
-                  throw new Error("Session refresh missing tokens");
-                }
-                return {
-                  accessToken: token,
-                  refreshToken,
-                } satisfies RefreshTokenResponse;
-              })
-              .finally(() => {
-                refreshingPromise = null;
-              });
-          }
-
-          const refreshData = await refreshingPromise;
-          if (refreshData?.accessToken) {
-            // Retry the original request with new token
-            const newHeaders = {
-              ...headers,
-              Authorization: `Bearer ${refreshData.accessToken}`,
-            };
-            return apiFetch<TResponse>(
-              path,
-              { ...config, headers: newHeaders },
-              proxy,
-            );
-          }
+          const refreshData = await getRefreshPromise();
+          // Retry the original request with new token
+          const newHeaders = {
+            ...headers,
+            Authorization: `Bearer ${refreshData.accessToken}`,
+          };
+          return apiFetch<TResponse>(
+            path,
+            { ...config, headers: newHeaders },
+            proxy,
+          );
         } catch {
           // Refresh failed, fall through to logout
         }
