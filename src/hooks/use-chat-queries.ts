@@ -8,10 +8,6 @@ import {
   extractCardsFromApiMessage,
   hydrateChatMessagesWithCards,
 } from "@/lib/chat-cards-storage";
-import {
-  getFirstUserMessageTitle,
-  sanitizeChatTitle,
-} from "@/lib/chat-actions-storage";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -29,34 +25,7 @@ export function useChatHistory() {
     staleTime: 60_000,
     queryFn: async () => {
       const data = await chatService.getAllChats();
-      const chats = Array.isArray(data) ? data : [];
-      const chatsNeedingTitle = chats.filter(
-        (chat) =>
-          !sanitizeChatTitle(chat.title) &&
-          !sanitizeChatTitle(chat.description) &&
-          !getFirstUserMessageTitle(chat.messages),
-      );
-
-      if (!userId || chatsNeedingTitle.length === 0) return chats;
-
-      const messageResults = await Promise.allSettled(
-        chatsNeedingTitle.map(async (chat) => ({
-          chatId: chat.id,
-          messages: await chatService.getChatMessages(chat.id, userId),
-        })),
-      );
-
-      const messagesByChatId = new Map<string, ChatMessage[]>();
-      for (const result of messageResults) {
-        if (result.status === "fulfilled") {
-          messagesByChatId.set(result.value.chatId, result.value.messages);
-        }
-      }
-
-      return chats.map((chat) => ({
-        ...chat,
-        messages: chat.messages ?? messagesByChatId.get(chat.id),
-      }));
+      return Array.isArray(data) ? data : [];
     },
   });
 
