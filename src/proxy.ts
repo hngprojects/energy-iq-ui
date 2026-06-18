@@ -15,8 +15,11 @@ export const proxy: NextProxy = (request) => {
   requestHeaders.set("x-request-id", requestId);
 
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    const hasOAuthToken =
+      request.nextUrl.searchParams.has("accessToken") ||
+      request.nextUrl.searchParams.has("token");
     const tokenCookie = request.cookies.get("token");
-    if (!tokenCookie?.value) {
+    if (!tokenCookie?.value && !hasOAuthToken) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set(
         "redirect",

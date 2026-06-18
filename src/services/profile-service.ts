@@ -1,7 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
-import { uploadToCloudinary } from "@/lib/cloudinary";
 import {
+  AvatarUploadResponse,
   PersonalSettings,
+  ProfileImageUploadResponse,
   ProfileUpdateRequest,
   ProfileUpdateResponse,
 } from "@/types/profile";
@@ -26,16 +27,17 @@ export const ProfileService = {
     );
   },
 
-  uploadAvatar: async (file: File) => {
-    const profileUrl = await uploadToCloudinary(file);
+  uploadAvatar: async (file: File): Promise<AvatarUploadResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const response = await apiFetch<ProfileUpdateResponse>(
-      "/users/settings/personal",
-      { method: "PATCH", data: { profileUrl } },
+    const response = await apiFetch<ProfileImageUploadResponse>(
+      "/users/settings/personal/img",
+      { method: "POST", data: formData },
       true,
     );
 
-    return { profilePhoto: response.profilePhoto ?? profileUrl };
+    return { profilePhoto: response.uploadUrl };
   },
 
   deleteAccount: async (id: string) => {
