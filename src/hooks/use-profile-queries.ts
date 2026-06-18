@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { ProfileService } from "@/services/profile-service";
@@ -9,6 +9,15 @@ import { ProfileUpdateRequest } from "@/types/profile";
 
 export const useProfileQueries = () => {
   const { setUser, user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const usePersonalSettings = () =>
+    useQuery({
+      queryKey: ["personal-settings", user?.id],
+      queryFn: ProfileService.getPersonalSettings,
+      enabled: !!user?.id,
+      staleTime: 5 * 60 * 1000,
+    });
 
   const useUpdateProfile = (onSuccess?: () => void) =>
     useMutation({
@@ -21,6 +30,9 @@ export const useProfileQueries = () => {
           setUser(data);
         }
         toast.success("Profile updated successfully", { duration: 4000 });
+        queryClient.invalidateQueries({
+          queryKey: ["personal-settings", currentUser?.id ?? data.id],
+        });
         onSuccess?.();
       },
       onError: () => {
@@ -35,6 +47,9 @@ export const useProfileQueries = () => {
         if (user) {
           setUser({ ...user, profilePhoto: data.profilePhoto });
         }
+        queryClient.invalidateQueries({
+          queryKey: ["personal-settings", user?.id],
+        });
         onSuccess?.();
       },
       onError: () => {
@@ -58,5 +73,10 @@ export const useProfileQueries = () => {
       },
     });
 
-  return { useUpdateProfile, useUploadAvatar, useDeleteAccount };
+  return {
+    usePersonalSettings,
+    useUpdateProfile,
+    useUploadAvatar,
+    useDeleteAccount,
+  };
 };
