@@ -101,7 +101,11 @@ export default function AIAssistantPage() {
             <p className="text-sm text-destructive">
               Failed to load chat history.
             </p>
-            <Button variant="outline" size="sm" onClick={refreshHistory}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void refreshHistory()}
+            >
               Retry
             </Button>
           </div>
