@@ -1,28 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { X, Sun, FileText, AlertTriangle, Calendar, Microchip, Zap, Clock, BatteryFull, CheckCircle, Unplug } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Report, ReportIconType } from "@/lib/mocks/reports-data";
-
-const ICON_MAP: Record<ReportIconType, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
-  battery_low: AlertTriangle,
-  power_high: Unplug,
-  clock: Clock,
-  battery_full: BatteryFull,
-  check: CheckCircle,
-  solar: Sun,
-  file: FileText,
-  alert: AlertTriangle,
-  device: Zap,
-  calendar: Calendar,
-  chip: Microchip,
-};
+import type { Report } from "@/lib/mocks/reports-data";
+import { REPORT_ICON_MAP } from "@/constants/reports";
 
 interface ReportViewModalProps {
   report: Report | null;
@@ -33,7 +20,7 @@ interface ReportViewModalProps {
 export function ReportViewModal({ report, onClose, onShare }: ReportViewModalProps) {
   if (!report) return null;
 
-  const Icon = ICON_MAP[report.iconType] ?? Sun;
+  const Icon = REPORT_ICON_MAP[report.iconType] ?? REPORT_ICON_MAP.solar;
 
   return (
     <Dialog open={!!report} onOpenChange={(open) => !open && onClose()}>
@@ -223,7 +210,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
                 onShare?.(report);
               }}
               className="gap-1.5 text-sm font-medium cursor-pointer
-                w-29.5 h-10 sm:w-48
+                w-29.5 sm:w-48 h-10
                 rounded-(--radius)
                 border
                 px-(--spacing-4,16px) py-(--spacing-2,8px)
@@ -235,7 +222,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
 
             <Button
               className="gap-1.5 text-sm font-medium cursor-pointer
-                w-29.5 h-10 sm:w-48
+                w-29.5 sm:w-48 h-10
                 rounded-(--radius)
                 px-(--spacing-4,16px) py-(--spacing-2,8px)
                 hover:opacity-80 transition-opacity"

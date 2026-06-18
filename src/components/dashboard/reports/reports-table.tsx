@@ -2,18 +2,9 @@
 
 import { useState } from "react";
 import {
-  AlertTriangle,
-  Clock,
-  BatteryFull,
   CheckCircle,
-  Sun,
   ChevronDown,
-  Unplug,
-  FileText,
-  Zap,
   Download,
-  Calendar,
-  Microchip,
 } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { cn } from "@/lib/utils";
@@ -27,21 +18,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ReportViewModal } from "@/components/dashboard/reports/report-view-modal";
 import { ShareReportModal } from "@/components/dashboard/reports/share-report-modal";
-import { DownloadReadyModal } from "@/components/dashboard/reports/download-ready-modal";
+import { ReportsNotificationToast } from "@/components/dashboard/reports/reports-notification-toast";
+import { GenerateReportModal, formatDateRange } from "@/components/dashboard/reports/generate-report-modal";
+import { ScheduleReportModal } from "@/components/dashboard/reports/schedule-report-modal";
+import { REPORT_ICON_MAP, REPORT_FREQUENCY_LABELS } from "@/constants/reports";
 
-const ICON_MAP = {
-  battery_low: AlertTriangle,
-  power_high: Unplug,
-  clock: Clock,
-  battery_full: BatteryFull,
-  check: CheckCircle,
-  solar: Sun,
-  file: FileText,
-  alert: AlertTriangle,
-  device: Zap,
-  calendar: Calendar,
-  chip: Microchip,
-} as const;
 
 
 function StatusText({ status }: { status: string }) {
@@ -72,7 +53,7 @@ function ReportCard({
   completedId: string | null;
   onDownload: () => void;
 }) {
-  const Icon = ICON_MAP[report.iconType];
+  const Icon = REPORT_ICON_MAP[report.iconType];
   return (
     <div className="bg-card border-border flex w-86.25 flex-col rounded-[8px] border p-6 sm:hidden">
       <div className="flex flex-col gap-4">
@@ -235,6 +216,14 @@ export function ReportsTable() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [completedId, setCompletedId] = useState<string | null>(null);
   const [downloadedReportName, setDownloadedReportName] = useState<string>("");
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+
+  const [showGenerateToast, setShowGenerateToast] = useState(false);
+  const [generatedReportName, setGeneratedReportName] = useState("");
+  
+  const [showScheduleToast, setShowScheduleToast] = useState(false);
+  const [scheduledReportDetails, setScheduledReportDetails] = useState("");
 
   const handleDownload = (report: Report) => {
     if (downloadingId || completedId) return;
@@ -261,12 +250,16 @@ export function ReportsTable() {
           <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:w-auto">
             <Button
               variant="outline"
+              onClick={() => setShowScheduleModal(true)}
               className="border-border text-foreground h-8 w-35 rounded-lg border bg-transparent p-[8px_16px] text-xs font-medium sm:h-10 sm:w-35.75 sm:text-sm"
             >
               <span className="sm:hidden">Schedule</span>
               <span className="hidden sm:inline">Schedule Report</span>
             </Button>
-            <Button className="bg-secondary text-primary-foreground hover:bg-secondary/80 h-8 w-35 rounded-lg p-[8px_16px] text-xs font-medium sm:h-10 sm:w-35.75 sm:text-sm">
+            <Button
+              onClick={() => setShowGenerateModal(true)}
+              className="bg-secondary text-primary-foreground hover:bg-secondary/80 h-8 w-35 rounded-lg p-[8px_16px] text-xs font-medium sm:h-10 sm:w-35.75 sm:text-sm"
+            >
               Generate Report
             </Button>
           </div>
@@ -353,7 +346,7 @@ export function ReportsTable() {
                     <SkeletonRow key={i} />
                   ))
                 : displayed.map((report) => {
-                    const Icon = ICON_MAP[report.iconType];
+                    const Icon = REPORT_ICON_MAP[report.iconType];
                     return (
                       <tr
                         key={report.id}
@@ -480,11 +473,54 @@ export function ReportsTable() {
         onClose={() => setShareReport(null)}
       />
 
-      <DownloadReadyModal
-        reportName={downloadedReportName}
+      <ReportsNotificationToast
         open={!!completedId}
         onClose={() => setCompletedId(null)}
-        onOpenFile={() => toast.success(`Opening ${downloadedReportName}.pdf`)}
+        title="Download ready"
+        description={`${downloadedReportName}.pdf`}
+        actionText="Open file"
+        onAction={() => toast.success(`Opening ${downloadedReportName}.pdf`)}
+      />
+
+      <ReportsNotificationToast
+        open={showGenerateToast}
+        onClose={() => setShowGenerateToast(false)}
+        title="Report generated"
+        description={generatedReportName}
+        actionText="Open file"
+        onAction={() => {}}
+      />
+
+      <ReportsNotificationToast
+        open={showScheduleToast}
+        onClose={() => setShowScheduleToast(false)}
+        title="Report Scheduled"
+        description={scheduledReportDetails}
+        actionText="Open file"
+        onAction={() => {}}
+      />
+
+      <GenerateReportModal
+        open={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        onGenerate={({ title, type, startDate, endDate }) => {
+          const dateRange = formatDateRange(startDate, endDate);
+          const label = title || type.charAt(0).toUpperCase() + type.slice(1);
+          const fileName = dateRange
+            ? `${label} - ${dateRange}.pdf`
+            : `${label}.pdf`;
+          setGeneratedReportName(fileName);
+          setShowGenerateToast(true);
+        }}
+      />
+
+      <ScheduleReportModal
+        open={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onSaveSchedule={({ type, time }) => {
+          setScheduledReportDetails(`${REPORT_FREQUENCY_LABELS[type as keyof typeof REPORT_FREQUENCY_LABELS] ?? type}, ${time}`);
+          setShowScheduleToast(true);
+        }}
       />
     </>
   );
