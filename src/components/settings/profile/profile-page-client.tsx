@@ -10,7 +10,6 @@ import { Pencil, Check, Loader2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileQueries } from "@/hooks/use-profile-queries";
-import { useCurrentUserSync } from "@/hooks/use-current-user-sync";
 import { SelectField } from "@/components/settings/select-field";
 import { PhotoUploadDialog } from "./photo-upload-dialog";
 import { PhotoSuccessDialog } from "./photo-success-dialog";
@@ -37,17 +36,61 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+function isOlderThanUserProfile(
+  settingsUpdatedAt: string | undefined,
+  userUpdatedAt: string | undefined,
+) {
+  if (!settingsUpdatedAt || !userUpdatedAt) return false;
+
+  const settingsTime = Date.parse(settingsUpdatedAt);
+  const userTime = Date.parse(userUpdatedAt);
+
+  if (!Number.isFinite(settingsTime) || !Number.isFinite(userTime)) {
+    return false;
+  }
+
+  return settingsTime < userTime;
+}
+
 export function ProfilePageClient() {
   const { user, setUser, logout } = useAuthStore();
   const router = useRouter();
-  const { useUpdateProfile, useDeleteAccount } = useProfileQueries();
-  const { isLoading: isSyncingUser } = useCurrentUserSync();
+  const { usePersonalSettings, useUpdateProfile, useDeleteAccount } =
+    useProfileQueries();
+  const {
+    data: personalSettings,
+    isLoading: isLoadingPersonalSettings,
+  } = usePersonalSettings();
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [profileSaved, setProfileSaved] = React.useState(false);
   const [photoDialogOpen, setPhotoDialogOpen] = React.useState(false);
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const profileValues = React.useMemo<ProfileFormValues>(
+    () => ({
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      businessName:
+        personalSettings?.businessName ?? user?.businessName ?? "",
+      businessType:
+        personalSettings?.businessType ?? user?.businessType ?? "",
+      state: personalSettings?.state ?? user?.state ?? "",
+      city: personalSettings?.city ?? user?.city ?? "",
+    }),
+    [
+      personalSettings?.businessName,
+      personalSettings?.businessType,
+      personalSettings?.city,
+      personalSettings?.state,
+      user?.businessName,
+      user?.businessType,
+      user?.city,
+      user?.firstName,
+      user?.lastName,
+      user?.state,
+    ],
+  );
 
   const { mutate: deleteAccount, isPending: deletePending } = useDeleteAccount(() => {
     setDeleteDialogOpen(false);
@@ -103,14 +146,7 @@ export function ProfilePageClient() {
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      firstName: user?.firstName ?? "",
-      lastName: user?.lastName ?? "",
-      businessName: user?.businessName ?? "",
-      businessType: user?.businessType ?? "",
-      state: user?.state ?? "",
-      city: user?.city ?? "",
-    },
+    defaultValues: profileValues,
   });
 
   const selectedState = useWatch({ control, name: "state" });
@@ -120,16 +156,37 @@ export function ProfilePageClient() {
 
   React.useEffect(() => {
     if (!isEditing) {
-      reset({
-        firstName: user?.firstName ?? "",
-        lastName: user?.lastName ?? "",
-        businessName: user?.businessName ?? "",
-        businessType: user?.businessType ?? "",
-        state: user?.state ?? "",
-        city: user?.city ?? "",
-      });
+      reset(profileValues);
     }
-  }, [user, isEditing, reset]);
+  }, [profileValues, isEditing, reset]);
+
+  React.useEffect(() => {
+    if (!personalSettings || !user) return;
+    if (isOlderThanUserProfile(personalSettings.updatedAt, user.updatedAt)) {
+      return;
+    }
+
+    const nextUser = {
+      ...user,
+      businessName: personalSettings.businessName ?? user.businessName,
+      businessType: personalSettings.businessType ?? user.businessType,
+      state: personalSettings.state ?? user.state,
+      city: personalSettings.city ?? user.city,
+      aiLanguage: personalSettings.aiLanguage ?? user.aiLanguage,
+      profilePhoto: personalSettings.profileUrl ?? user.profilePhoto,
+    };
+
+    if (
+      nextUser.businessName !== user.businessName ||
+      nextUser.businessType !== user.businessType ||
+      nextUser.state !== user.state ||
+      nextUser.city !== user.city ||
+      nextUser.aiLanguage !== user.aiLanguage ||
+      nextUser.profilePhoto !== user.profilePhoto
+    ) {
+      setUser(nextUser);
+    }
+  }, [personalSettings, setUser, user]);
 
   const updateProfile = useUpdateProfile(() => {
     setIsEditing(false);
@@ -154,14 +211,7 @@ export function ProfilePageClient() {
 
   const handleCancel = () => {
     setIsEditing(false);
-    reset({
-      firstName: user?.firstName ?? "",
-      lastName: user?.lastName ?? "",
-      businessName: user?.businessName ?? "",
-      businessType: user?.businessType ?? "",
-      state: user?.state ?? "",
-      city: user?.city ?? "",
-    });
+    reset(profileValues);
   };
 
   const sectionTitle = profileSaved
@@ -169,7 +219,7 @@ export function ProfilePageClient() {
     : "Personal and Business Information.";
   const hasPhoto = !!user?.profilePhoto;
 
-  if (isSyncingUser && !user) {
+  if (!user || isLoadingPersonalSettings) {
     return (
       <div className="space-y-4">
         <div className="mb-6">

@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronDown, ChevronUp, Mic, Plus, Send } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Mic,
+  Plus,
+  Send,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
@@ -70,6 +77,7 @@ export default function NewChatPage() {
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isTextareaExpanded, setIsTextareaExpanded] = useState(false);
   const [sending, setSending] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const EXPAND_THRESHOLD = 40;
@@ -87,6 +95,7 @@ export default function NewChatPage() {
 
     isCreatingChatRef.current = true;
     setSending(true);
+    setPendingPrompt(cleanText);
     setError(null);
 
     const requestedAt = Date.now();
@@ -147,6 +156,7 @@ export default function NewChatPage() {
       console.error("Failed to start chat:", message);
       setError(message);
       setSending(false);
+      setPendingPrompt("");
     } finally {
       isCreatingChatRef.current = false;
     }
@@ -275,7 +285,8 @@ export default function NewChatPage() {
 
                 <Button
                   type="button"
-                  title="Send message"
+                  title={sending ? "Starting chat" : "Send message"}
+                  aria-label={sending ? "Starting chat" : "Send message"}
                   onClick={() => void handleStartConversation(input)}
                   disabled={!input.trim() || sending || !userId}
                   className={cn(
@@ -285,11 +296,22 @@ export default function NewChatPage() {
                       : "bg-muted text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  <Send className="h-4 w-4" />
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
           </div>
+
+          {sending ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              Starting chat
+              {pendingPrompt ? `: "${pendingPrompt.slice(0, 80)}"` : ""}...
+            </p>
+          ) : null}
 
           {error ? (
             <p className="mt-3 text-sm text-destructive">{error}</p>
@@ -317,10 +339,13 @@ export default function NewChatPage() {
                     variant="outline"
                     onClick={() => void handleStartConversation(card.title)}
                     disabled={sending}
-                    className="flex h-auto cursor-pointer flex-col items-start whitespace-normal rounded-xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20"
+                    className="flex h-auto cursor-pointer flex-col items-start whitespace-normal rounded-xl border border-border bg-card p-6 text-left shadow-sm transition-all hover:border-muted-foreground/30 hover:bg-muted/20 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    <span className="line-clamp-2 text-sm font-semibold text-foreground">
-                      {card.title}
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      {sending && pendingPrompt === card.title ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : null}
+                      <span className="line-clamp-2">{card.title}</span>
                     </span>
                     <span className="mt-1.5 line-clamp-2 text-xs font-normal text-muted-foreground">
                       {card.description}

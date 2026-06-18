@@ -28,8 +28,10 @@ import type {
 } from "@/types/chat";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import {
+  getFirstUserMessageTitle,
   getChatActionsStorageKey,
   loadStoredChatActions,
+  sanitizeChatTitle,
   saveStoredChatActions,
 } from "@/lib/chat-actions-storage";
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
@@ -665,61 +667,20 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       const hasAssistantResponse = responseWindow.some(
         (m) =>
           (m.role === "assistant" || m.role === "ai") &&
-          (m.content?.trim() || (m.cards && m.cards.length > 0)),
+          !m.failed,
       );
-      if (hasAssistantResponse) {
-        streamingMessageIdRef.current = null;
-        pendingMessageSentRef.current = false;
-        setSending(false);
-        return;
-      }
-      const assistantMessageId = `assistant-stream-${Date.now()}`;
-      streamingMessageIdRef.current = assistantMessageId;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: assistantMessageId,
-          role: "assistant" as const,
-          content: "",
-          timestamp: formatMessageTime(),
-          isStreaming: true,
-          awaitingCards: true,
-        },
-      ]);
-      setSending(true);
-      lastUserMessageRef.current = text;
-      try {
-        sendMessage(text);
-        startSendingTimeout(assistantMessageId);
-      } catch (error) {
+
+      streamingMessageIdRef.current = null;
+      pendingMessageSentRef.current = false;
+      setSending(false);
+
+      if (!hasAssistantResponse) {
         sessionStorage.setItem(
           key,
           JSON.stringify({
             content: text,
             timestamp,
           }),
-        );
-        pendingMessageSentRef.current = false;
-
-        streamingMessageIdRef.current = null;
-        setSending(false);
-        setMessages((prev) =>
-          prev.map((message) =>
-            message.id === assistantMessageId
-              ? {
-                  ...message,
-                  role: "assistant" as const,
-                  content: message.content || "",
-                  error:
-                    error instanceof Error
-                      ? error.message
-                      : "Unable to resend message. Please try again.",
-                  isStreaming: false,
-                  awaitingCards: false,
-                  failed: true,
-                }
-              : message,
-          ),
         );
       }
       return;
@@ -990,26 +951,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     }
   };
 
-  function sanitizeChatTitle(raw: string | undefined): string | undefined {
-    if (!raw) return undefined;
-    const trimmed = raw.trim();
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) return undefined;
-    return (
-      trimmed
-        .replace(/^```[a-z]*\n?/i, "")
-        .replace(/```$/, "")
-        .trim() || undefined
-    );
-  }
-
-  const firstUserMessage = messages
-    .find((m) => m.role === "user")
-    ?.content.trim();
-
   const title =
     actions.renamedTitles[chatId] ??
     sanitizeChatTitle(chatInfo?.title) ??
-    firstUserMessage?.slice(0, 60) ??
+    getFirstUserMessageTitle(messages) ??
     (loading ? "Loading chat..." : "Chat");
 
   const dateLabel = formatChatHeaderDateTime(

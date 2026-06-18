@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { chatService } from "@/services/chat-service";
 import { useAuthStore } from "@/stores/auth-store";
-import { ChatMessage, ChatSession } from "@/types/chat";
+import { ChatMessage } from "@/types/chat";
 import { getUserInitials } from "@/lib/user-initials";
 import {
   extractCardsFromApiMessage,
@@ -16,31 +18,24 @@ export function isValidChatId(chatId: string) {
 }
 
 export function useChatHistory() {
-  const [history, setHistory] = useState<ChatSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const userId = useAuthStore((state) => state.user?.id);
 
-  const fetchHistory = useCallback(async () => {
-    try {
-      setLoading(true);
+  const query = useQuery({
+    queryKey: ["chat-history", userId],
+    enabled: !!userId,
+    staleTime: 60_000,
+    queryFn: async () => {
       const data = await chatService.getAllChats();
-      setHistory(Array.isArray(data) ? data : []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch chats"));
-      setHistory([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return Array.isArray(data) ? data : [];
+    },
+  });
 
-  useEffect(() => {
-    void (async () => {
-      await fetchHistory();
-    })();
-  }, [fetchHistory]);
-
-  return { history, loading, error, refreshHistory: fetchHistory };
+  return {
+    history: query.data ?? [],
+    loading: query.isLoading || (!userId && query.fetchStatus !== "idle"),
+    error: query.error instanceof Error ? query.error : null,
+    refreshHistory: query.refetch,
+  };
 }
 
 function formatMessageTime(value?: string) {
@@ -109,71 +104,75 @@ function normalizeChatMessage(
 }
 
 export function useActiveChat(chatId: string) {
-  const requestSeqRef = useRef(0);
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
   const userInitials = getUserInitials(user);
 
-  const [chatInfo, setChatInfo] = useState<Partial<ChatSession> | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [messageOverride, setMessageOverride] = useState<{
+    chatId: string;
+    messages: ChatMessage[];
+  } | null>(null);
 
   const validChatId = useMemo(() => isValidChatId(chatId), [chatId]);
 
-  const fetchChatDetails = useCallback(async () => {
-    const requestSeq = ++requestSeqRef.current;
-    if (!validChatId || !userId) {
-      setChatInfo(null);
-      setMessages([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+  const query = useQuery({
+    queryKey: ["active-chat", chatId, userId],
+    enabled: validChatId && !!userId,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (!userId) {
+        throw new Error("User is required to load chat messages.");
+      }
 
-    try {
-      setLoading(true);
       const [info, msgs] = await Promise.all([
         chatService.getChatById(chatId),
         chatService.getChatMessages(chatId, userId),
       ]);
-      if (requestSeq !== requestSeqRef.current) return;
 
-      setChatInfo(info);
       const normalized = Array.isArray(msgs)
         ? (msgs as unknown as Record<string, unknown>[]).map((message) =>
             normalizeChatMessage(message, userId, userInitials),
           )
         : [];
 
-      setMessages(hydrateChatMessagesWithCards(chatId, normalized));
-      setError(null);
-    } catch (err) {
-      if (requestSeq !== requestSeqRef.current) return;
-      setChatInfo(null);
-      setMessages([]);
-      setError(
-        err instanceof Error ? err : new Error("Failed to load conversation"),
-      );
-    } finally {
-      if (requestSeq !== requestSeqRef.current) return;
-      setLoading(false);
-    }
-  }, [chatId, userId, userInitials, validChatId]);
+      return {
+        info,
+        messages: hydrateChatMessagesWithCards(chatId, normalized),
+      };
+    },
+  });
 
-  useEffect(() => {
-    void (async () => {
-      await fetchChatDetails();
-    })();
-  }, [fetchChatDetails]);
+  const baseMessages = useMemo(
+    () => (validChatId && userId ? (query.data?.messages ?? []) : []),
+    [query.data?.messages, userId, validChatId],
+  );
+  const messages =
+    messageOverride?.chatId === chatId
+      ? messageOverride.messages
+      : baseMessages;
+  const setMessages = useCallback<Dispatch<SetStateAction<ChatMessage[]>>>(
+    (value) => {
+      setMessageOverride((currentOverride) => {
+        const currentMessages =
+          currentOverride?.chatId === chatId
+            ? currentOverride.messages
+            : baseMessages;
+        const nextMessages =
+          typeof value === "function" ? value(currentMessages) : value;
+
+        return { chatId, messages: nextMessages };
+      });
+    },
+    [baseMessages, chatId],
+  );
 
   return {
-    chatInfo,
+    chatInfo: validChatId && userId ? (query.data?.info ?? null) : null,
     messages,
     setMessages,
-    loading,
-    error,
-    refreshChat: fetchChatDetails,
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error : null,
+    refreshChat: query.refetch,
     validChatId,
   };
 }

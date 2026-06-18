@@ -116,6 +116,7 @@ export function DashboardContent() {
 
   const { data: inverters, isLoading: invertersLoading } = useUserInverters();
   const inverterId = inverters?.[0]?.id;
+  const energyPeriod = period.toLowerCase();
 
   const {
     data: metrics,
@@ -128,7 +129,7 @@ export function DashboardContent() {
     data: energyUsage,
     isLoading: energyLoading,
     refetch: refetchEnergy,
-  } = useEnergyUsage(inverterId, period.toLowerCase());
+  } = useEnergyUsage(inverterId, energyPeriod);
 
   // const { data: powerConsumption, refetch: refetchPower } =
   //   usePowerConsumption(inverterId);
