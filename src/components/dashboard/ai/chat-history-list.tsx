@@ -6,8 +6,10 @@ import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { Button } from "@/components/ui/button";
 import {
+  getFirstUserMessageTitle,
   getChatActionsStorageKey,
   loadStoredChatActions,
+  sanitizeChatTitle,
   saveStoredChatActions,
 } from "@/lib/chat-actions-storage";
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
@@ -89,9 +91,22 @@ function formatChatTimestamp(chat: ChatSession) {
   });
 }
 
+function resolveChatTitle(
+  chat: ChatSession,
+  renamedTitles: Record<string, string>,
+) {
+  return (
+    renamedTitles[chat.id] ??
+    sanitizeChatTitle(chat.title) ??
+    getFirstUserMessageTitle(chat.messages) ??
+    sanitizeChatTitle(chat.description) ??
+    "Untitled chat"
+  );
+}
+
 function getTag(chat: ChatSession): TagType {
   if (chat.tag) return chat.tag === "Report" ? "General" : chat.tag;
-  const text = `${chat.title} ${chat.description ?? ""}`.toLowerCase();
+  const text = `${chat.title} ${chat.description ?? ""} ${getFirstUserMessageTitle(chat.messages) ?? ""}`.toLowerCase();
 
   // Solar/PV related
   if (
@@ -196,7 +211,7 @@ export function ChatHistoryList({
   const visibleChats = useMemo(() => {
     const normalizedHistory = history.map((chat) => ({
       ...chat,
-      title: actions.renamedTitles[chat.id] ?? chat.title,
+      title: resolveChatTitle(chat, actions.renamedTitles),
     }));
     return normalizedHistory
       .filter((chat) => !actions.deletedIds.includes(chat.id))
