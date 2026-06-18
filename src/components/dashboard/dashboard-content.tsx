@@ -5,6 +5,7 @@ import { Sun, Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
+import { useInverterMetricsSocket } from "@/hooks/use-inverter-metrics-socket";
 import { AlertBanner } from "@/components/dashboard/cards/alert-banner";
 import { MetricCard } from "@/components/dashboard/cards/metric-card";
 import { BatteryCard } from "@/components/dashboard/cards/battery-card";
@@ -116,6 +117,9 @@ export function DashboardContent() {
 
   const { data: inverters, isLoading: invertersLoading } = useUserInverters();
   const inverterId = inverters?.[0]?.id;
+  const energyPeriod = period.toLowerCase();
+
+  useInverterMetricsSocket(inverterId, energyPeriod);
 
   const {
     data: metrics,
@@ -128,7 +132,7 @@ export function DashboardContent() {
     data: energyUsage,
     isLoading: energyLoading,
     refetch: refetchEnergy,
-  } = useEnergyUsage(inverterId, period.toLowerCase());
+  } = useEnergyUsage(inverterId, energyPeriod);
 
   // const { data: powerConsumption, refetch: refetchPower } =
   //   usePowerConsumption(inverterId);
