@@ -72,6 +72,20 @@ export interface ProfileUpdateResponse {
   aiLanguage?: string;
 }
 
+export interface ProfileImageUploadResponse {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  fileExtname: string;
+  filename: string;
+  filesizeBytes: string;
+  publicId: string;
+  uploadStatus: "COMPLETE" | "PENDING" | "FAILED" | string;
+  uploadUrl: string;
+  uploadedByEmail: string;
+  thumbnail?: string;
+}
+
 export interface AvatarUploadResponse {
   profilePhoto: string;
 }
