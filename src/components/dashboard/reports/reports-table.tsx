@@ -24,8 +24,10 @@ import {
   FILTER_OPTIONS,
 } from "@/lib/mocks/reports-data";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { ReportViewModal } from "@/components/dashboard/reports/report-view-modal";
 import { ShareReportModal } from "@/components/dashboard/reports/share-report-modal";
+import { DownloadReadyModal } from "@/components/dashboard/reports/download-ready-modal";
 
 const ICON_MAP = {
   battery_low: AlertTriangle,
@@ -46,11 +48,11 @@ function StatusText({ status }: { status: string }) {
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-      style={{ backgroundColor: "#DFFFEB", color: "#17CC4E" }}
+      style={{ backgroundColor: "var(--color-success-bg)", color: "var(--color-success-alt)" }}
     >
       <span
         className="h-1.5 w-1.5 rounded-full shrink-0"
-        style={{ backgroundColor: "#17CC4E" }}
+        style={{ backgroundColor: "var(--color-success-alt)" }}
       />
       {status}
     </span>
@@ -60,9 +62,15 @@ function StatusText({ status }: { status: string }) {
 function ReportCard({
   report,
   onView,
+  downloadingId,
+  completedId,
+  onDownload,
 }: {
   report: Report;
   onView: () => void;
+  downloadingId: string | null;
+  completedId: string | null;
+  onDownload: () => void;
 }) {
   const Icon = ICON_MAP[report.iconType];
   return (
@@ -71,19 +79,19 @@ function ReportCard({
         <div className="flex items-center gap-1.5">
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-            style={{ backgroundColor: "#DFFFEB", color: "#17CC4E" }}
+            style={{ backgroundColor: "var(--color-success-bg)", color: "var(--color-success-alt)" }}
           >
             <span
               className="h-1.5 w-1.5 rounded-full shrink-0"
-              style={{ backgroundColor: "#17CC4E" }}
+              style={{ backgroundColor: "var(--color-success-alt)" }}
             />
             {report.status}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-[#E8E8E8] flex size-10 shrink-0 items-center justify-center rounded-full">
-            <Icon className="text-[#121212] size-4" />
+          <div className="bg-(--color-border-disabled) flex size-10 shrink-0 items-center justify-center rounded-full">
+            <Icon className="text-foreground size-4" />
           </div>
           <div className="overflow-hidden">
             <p className="text-foreground truncate text-sm font-semibold">
@@ -103,11 +111,24 @@ function ReportCard({
             View
           </Button>
           <Button
-            onClick={() => console.log("Download", report.id)}
+            onClick={onDownload}
             variant="outline"
             className="border-border text-foreground flex h-10 flex-1 items-center justify-center rounded-lg border bg-transparent p-[8px_16px] text-xs font-medium"
+            disabled={downloadingId === report.id || completedId === report.id}
           >
-            Download
+            {downloadingId === report.id ? (
+              <span className="flex items-center gap-1.5">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Loading...
+              </span>
+            ) : completedId === report.id ? (
+              <span className="flex items-center gap-1.5 text-(--color-success-alt)">
+                <CheckCircle className="size-3.5 text-(--color-success-alt)" />
+                Ready
+              </span>
+            ) : (
+              "Download"
+            )}
           </Button>
         </div>
       </div>
@@ -162,11 +183,14 @@ function FilterDropdown({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+        <Button
+          variant="outline"
+          className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+        >
           <span className="text-muted-foreground">Report Type:</span>
           <span className="text-foreground hidden sm:inline">{currentLabel}</span>
           <ChevronDown className="text-muted-foreground h-4 w-4" />
-        </button>
+        </Button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
@@ -208,6 +232,21 @@ export function ReportsTable() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [shareReport, setShareReport] = useState<Report | null>(null);
 
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [completedId, setCompletedId] = useState<string | null>(null);
+  const [downloadedReportName, setDownloadedReportName] = useState<string>("");
+
+  const handleDownload = (report: Report) => {
+    if (downloadingId || completedId) return;
+    setDownloadingId(report.id);
+    setCompletedId(null);
+    setTimeout(() => {
+      setDownloadingId(null);
+      setCompletedId(report.id);
+      setDownloadedReportName(report.title);
+    }, 1500);
+  };
+
   const displayed = filterReports(reports, filter);
 
   return (
@@ -247,6 +286,9 @@ export function ReportsTable() {
                   key={report.id}
                   report={report}
                   onView={() => setSelectedReport(report)}
+                  downloadingId={downloadingId}
+                  completedId={completedId}
+                  onDownload={() => handleDownload(report)}
                 />
               ))}
           {!isRefreshing && displayed.length === 0 && (
@@ -319,8 +361,8 @@ export function ReportsTable() {
                       >
                         <td className="w-75 p-[12px_24px]">
                           <div className="flex items-center gap-3">
-                            <div className="bg-[#E8E8E8] flex size-10 shrink-0 items-center justify-center rounded-full">
-                              <Icon className="text-[#121212] size-4" />
+                            <div className="bg-(--color-border-disabled) flex size-10 shrink-0 items-center justify-center rounded-full">
+                              <Icon className="text-foreground size-4" />
                             </div>
                             <div className="overflow-hidden">
                               <p className="text-foreground truncate text-base font-semibold">
@@ -335,7 +377,7 @@ export function ReportsTable() {
                         <td className="w-34.5 p-[12px_24px]">
                           <span
                             className="font-sans text-sm font-normal leading-none tracking-normal"
-                            style={{ color: "#525252" }}
+                            style={{ color: "var(--color-slate-80)" }}
                           >
                             {report.type}
                           </span>
@@ -347,13 +389,13 @@ export function ReportsTable() {
                           <div className="inline-flex flex-col items-end">
                             <p
                               className="font-sans text-sm font-semibold leading-none tracking-normal whitespace-nowrap"
-                              style={{ color: "#E08A1E" }}
+                              style={{ color: "var(--color-amber-60)" }}
                             >
                               {report.keyMetrics.value}
                             </p>
                             <p
                               className="font-sans mt-1 text-xs font-normal leading-none tracking-normal whitespace-nowrap"
-                              style={{ color: "#999999" }}
+                              style={{ color: "var(--color-slate-70)" }}
                             >
                               {report.keyMetrics.label}
                             </p>
@@ -377,13 +419,34 @@ export function ReportsTable() {
                             >
                               View
                             </Button>
-                            <button
-                              onClick={() => console.log("Download", report.id)}
-                              className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#E8E8E8] transition-colors hover:bg-[#d4d4d4]"
-                              aria-label="Download report"
-                            >
-                              <Download className="size-4 text-[#121212]" />
-                            </button>
+                            {downloadingId === report.id ? (
+                              <Button
+                                disabled
+                                variant="ghost"
+                                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--color-border-disabled) cursor-not-allowed p-0 hover:bg-(--color-border-disabled)"
+                                aria-label="Downloading report"
+                              >
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                              </Button>
+                            ) : completedId === report.id ? (
+                              <Button
+                                disabled
+                                variant="ghost"
+                                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--color-border-disabled) cursor-default p-0 hover:bg-(--color-border-disabled)"
+                                aria-label="Download complete"
+                              >
+                                <CheckCircle className="size-4 text-(--color-success-alt)" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                onClick={() => handleDownload(report)}
+                                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--color-border-disabled) transition-colors hover:bg-(--color-slate-30) p-0 text-foreground hover:text-foreground"
+                                aria-label="Download report"
+                              >
+                                <Download className="size-4 text-foreground" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -415,6 +478,13 @@ export function ReportsTable() {
         report={shareReport}
         open={!!shareReport}
         onClose={() => setShareReport(null)}
+      />
+
+      <DownloadReadyModal
+        reportName={downloadedReportName}
+        open={!!completedId}
+        onClose={() => setCompletedId(null)}
+        onOpenFile={() => toast.success(`Opening ${downloadedReportName}.pdf`)}
       />
     </>
   );

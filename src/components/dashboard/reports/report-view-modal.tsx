@@ -70,14 +70,14 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
               aria-label="Close modal"
               className="size-8 p-0 shrink-0 flex items-center justify-center hover:bg-transparent hover:opacity-75 transition-opacity"
             >
-              <X className="size-6 text-[#141414]" />
+              <X className="size-6 text-(--color-surface-100)" />
             </Button>
           </div>
 
           <div className="flex items-stretch gap-[13.5px] sm:gap-4">
             <div
               className="flex flex-1 flex-col rounded-sm border bg-muted"
-              style={{ borderColor: "#E8E8E8", padding: 12 }}
+              style={{ borderColor: "var(--color-border-disabled)", padding: 12 }}
             >
               <p
                 className="font-medium text-muted-foreground"
@@ -101,7 +101,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
 
             <div
               className="flex flex-1 flex-col rounded-sm border bg-muted"
-              style={{ borderColor: "#E8E8E8", padding: 12 }}
+              style={{ borderColor: "var(--color-border-disabled)", padding: 12 }}
             >
               <p
                 className="font-medium text-muted-foreground"
@@ -125,7 +125,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
 
             <div
               className="flex flex-1 flex-col rounded-sm border bg-muted"
-              style={{ borderColor: "#E8E8E8", padding: 12 }}
+              style={{ borderColor: "var(--color-border-disabled)", padding: 12 }}
             >
               <p
                 className="font-medium text-muted-foreground"
@@ -171,15 +171,15 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <circle cx="9" cy="9" r="8" stroke="#F5A623" strokeWidth="1.5" />
-                    <line x1="9" y1="5" x2="9" y2="10" stroke="#F5A623" strokeWidth="1.5" strokeLinecap="round" />
-                    <circle cx="9" cy="13" r="0.75" fill="#F5A623" />
+                    <circle cx="9" cy="9" r="8" stroke="var(--primary)" strokeWidth="1.5" />
+                    <line x1="9" y1="5" x2="9" y2="10" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="9" cy="13" r="0.75" fill="var(--primary)" />
                   </svg>
                 </div>
 
                 <p
-                  className="font-normal"
-                  style={{ fontSize: 14, lineHeight: "21px", color: "#333333" }}
+                  className="font-normal text-(--color-surface-100)"
+                  style={{ fontSize: 14, lineHeight: "21px" }}
                 >
                   Unit 2 inverter logged 3 throttle events between 21-22 April. Physical inspection pending.
                 </p>
@@ -197,14 +197,14 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <circle cx="9" cy="9" r="8" stroke="#72B800" strokeWidth="1.5" />
-                    <path d="M5.5 9.5L7.5 11.5L12.5 6.5" stroke="#72B800" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="9" cy="9" r="8" stroke="var(--color-success-alt)" strokeWidth="1.5" />
+                    <path d="M5.5 9.5L7.5 11.5L12.5 6.5" stroke="var(--color-success-alt)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
 
                 <p
-                  className="font-normal"
-                  style={{ fontSize: 14, lineHeight: "21px", color: "#333333" }}
+                  className="font-normal text-(--color-surface-100)"
+                  style={{ fontSize: 14, lineHeight: "21px" }}
                 >
                   April monthly yield of 703kWh is 4% above the modelled forecast.
                 </p>
@@ -228,7 +228,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
                 border
                 px-(--spacing-4,16px) py-(--spacing-2,8px)
                 hover:opacity-80 transition-opacity"
-              style={{ color: "#0B0C0C", backgroundColor: "#FBFBFB", borderColor: "#E8E8E8" }}
+              style={{ color: "var(--foreground)", backgroundColor: "var(--color-surface-40)", borderColor: "var(--color-border-disabled)" }}
             >
               Share Report
             </Button>
@@ -239,7 +239,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
                 rounded-(--radius)
                 px-(--spacing-4,16px) py-(--spacing-2,8px)
                 hover:opacity-80 transition-opacity"
-              style={{ backgroundColor: "#111928", color: "#FDFDFD" }}
+              style={{ backgroundColor: "var(--secondary)", color: "var(--color-surface-white)" }}
             >
               Download PDF
             </Button>
