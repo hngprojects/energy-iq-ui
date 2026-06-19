@@ -162,9 +162,6 @@ export function ProfilePageClient() {
 
   React.useEffect(() => {
     if (!personalSettings || !user) return;
-    if (isOlderThanUserProfile(personalSettings.updatedAt, user.updatedAt)) {
-      return;
-    }
 
     const nextUser = {
       ...user,
@@ -174,6 +171,7 @@ export function ProfilePageClient() {
       city: personalSettings.city ?? user.city,
       aiLanguage: personalSettings.aiLanguage ?? user.aiLanguage,
       profilePhoto: personalSettings.profileUrl ?? user.profilePhoto,
+      profileUrl: personalSettings.profileUrl ?? user.profileUrl,
     };
 
     if (
@@ -182,7 +180,8 @@ export function ProfilePageClient() {
       nextUser.state !== user.state ||
       nextUser.city !== user.city ||
       nextUser.aiLanguage !== user.aiLanguage ||
-      nextUser.profilePhoto !== user.profilePhoto
+      nextUser.profilePhoto !== user.profilePhoto ||
+      nextUser.profileUrl !== user.profileUrl
     ) {
       setUser(nextUser);
     }
@@ -217,7 +216,8 @@ export function ProfilePageClient() {
   const sectionTitle = profileSaved
     ? "User Profile"
     : "Personal and Business Information.";
-  const hasPhoto = !!user?.profilePhoto;
+  const profilePhoto = user?.profilePhoto ?? user?.profileUrl;
+  const hasPhoto = !!profilePhoto;
 
   if (!user || isLoadingPersonalSettings) {
     return (
@@ -264,7 +264,7 @@ export function ProfilePageClient() {
           <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#D1D5DB]">
             {hasPhoto ? (
               <Image
-                src={user!.profilePhoto!}
+                src={profilePhoto!}
                 alt="Profile photo"
                 fill
                 className="object-cover"
