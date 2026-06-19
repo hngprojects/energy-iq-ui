@@ -7,6 +7,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   profilePhoto?: string;
+  profileUrl?: string;
   businessName?: string;
   businessType?: string;
   state?: string;

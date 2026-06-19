@@ -98,16 +98,26 @@ interface AuthState {
 function normalizeUser(user: User | null): User | null {
   if (!user) return null;
   const rawUser = user as unknown as Record<string, unknown>;
+  const normalized: User = {
+    ...user,
+    profilePhoto:
+      user.profilePhoto ??
+      (typeof rawUser.profileUrl === "string" ? rawUser.profileUrl : undefined),
+    profileUrl:
+      user.profileUrl ??
+      (typeof rawUser.profilePhoto === "string"
+        ? rawUser.profilePhoto
+        : undefined),
+  };
+
   if ("AiLanguage" in rawUser && typeof rawUser.AiLanguage === "string") {
-    const normalized: User = {
-      ...user,
-      aiLanguage: user.aiLanguage ?? rawUser.AiLanguage,
-    };
-    const cleaned = { ...normalized } as unknown as Record<string, unknown>;
+    normalized.aiLanguage = normalized.aiLanguage ?? rawUser.AiLanguage;
+    const cleaned = { ...normalized } as Record<string, unknown>;
     delete cleaned.AiLanguage;
     return cleaned as unknown as User;
   }
-  return user;
+
+  return normalized;
 }
 
 export const useAuthStore = create<AuthState>()(

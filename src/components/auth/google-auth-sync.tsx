@@ -91,7 +91,7 @@ function GoogleAuthSyncInner() {
           await persistTokensToSession(token, refreshToken);
           const realUser = await AuthService.me();
           if (realUser?.id) {
-            setAuthLocal(realUser, token, refreshToken);
+            setAuthLocal(realUser, token, refreshToken, true);
             cleanOAuthParamsFromUrl();
           } else {
             cleanOAuthParamsFromUrl();
