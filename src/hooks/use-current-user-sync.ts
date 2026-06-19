@@ -36,14 +36,21 @@ export function useCurrentUserSync(options?: { enabled?: boolean }) {
       setUser(me);
     }
 
-    const profileImagePresent = Boolean(me.profilePhoto || me.profileUrl);
+    const latestAtStart = useAuthStore.getState().user;
+    const profileImagePresent = Boolean(
+      latestAtStart?.profilePhoto || latestAtStart?.profileUrl,
+    );
     if (!profileImagePresent) {
       void (async () => {
         try {
           const personalSettings = await ProfileService.getPersonalSettings();
           if (personalSettings.profileUrl) {
             const latestUser = useAuthStore.getState().user;
-            if (latestUser) {
+            if (
+              latestUser &&
+              !latestUser.profilePhoto &&
+              !latestUser.profileUrl
+            ) {
               setUser({
                 ...latestUser,
                 profilePhoto: personalSettings.profileUrl,

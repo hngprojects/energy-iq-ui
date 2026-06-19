@@ -98,16 +98,18 @@ interface AuthState {
 function normalizeUser(user: User | null): User | null {
   if (!user) return null;
   const rawUser = user as unknown as Record<string, unknown>;
+  const toNonEmptyString = (value: unknown) =>
+    typeof value === "string" && value.trim().length > 0 ? value : undefined;
+
+  const profilePhoto = toNonEmptyString(user.profilePhoto);
+  const profileUrl = toNonEmptyString(user.profileUrl);
+
   const normalized: User = {
     ...user,
     profilePhoto:
-      user.profilePhoto ??
-      (typeof rawUser.profileUrl === "string" ? rawUser.profileUrl : undefined),
+      profilePhoto ?? toNonEmptyString(rawUser.profileUrl),
     profileUrl:
-      user.profileUrl ??
-      (typeof rawUser.profilePhoto === "string"
-        ? rawUser.profilePhoto
-        : undefined),
+      profileUrl ?? toNonEmptyString(rawUser.profilePhoto),
   };
 
   if ("AiLanguage" in rawUser && typeof rawUser.AiLanguage === "string") {
