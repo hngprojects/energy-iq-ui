@@ -118,7 +118,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const userId = user?.id;
   const resolvedParams = use(params);
   const chatId = resolvedParams.chatId;
-  const { chatInfo, messages, setMessages, loading, error, refreshChat } =
+  const { chatInfo, messages, setMessages, loading, error } =
     useActiveChat(chatId);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -677,11 +677,55 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         return;
       }
 
-      sessionStorage.removeItem(key);
-      setTimeout(() => {
-        void refreshChat();
-      }, 1500);
-      pendingMessageSentRef.current = false;
+      const assistantMessageId = `assistant-stream-${Date.now()}`;
+      streamingMessageIdRef.current = assistantMessageId;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: "assistant" as const,
+          content: "",
+          timestamp: formatMessageTime(),
+          isStreaming: true,
+          awaitingCards: true,
+        },
+      ]);
+      setSending(true);
+      lastUserMessageRef.current = text;
+
+      try {
+        sendMessage(text);
+        startSendingTimeout(assistantMessageId);
+      } catch (error) {
+        sessionStorage.setItem(
+          key,
+          JSON.stringify({
+            content: text,
+            timestamp,
+          }),
+        );
+        pendingMessageSentRef.current = false;
+        streamingMessageIdRef.current = null;
+        setSending(false);
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  role: "assistant" as const,
+                  content: message.content || "",
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Unable to send your first message. Please try again.",
+                  isStreaming: false,
+                  awaitingCards: false,
+                  failed: true,
+                }
+              : message,
+          ),
+        );
+      }
       return;
     }
 
@@ -761,7 +805,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     setMessages,
     startSendingTimeout,
     userInitials,
-    refreshChat,
   ]);
   const resetComposer = () => {
     const el = textareaRef.current;
