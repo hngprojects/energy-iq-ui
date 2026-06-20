@@ -665,9 +665,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           ? messagesAfterDuplicate
           : messagesAfterDuplicate.slice(0, nextUserIndex);
       const hasAssistantResponse = responseWindow.some(
-        (m) =>
-          (m.role === "assistant" || m.role === "ai") &&
-          !m.failed,
+        (m) => (m.role === "assistant" || m.role === "ai") && !m.failed,
       );
 
       streamingMessageIdRef.current = null;
