@@ -133,6 +133,7 @@ export function SystemDeviceClient() {
     if (!inverters?.length) return [];
 
     return inverters.map((item) => ({
+      id: item.id,
       inverter: item,
       initials: item.brand.slice(0, 2).toUpperCase(),
       name: `${item.brand} ${item.model ?? "Inverter"}`.trim(),
@@ -205,7 +206,7 @@ export function SystemDeviceClient() {
       <div className="space-y-6">
         {devices.map((device) => (
           <article
-            key={device.serial}
+            key={device.id}
             className="rounded-[6px] border border-border bg-white p-6"
           >
             <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
