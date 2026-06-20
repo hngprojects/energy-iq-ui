@@ -52,11 +52,11 @@ const DemoBadge = ({ title, description, image, isActive, isPlaying, onClick }: 
       role="button"
       tabIndex={0}
       aria-pressed={isActive}
-      className={`flex cursor-pointer items-center gap-4 rounded-[12px] p-4 shadow-xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      className={`flex cursor-pointer items-center gap-3 rounded-[12px] p-3 shadow-xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-4 sm:p-4 ${
         isActive ? "bg-white ring-2 ring-primary" : "bg-white/90 hover:bg-white"
       }`}
     >
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl sm:h-20 sm:w-20 lg:h-24 lg:w-24">
         <Image src={image} alt={title} fill className="object-cover" />
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm">
@@ -73,8 +73,8 @@ const DemoBadge = ({ title, description, image, isActive, isPlaying, onClick }: 
         </div>
       </div>
       <div>
-        <h3 className="mb-1 text-[18px] font-semibold text-[#525252]">{title}</h3>
-        <p className="text-[16px] leading-tight text-[#525252]">{description}</p>
+        <h3 className="mb-1 text-sm font-semibold text-[#525252] sm:text-base lg:text-[18px]">{title}</h3>
+        <p className="text-xs leading-tight text-[#525252] sm:text-sm lg:text-[16px]">{description}</p>
       </div>
     </div>
   );
@@ -114,9 +114,9 @@ export const RequestDemo = () => {
   };
 
   return (
-    <section className="section-padding text-foreground bg-[#F7F7F799] py-16 md:py-24">
-      <div className="container-padding mx-auto w-full max-w-7xl">
-        <div className="relative isolate flex min-h-[400px] flex-col justify-between overflow-hidden rounded-[8px] p-6 md:min-h-[730px] md:p-11">
+    <section className="text-foreground bg-[#F7F7F799] px-4 py-16 md:px-8 md:py-24">
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="relative isolate flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[8px] p-5 md:min-h-[620px] md:p-8 lg:min-h-[730px] lg:p-11">
 
           {/* Background — always mounted, never remounts */}
           <div className="absolute inset-0 z-0">
@@ -165,14 +165,14 @@ export const RequestDemo = () => {
             <div className="absolute inset-0 bg-[#0D1624]/50" />
           </div>
 
-          <div className="relative z-10 flex flex-col justify-between gap-8 md:flex-row md:items-center">
+          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
             <div className="space-y-6">
               <motion.h2
                 key={activeIndex ?? "default"}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="max-w-2xl text-[34px] leading-tight font-bold tracking-tight text-white md:text-[48px]"
+                className="max-w-2xl text-2xl leading-tight font-bold tracking-tight text-white sm:text-[34px] lg:text-[48px]"
               >
                 {activeIndex === null ? (
                   <>Smart Energy, Smarter Business</>
@@ -181,7 +181,7 @@ export const RequestDemo = () => {
                     <React.Fragment key={i}>
                       {text}
                       {i === 0 && badges[activeIndex].heading.includes(", ") && (
-                        <> <br className="hidden md:block" /></>
+                        <> <br className="hidden lg:block" /></>
                       )}
                     </React.Fragment>
                   ))
@@ -190,15 +190,15 @@ export const RequestDemo = () => {
             </div>
           </div>
 
-          <div className="no-scrollbar relative z-10 flex snap-x gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:overflow-x-visible md:pb-0">
+          <div className="no-scrollbar relative z-10 flex snap-x gap-3 overflow-x-auto pb-4 lg:grid lg:grid-cols-3 lg:overflow-x-visible lg:pb-0">
             {badges.map((badge, index) => (
               <motion.div
-                key={index}
+                key={badge.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="w-[92%] shrink-0 snap-center md:w-full"
+                className="w-[82%] shrink-0 snap-center sm:w-[58%] lg:w-full"
               >
                 <DemoBadge
                   title={badge.title}

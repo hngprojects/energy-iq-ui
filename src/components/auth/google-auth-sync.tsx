@@ -84,6 +84,7 @@ function GoogleAuthSyncInner() {
       searchParams.get("refreshToken") || hashParams.get("refreshToken") || "";
 
     if (token) {
+      cleanOAuthParamsFromUrl();
       void (async () => {
         try {
           resetAuthForOAuthCallback();
@@ -92,14 +93,11 @@ function GoogleAuthSyncInner() {
           const realUser = await AuthService.me();
           if (realUser?.id) {
             setAuthLocal(realUser, token, refreshToken, true);
-            cleanOAuthParamsFromUrl();
           } else {
-            cleanOAuthParamsFromUrl();
             logout();
           }
         } catch (err) {
           console.error("Failed to fetch user profile", err);
-          cleanOAuthParamsFromUrl();
           logout();
         }
       })();
