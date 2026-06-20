@@ -78,7 +78,10 @@ export function PaginationBar({
         {onPerPageChange ? (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <button className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+              <button
+                type="button"
+                className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+              >
                 <span className="text-muted-foreground">Per page:</span>
                 <span className="text-foreground">{itemsPerPage}</span>
                 <ChevronDown className="text-muted-foreground h-4 w-4" />

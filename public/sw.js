@@ -74,7 +74,7 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/_next/")) {
     event.respondWith(
       fetch(request).then((response) => {
-        if (url.pathname.startsWith("/_next/static/") && response.ok) {
+        if (shouldRuntimeCache(url) && response.ok) {
           const clone = response.clone();
           caches
             .open(CACHE_NAME)

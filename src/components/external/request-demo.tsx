@@ -193,7 +193,7 @@ export const RequestDemo = () => {
           <div className="no-scrollbar relative z-10 flex snap-x gap-3 overflow-x-auto pb-4 lg:grid lg:grid-cols-3 lg:overflow-x-visible lg:pb-0">
             {badges.map((badge, index) => (
               <motion.div
-                key={index}
+                key={badge.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}

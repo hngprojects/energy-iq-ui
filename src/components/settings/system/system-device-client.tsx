@@ -54,6 +54,30 @@ function getStatusMeta(status?: string) {
   return statusStyles.unknown;
 }
 
+function getInverterStatusLabel(inverter: Inverter) {
+  if (inverter.isOffline) return "offline";
+  return inverter.status ?? (inverter.isActive ? "active" : "inactive");
+}
+
+function getInverterSyncTime(inverter: Inverter) {
+  return (
+    inverter.lastSyncAt ??
+    inverter.lastSyncedAt ??
+    inverter.updatedAt ??
+    inverter.createdAt
+  );
+}
+
+function getInverterMeta(inverter: Inverter) {
+  if (inverter.capacityKw != null) {
+    return `Hybrid Inverter • ${inverter.capacityKw}kw`;
+  }
+  if (inverter.ratedCapacityKwh != null) {
+    return `Hybrid Inverter • ${inverter.ratedCapacityKwh}kWh`;
+  }
+  return "Hybrid Inverter";
+}
+
 function formatRelativeTime(value?: string) {
   if (!value) return "Never synced";
 
@@ -112,25 +136,15 @@ export function SystemDeviceClient() {
       inverter: item,
       initials: item.brand.slice(0, 2).toUpperCase(),
       name: `${item.brand} ${item.model ?? "Inverter"}`.trim(),
-      meta: item.capacityKw
-        ? `Hybrid Inverter • ${item.capacityKw}kw`
-        : item.ratedCapacityKwh
-          ? `Hybrid Inverter • ${item.ratedCapacityKwh}kWh`
-        : "Hybrid Inverter",
+      meta: getInverterMeta(item),
       serial: item.serialNumber ?? "Serial unavailable",
       connectionDate: new Date(item.createdAt).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
       }),
-      lastSync: formatRelativeTime(
-        item.lastSyncAt ?? item.lastSyncedAt ?? item.updatedAt ?? item.createdAt,
-      ),
-      status: getStatusMeta(
-        item.isOffline
-          ? "offline"
-          : item.status ?? (item.isActive ? "active" : "inactive"),
-      ),
+      lastSync: formatRelativeTime(getInverterSyncTime(item)),
+      status: getStatusMeta(getInverterStatusLabel(item)),
     }));
   }, [inverters]);
 
@@ -196,7 +210,7 @@ export function SystemDeviceClient() {
           >
             <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
               <div className="flex gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-[6px] bg-[#020617] font-semibold text-white">
+                <div className="flex h-11 w-14 sm:w-11 items-center justify-center rounded-[6px] bg-[#020617] font-semibold text-white">
                   {device.initials}
                 </div>
                 <div>
@@ -333,7 +347,7 @@ export function SystemDeviceClient() {
         open={!!selectedInverter}
         onOpenChange={(isOpen) => !isOpen && setSelectedInverter(null)}
       >
-        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto p-4 sm:p-6 rounded-sm">
           <DialogHeader>
             <DialogTitle>Inverter details</DialogTitle>
           </DialogHeader>
@@ -365,19 +379,11 @@ export function SystemDeviceClient() {
                 ],
                 [
                   "Status",
-                  selectedInverter.isOffline
-                    ? "Offline"
-                    : selectedInverter.isActive
-                      ? "Active"
-                      : selectedInverter.status ?? "Unknown",
+                  getStatusMeta(getInverterStatusLabel(selectedInverter)).label,
                 ],
                 [
                   "Last synced",
-                  formatRelativeTime(
-                    selectedInverter.lastSyncAt ??
-                      selectedInverter.lastSyncedAt ??
-                      undefined,
-                  ),
+                  formatRelativeTime(getInverterSyncTime(selectedInverter)),
                 ],
                 [
                   "Connected on",

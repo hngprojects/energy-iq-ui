@@ -127,7 +127,8 @@ function getFirstApiUserMessageTitle(
           ? firstUserMessage.message
           : undefined;
 
-  return content ? createLocalChatTitle(content) : undefined;
+  const trimmed = content?.trim();
+  return trimmed ? createLocalChatTitle(trimmed) : undefined;
 }
 
 function getTag(chat: ChatSession): TagType {
@@ -395,9 +396,10 @@ export function ChatHistoryList({
       !actions.archivedIds.includes(chat.id),
   );
   const totalPages = Math.max(1, Math.ceil(visibleChats.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedChats = visibleChats.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage,
   );
   const groups = useMemo(() => {
     const orderedLabels: ChatGroup["label"][] = [
@@ -487,7 +489,7 @@ export function ChatHistoryList({
         ) : null}
       </div>
       <PaginationBar
-        currentPage={currentPage}
+        currentPage={safeCurrentPage}
         totalPages={totalPages}
         totalItems={visibleChats.length}
         itemsPerPage={itemsPerPage}
