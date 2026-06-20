@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Battery,
   Download,
+  Loader2,
   Mic,
   Send,
   Sun,
@@ -669,16 +670,59 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       );
 
       streamingMessageIdRef.current = null;
-      pendingMessageSentRef.current = false;
       setSending(false);
 
-      if (!hasAssistantResponse) {
+      if (hasAssistantResponse) {
+        pendingMessageSentRef.current = false;
+        return;
+      }
+
+      const assistantMessageId = `assistant-stream-${Date.now()}`;
+      streamingMessageIdRef.current = assistantMessageId;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: "assistant" as const,
+          content: "",
+          timestamp: formatMessageTime(),
+          isStreaming: true,
+          awaitingCards: true,
+        },
+      ]);
+      setSending(true);
+      lastUserMessageRef.current = text;
+      try {
+        sendMessage(text);
+        startSendingTimeout(assistantMessageId);
+      } catch (error) {
         sessionStorage.setItem(
           key,
           JSON.stringify({
             content: text,
             timestamp,
           }),
+        );
+        pendingMessageSentRef.current = false;
+        streamingMessageIdRef.current = null;
+        setSending(false);
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  role: "assistant" as const,
+                  content: message.content || "",
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Unable to send your first message. Please try again.",
+                  isStreaming: false,
+                  awaitingCards: false,
+                  failed: true,
+                }
+              : message,
+          ),
         );
       }
       return;
@@ -1176,7 +1220,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   : "bg-muted text-muted-foreground hover:bg-muted",
               )}
             >
-              <Send className="h-3.5 w-3.5" />
+              {sending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5" />
+              )}
             </Button>
           </div>
         </div>

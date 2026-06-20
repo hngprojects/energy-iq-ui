@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { chatService } from "@/services/chat-service";
 import { toast } from "sonner";
 import {
@@ -40,16 +40,16 @@ export function AIAssistantBanner() {
   const userId = useAuthStore((state) => state.user?.id);
   const isCreatingChatRef = useRef(false);
 
-  const [sending, setSending] = useState(false);
+  const [sendingPrompt, setSendingPrompt] = useState<string | null>(null);
 
   const handleStartConversation = async (text: string) => {
     const cleanText = text.trim();
-    if (!cleanText || sending) return;
+    if (!cleanText || sendingPrompt) return;
     if (!userId) return;
     if (isCreatingChatRef.current) return;
 
     isCreatingChatRef.current = true;
-    setSending(true);
+    setSendingPrompt(cleanText);
 
     const requestedAt = new Date().getTime();
     const recoveryToken = createChatRecoveryToken();
@@ -109,7 +109,7 @@ export function AIAssistantBanner() {
       toast.error(message);
     } finally {
       isCreatingChatRef.current = false;
-      setSending(false);
+      setSendingPrompt(null);
     }
   };
 
@@ -143,11 +143,16 @@ export function AIAssistantBanner() {
             <Button
               key={s}
               type="button"
-              disabled={sending || !userId}
+              disabled={!!sendingPrompt || !userId}
               onClick={() => void handleStartConversation(s)}
               className="border-secondary-foreground/20 bg-secondary-foreground/5 hover:bg-secondary-foreground/10 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {s} <ArrowUpRight className="h-3 w-3" />
+              {s}
+              {sendingPrompt === s ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <ArrowUpRight className="h-3 w-3" />
+              )}
             </Button>
           ))}
         </div>
