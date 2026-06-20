@@ -33,6 +33,11 @@ export interface Inverter {
   isOffline?: boolean;
   model?: string;
   lastSyncAt?: string;
+  lastSyncedAt?: string | null;
+  installationId?: string;
+  apiType?: string;
+  ratedCapacityKwh?: string | number | null;
+  panelCapacityKw?: string | number | null;
   createdAt: string;
   updatedAt: string;
 }

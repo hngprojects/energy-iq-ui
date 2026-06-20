@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CheckCircle,
   ChevronDown,
@@ -22,6 +22,7 @@ import { ReportsNotificationToast } from "@/components/dashboard/reports/reports
 import { GenerateReportModal, formatDateRange } from "@/components/dashboard/reports/generate-report-modal";
 import { ScheduleReportModal } from "@/components/dashboard/reports/schedule-report-modal";
 import { REPORT_ICON_MAP, REPORT_FREQUENCY_LABELS } from "@/constants/reports";
+import { PaginationBar } from "@/components/dashboard/shared/pagination-bar";
 
 
 
@@ -55,7 +56,7 @@ function ReportCard({
 }) {
   const Icon = REPORT_ICON_MAP[report.iconType];
   return (
-    <div className="bg-card border-border flex w-86.25 flex-col rounded-[8px] border p-6 sm:hidden">
+    <div className="bg-card border-border flex w-full flex-col rounded-[8px] border p-6 sm:hidden">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-1.5">
           <span
@@ -224,6 +225,8 @@ export function ReportsTable() {
   
   const [showScheduleToast, setShowScheduleToast] = useState(false);
   const [scheduledReportDetails, setScheduledReportDetails] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const handleDownload = (report: Report) => {
     if (downloadingId || completedId) return;
@@ -236,15 +239,28 @@ export function ReportsTable() {
     }, 1500);
   };
 
-  const displayed = filterReports(reports, filter);
+  const displayed = useMemo(
+    () => filterReports(reports, filter),
+    [filter, reports],
+  );
+  const totalPages = Math.max(1, Math.ceil(displayed.length / itemsPerPage));
+  const paginatedReports = displayed.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const handleFilterChange = (nextFilter: ReportFilterType) => {
+    setFilter(nextFilter);
+    setCurrentPage(1);
+  };
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:gap-0 sm:bg-card sm:border-border sm:overflow-hidden sm:rounded-xl sm:border">
+      <div className="flex w-full flex-col gap-4 sm:gap-0 sm:bg-card sm:border-border sm:overflow-hidden sm:rounded-xl sm:border">
         {/* Toolbar */}
-        <div className="flex h-auto w-86.25 items-center justify-between sm:border-border sm:h-19.75 sm:w-full sm:flex-row sm:justify-between sm:border-b sm:px-6 lg:gap-2">
+        <div className="flex h-auto w-full items-center justify-between gap-3 sm:border-border sm:h-19.75 sm:flex-row sm:justify-between sm:border-b sm:px-6 lg:gap-2">
           {/* Filter */}
-          <FilterDropdown value={filter} onChange={setFilter} />
+          <FilterDropdown value={filter} onChange={handleFilterChange} />
 
           {/* Action Buttons — stacked on mobile, side-by-side on desktop */}
           <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:w-auto">
@@ -271,10 +287,10 @@ export function ReportsTable() {
             ? Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-card h-51.5 w-86.25 animate-pulse rounded-[8px] border border-border"
+                className="bg-card h-51.5 w-full animate-pulse rounded-[8px] border border-border"
                 />
               ))
-            : displayed.map((report) => (
+            : paginatedReports.map((report) => (
                 <ReportCard
                   key={report.id}
                   report={report}
@@ -345,7 +361,7 @@ export function ReportsTable() {
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <SkeletonRow key={i} />
                   ))
-                : displayed.map((report) => {
+                : paginatedReports.map((report) => {
                     const Icon = REPORT_ICON_MAP[report.iconType];
                     return (
                       <tr
@@ -459,6 +475,20 @@ export function ReportsTable() {
             </tbody>
           </table>
         </div>
+        {!isRefreshing ? (
+          <PaginationBar
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={displayed.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onPerPageChange={(perPage) => {
+              setItemsPerPage(perPage);
+              setCurrentPage(1);
+            }}
+            itemLabel="reports"
+          />
+        ) : null}
       </div>
 
       <ReportViewModal

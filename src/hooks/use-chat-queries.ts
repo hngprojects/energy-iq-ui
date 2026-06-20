@@ -103,6 +103,17 @@ function normalizeChatMessage(
   };
 }
 
+function dedupeConsecutiveUserMessages(messages: ChatMessage[]) {
+  return messages.filter((message, index) => {
+    if (message.role !== "user") return true;
+    const previous = messages[index - 1];
+    return !(
+      previous?.role === "user" &&
+      previous.content.trim() === message.content.trim()
+    );
+  });
+}
+
 export function useActiveChat(chatId: string) {
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
@@ -137,7 +148,10 @@ export function useActiveChat(chatId: string) {
 
       return {
         info,
-        messages: hydrateChatMessagesWithCards(chatId, normalized),
+        messages: hydrateChatMessagesWithCards(
+          chatId,
+          dedupeConsecutiveUserMessages(normalized),
+        ),
       };
     },
   });
@@ -160,7 +174,10 @@ export function useActiveChat(chatId: string) {
         const nextMessages =
           typeof value === "function" ? value(currentMessages) : value;
 
-        return { chatId, messages: nextMessages };
+        return {
+          chatId,
+          messages: dedupeConsecutiveUserMessages(nextMessages),
+        };
       });
     },
     [baseMessages, chatId],

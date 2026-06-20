@@ -174,8 +174,8 @@ export default function NewChatPage() {
   }, []);
 
   return (
-    <div className="flex min-h-[calc(100vh-130px)] w-full flex-col overflow-y-auto bg-background md:min-h-[calc(100vh-140px)]">
-      <div className="w-full px-6 pt-4 md:pt-6">
+    <div className="flex min-h-[calc(100dvh-130px)] w-full max-w-full flex-col overflow-y-auto bg-background md:min-h-[calc(100dvh-140px)]">
+      <div className="w-full px-4 pt-4 sm:px-6 md:pt-6">
         <div className="mx-auto w-full max-w-7xl">
           <DashboardBreadcrumb
             items={[
@@ -186,7 +186,7 @@ export default function NewChatPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center px-6 pb-8 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center px-4 pb-8 text-center sm:px-6">
         <div className="flex w-full max-w-7xl flex-col items-center mt-12 sm:mt-0">
           <div className="mb-6 flex h-16 w-16 items-center justify-center">
             <Image
@@ -212,7 +212,7 @@ export default function NewChatPage() {
           <div className="mt-8 w-full rounded-xl border border-border bg-card p-2 shadow-sm focus-within:ring-1 focus-within:ring-ring">
             <div
               className={cn(
-                "flex gap-3 px-3 py-1.5",
+                "flex gap-2 px-2 py-1.5 sm:gap-3 sm:px-3",
                 isTextareaExpanded ? "items-end" : "items-center",
               )}
             >
@@ -261,7 +261,7 @@ export default function NewChatPage() {
                   }}
                 />
               </div>
-              <div className="flex justify-end">
+              <div className="hidden justify-end sm:flex">
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {input.length}/{MAX_CHARS}
                 </span>
@@ -285,8 +285,8 @@ export default function NewChatPage() {
 
                 <Button
                   type="button"
-                  title={sending ? "Starting chat" : "Send message"}
-                  aria-label={sending ? "Starting chat" : "Send message"}
+                  title={sending ? "Sending" : "Send message"}
+                  aria-label={sending ? "Sending" : "Send message"}
                   onClick={() => void handleStartConversation(input)}
                   disabled={!input.trim() || sending || !userId}
                   className={cn(
@@ -308,7 +308,7 @@ export default function NewChatPage() {
 
           {sending ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              Starting chat
+              Sending
               {pendingPrompt ? `: "${pendingPrompt.slice(0, 80)}"` : ""}...
             </p>
           ) : null}
