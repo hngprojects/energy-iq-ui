@@ -333,12 +333,12 @@ export function SystemDeviceClient() {
         open={!!selectedInverter}
         onOpenChange={(isOpen) => !isOpen && setSelectedInverter(null)}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Inverter details</DialogTitle>
           </DialogHeader>
           {selectedInverter ? (
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <dl className="grid min-w-0 gap-3 text-sm sm:grid-cols-2">
               {[
                 ["Brand", selectedInverter.brand],
                 ["Model", selectedInverter.model ?? "Unavailable"],
@@ -393,7 +393,7 @@ export function SystemDeviceClient() {
               ].map(([label, value]) => (
                 <div
                   key={label}
-                  className="rounded-lg border border-border bg-muted/30 p-3"
+                  className="min-w-0 rounded-lg border border-border bg-muted/30 p-3"
                 >
                   <dt className="text-xs text-muted-foreground">{label}</dt>
                   <dd className="mt-1 break-words font-medium text-foreground">

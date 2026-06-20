@@ -33,8 +33,8 @@ function StatCard({
   const trendRest = trendMatch ? trendMatch[2] : sub;
 
   return (
-    <div className="bg-card border-border flex h-37.25 w-[160.5px] items-center justify-center rounded-[8px] border p-6 sm:block sm:h-auto sm:w-auto sm:rounded-xl sm:p-5">
-      <div className="flex h-25.25 w-[112.5px] flex-col justify-between sm:flex sm:h-auto sm:w-auto sm:flex-col sm:gap-2">
+    <div className="bg-card border-border flex min-w-0 items-center rounded-[8px] border p-4 sm:block sm:rounded-xl sm:p-5">
+      <div className="flex min-w-0 flex-col justify-between sm:flex sm:flex-col sm:gap-2">
         <div className="flex flex-col gap-3.5 sm:block">
           <div className="flex items-center gap-1.5 sm:mb-2">
             <Icon className={cn("size-4", iconColor)} />
@@ -68,7 +68,7 @@ function StatCard({
 export function ReportStatCards() {
   const s = reportStatsMock;
   return (
-    <div className="grid w-86.25 grid-cols-2 gap-6 sm:w-full sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+    <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
       <StatCard
         Icon={Sun}
         iconColor="text-[#EAB308]"

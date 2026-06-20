@@ -129,10 +129,10 @@ export function Navbar() {
 
   return (
     <header className="bg-background sticky top-0 z-50 w-full">
-      <nav className="mx-auto flex h-16 max-w-350 items-center justify-between px-4 md:h-20 md:px-8">
+      <nav className="mx-auto flex h-16 max-w-350 items-center justify-between px-4 lg:h-20 lg:px-8">
         <Logo size="md" />
 
-        <ul className="hidden items-center gap-8 md:flex">
+        <ul className="hidden items-center gap-8 lg:flex">
           {NAV_LINKS.map((l) => {
             const isActive = activeLabel === l.label;
 
@@ -155,7 +155,7 @@ export function Navbar() {
           })}
         </ul>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {mounted && isAuthenticated && user ? (
             <UserDropdown
               user={user}
@@ -188,7 +188,7 @@ export function Navbar() {
           variant="ghost"
           aria-label="Toggle menu"
           onClick={() => setOpen((v) => !v)}
-          className="text-foreground grid h-10 w-10 place-items-center md:hidden"
+          className="text-foreground grid h-10 w-10 place-items-center lg:hidden"
         >
           {open ? (
             <IconX className="h-6 w-6" />
@@ -201,7 +201,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       <div
         className={cn(
-          "border-border bg-background overflow-hidden border-t transition-all duration-300 md:hidden",
+          "border-border bg-background overflow-hidden border-t transition-all duration-300 lg:hidden",
           open ? "max-h-150" : "max-h-0",
         )}
       >
