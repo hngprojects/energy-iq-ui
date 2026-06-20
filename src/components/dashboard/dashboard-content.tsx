@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Sun, Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
@@ -20,6 +21,7 @@ import {
 } from "@/components/dashboard/charts/energy-usage-chart";
 import { AIAssistantBanner } from "@/components/dashboard/ai/ai-assistant-banner";
 import { dashboardMock as d } from "@/lib/mocks/dashboard-data";
+import { InverterService } from "@/services/inverter-service";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -67,6 +69,10 @@ function formatDataAge(seconds: number): string {
   if (seconds < 60) return "just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
   return `${Math.floor(seconds / 3600)}h ago`;
+}
+
+function formatDateForApi(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
 
 function CardSkeleton() {
@@ -131,6 +137,32 @@ export function DashboardContent() {
     refetch: refetchEnergy,
   } = useEnergyUsage(inverterId, energyPeriod);
 
+  const today = formatDateForApi(new Date());
+  const monthStart = formatDateForApi(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
+
+  const { data: todaySavings, refetch: refetchTodaySavings } = useQuery({
+    queryKey: ["dashboard-savings", inverterId, "today", today],
+    enabled: !!inverterId,
+    queryFn: () =>
+      InverterService.getSavingsMetrics(inverterId!, {
+        date: today,
+        startDate: today,
+        endDate: today,
+      }),
+  });
+
+  const { data: monthSavings, refetch: refetchMonthSavings } = useQuery({
+    queryKey: ["dashboard-savings", inverterId, "month", monthStart, today],
+    enabled: !!inverterId,
+    queryFn: () =>
+      InverterService.getSavingsMetrics(inverterId!, {
+        startDate: monthStart,
+        endDate: today,
+      }),
+  });
+
   // const { data: powerConsumption, refetch: refetchPower } =
   //   usePowerConsumption(inverterId);
 
@@ -143,6 +175,8 @@ export function DashboardContent() {
     await Promise.allSettled([
       refetchMetrics(),
       refetchEnergy(),
+      refetchTodaySavings(),
+      refetchMonthSavings(),
       // refetchPower(),
     ]);
     setIsRefreshing(false);
@@ -172,6 +206,14 @@ export function DashboardContent() {
     : d.status.updated;
 
   const isOnline = metrics && !metrics.systemOffline;
+  const savedToday =
+    todaySavings?.results?.totalCostSavedNgn ??
+    metrics?.nairaSavedToday ??
+    d.savedToday.amount;
+  const savedThisMonth =
+    monthSavings?.results?.totalCostSavedNgn ??
+    metrics?.nairaSavedThisMonth ??
+    d.savedMonth.amount;
 
   const alertReason =
     metrics && metrics.health.status !== "GREEN" ? metrics.health.reason : null;
@@ -284,12 +326,12 @@ export function DashboardContent() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <SavedMonthCard
-            amount={metrics?.nairaSavedThisMonth ?? d.savedMonth.amount}
+            amount={savedThisMonth}
             months={months}
             active={active}
           />
           <SavedTodayCard
-            amount={metrics?.nairaSavedToday ?? d.savedToday.amount}
+            amount={savedToday}
           />
           {/* <PowerUsageCard zones={zones} /> */}
         </div>
