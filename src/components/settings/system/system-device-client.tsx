@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectField } from "@/components/settings/select-field";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
-import type { ConnectInverterRequest } from "@/types/inverter";
+import type { ConnectInverterRequest, Inverter } from "@/types/inverter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const statusStyles = {
   active: {
@@ -81,6 +87,9 @@ function formatRelativeTime(value?: string) {
 
 export function SystemDeviceClient() {
   const [open, setOpen] = useState(false);
+  const [selectedInverter, setSelectedInverter] = useState<Inverter | null>(
+    null,
+  );
   const [brand, setBrand] = useState("Sunsynk");
   const [capacity, setCapacity] = useState("");
   const [serial, setSerial] = useState("");
@@ -100,10 +109,13 @@ export function SystemDeviceClient() {
     if (!inverters?.length) return [];
 
     return inverters.map((item) => ({
+      inverter: item,
       initials: item.brand.slice(0, 2).toUpperCase(),
-      name: `${item.brand} ${item.capacityKw ?? ""}kW Inverter`.trim(),
+      name: `${item.brand} ${item.model ?? "Inverter"}`.trim(),
       meta: item.capacityKw
         ? `Hybrid Inverter • ${item.capacityKw}kw`
+        : item.ratedCapacityKwh
+          ? `Hybrid Inverter • ${item.ratedCapacityKwh}kWh`
         : "Hybrid Inverter",
       serial: item.serialNumber ?? "Serial unavailable",
       connectionDate: new Date(item.createdAt).toLocaleDateString("en-US", {
@@ -112,9 +124,13 @@ export function SystemDeviceClient() {
         year: "numeric",
       }),
       lastSync: formatRelativeTime(
-        item.lastSyncAt ?? item.updatedAt ?? item.createdAt,
+        item.lastSyncAt ?? item.lastSyncedAt ?? item.updatedAt ?? item.createdAt,
       ),
-      status: getStatusMeta(item.status),
+      status: getStatusMeta(
+        item.isOffline
+          ? "offline"
+          : item.status ?? (item.isActive ? "active" : "inactive"),
+      ),
     }));
   }, [inverters]);
 
@@ -210,16 +226,11 @@ export function SystemDeviceClient() {
               <dd className="font-medium text-right">{device.lastSync}</dd>
             </dl>
 
-            <div className="mt-7 grid grid-cols-2 gap-4 lg:flex lg:justify-end">
+            <div className="mt-7 grid gap-4 lg:flex lg:justify-end">
               <Button
                 variant="outline"
                 className="h-11 rounded-lg border-border"
-              >
-                Reconnect
-              </Button>
-              <Button
-                variant="outline"
-                className="h-11 rounded-lg border-border"
+                onClick={() => setSelectedInverter(device.inverter)}
               >
                 View Details
               </Button>
@@ -317,6 +328,83 @@ export function SystemDeviceClient() {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={!!selectedInverter}
+        onOpenChange={(isOpen) => !isOpen && setSelectedInverter(null)}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Inverter details</DialogTitle>
+          </DialogHeader>
+          {selectedInverter ? (
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              {[
+                ["Brand", selectedInverter.brand],
+                ["Model", selectedInverter.model ?? "Unavailable"],
+                [
+                  "Serial number",
+                  selectedInverter.serialNumber ?? "Unavailable",
+                ],
+                [
+                  "Installation ID",
+                  selectedInverter.installationId ?? "Unavailable",
+                ],
+                ["API type", selectedInverter.apiType ?? "Unavailable"],
+                [
+                  "Rated capacity",
+                  selectedInverter.ratedCapacityKwh != null
+                    ? `${selectedInverter.ratedCapacityKwh} kWh`
+                    : "Unavailable",
+                ],
+                [
+                  "Panel capacity",
+                  selectedInverter.panelCapacityKw != null
+                    ? `${selectedInverter.panelCapacityKw} kW`
+                    : "Unavailable",
+                ],
+                [
+                  "Status",
+                  selectedInverter.isOffline
+                    ? "Offline"
+                    : selectedInverter.isActive
+                      ? "Active"
+                      : selectedInverter.status ?? "Unknown",
+                ],
+                [
+                  "Last synced",
+                  formatRelativeTime(
+                    selectedInverter.lastSyncAt ??
+                      selectedInverter.lastSyncedAt ??
+                      undefined,
+                  ),
+                ],
+                [
+                  "Connected on",
+                  new Date(selectedInverter.createdAt).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    },
+                  ),
+                ],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-lg border border-border bg-muted/30 p-3"
+                >
+                  <dt className="text-xs text-muted-foreground">{label}</dt>
+                  <dd className="mt-1 break-words font-medium text-foreground">
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
