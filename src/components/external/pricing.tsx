@@ -162,7 +162,7 @@ export function PricingSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="mx-auto grid w-full max-w-240 grid-cols-1 items-center gap-6 md:grid-cols-3"
+          className="mx-auto grid w-full max-w-240 grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {pricingTiers.map((tier) => (
             <motion.div

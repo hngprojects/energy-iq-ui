@@ -150,6 +150,7 @@ interface SavingsSetupModalWizardProps {
   savePreferences: (prefs: SavingsSetupPreferences) => Promise<void>;
   skipSetup: () => void;
   isSaving: boolean;
+  showSkipForNow: boolean;
 }
 
 function SavingsSetupModalWizard({
@@ -157,6 +158,7 @@ function SavingsSetupModalWizard({
   savePreferences,
   skipSetup,
   isSaving,
+  showSkipForNow,
 }: SavingsSetupModalWizardProps) {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
@@ -422,13 +424,17 @@ function SavingsSetupModalWizard({
             ) : (
               <span />
             )}
-            <button
-              type="button"
-              onClick={skipSetup}
-              className="font-medium text-muted-foreground hover:text-foreground"
-            >
-              Skip for now
-            </button>
+            {showSkipForNow ? (
+              <button
+                type="button"
+                onClick={skipSetup}
+                className="font-medium text-muted-foreground hover:text-foreground"
+              >
+                Skip for now
+              </button>
+            ) : (
+              <span />
+            )}
           </div>
         </div>
     </>
@@ -440,7 +446,15 @@ interface SavingsSetupModalProps {
 }
 
 export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) {
-  const { preferences, isModalOpen, closeSetup, savePreferences, skipSetup, isSaving } =
+  const {
+    preferences,
+    isSetupComplete,
+    isModalOpen,
+    closeSetup,
+    savePreferences,
+    skipSetup,
+    isSaving,
+  } =
     useSavingsSetup();
 
   const handleClose = () => {
@@ -466,6 +480,7 @@ export function SavingsSetupModal({ onDismissSession }: SavingsSetupModalProps) 
             savePreferences={savePreferences}
             skipSetup={skipSetup}
             isSaving={isSaving}
+            showSkipForNow={!isSetupComplete && !preferences}
           />
         ) : null}
       </DialogContent>

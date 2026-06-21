@@ -1,5 +1,10 @@
 import type { PersonalSettings, PersonalSettingsPatch } from "@/types/profile";
-import type { GeneratorType, SavingsSetupPreferences } from "@/types/savings-setup";
+import {
+  GENERATOR_HOUR_PRESETS,
+  type GeneratorHoursPreset,
+  type GeneratorType,
+  type SavingsSetupPreferences,
+} from "@/types/savings-setup";
 
 export type GeneratorFuelType = "PMS" | "DIESEL";
 
@@ -31,6 +36,13 @@ export function formatFuelLabel(fuelType?: string | null): string {
   return "Petrol";
 }
 
+function hoursToPreset(hours: number | undefined): GeneratorHoursPreset | undefined {
+  if (hours == null) return undefined;
+  return (GENERATOR_HOUR_PRESETS as readonly number[]).includes(hours)
+    ? (hours as GeneratorHoursPreset)
+    : "custom";
+}
+
 export function personalSettingsToPreferences(
   settings: PersonalSettings,
 ): SavingsSetupPreferences | null {
@@ -47,6 +59,7 @@ export function personalSettingsToPreferences(
     generatorType,
     fuelPricePerLitre: fuelPrice,
     generatorHoursPerDay: hours,
+    generatorHoursPreset: hoursToPreset(hours),
     generatorRatedPowerKw: ratedPower,
     skipped: false,
     updatedAt: settings.updatedAt,

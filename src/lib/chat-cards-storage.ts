@@ -1,5 +1,6 @@
 import type { AiResponseCard } from "@/types/chat";
 import {
+  deriveAiResponseCardsFromText,
   normalizeBackendCard,
   normalizeBackendCards,
   type BackendAiCardPayload,
@@ -242,8 +243,6 @@ export function hydrateChatMessagesWithCards(
   messages: ChatMessage[],
 ): ChatMessage[] {
   const entries = readStore()[chatId] ?? [];
-  if (entries.length === 0) return messages;
-
   let lastUserPrompt = "";
 
   return messages.map((message) => {
@@ -259,12 +258,18 @@ export function hydrateChatMessagesWithCards(
     const apiCards = message.cards ?? [];
     const storedCards =
       findStoredCards(entries, message.id, lastUserPrompt) ?? [];
+    const derivedCards =
+      apiCards.length === 0 && storedCards.length === 0
+        ? deriveAiResponseCardsFromText(message.content)
+        : [];
     const cards =
       apiCards.length > 0
         ? apiCards
         : storedCards.length > 0
           ? storedCards
-          : undefined;
+          : derivedCards.length > 0
+            ? derivedCards
+            : undefined;
 
     if (!cards?.length) return message;
 
