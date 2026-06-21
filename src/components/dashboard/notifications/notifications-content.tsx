@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { cn } from "@/lib/utils";
 import { ALERT_ROWS, DELIVERY_CHANNELS } from "@/constants/notifications";
+import { useAuthStore } from "@/stores/auth-store";
 
 function SectionHeader({ title, description }: { title: string; description: string }) {
   return (
@@ -74,6 +75,9 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 }
 
 function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const user = useAuthStore((state) => state.user);
+  const firstName = user?.firstName || "Amaka";
+
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent
@@ -101,7 +105,7 @@ function SuccessModal({ open, onClose }: { open: boolean; onClose: () => void })
               Phone Verification Successful
             </h2>
             <p className="font-normal text-base text-center leading-none text-(--color-slate-80)">
-              Hello Amaka, your phone number has been successfully verified.
+              Hello {firstName}, your phone number has been successfully verified.
             </p>
           </div>
 
@@ -134,12 +138,16 @@ function VerifyModal({
   const [seconds, setSeconds] = useState(119);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    setOtp("");
-    setStatus("idle");
-    setSeconds(119);
-  }, [open]);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setOtp("");
+      setStatus("idle");
+      setSeconds(119);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -149,7 +157,10 @@ function VerifyModal({
     }
     timerRef.current = setInterval(() => {
       setSeconds((s) => {
-        if (s <= 1) { clearInterval(timerRef.current!); return 0; }
+        if (s <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
         return s - 1;
       });
     }, 1000);
@@ -287,6 +298,8 @@ function VerifyModal({
 }
 
 export function NotificationContent() {
+  const user = useAuthStore((state) => state.user);
+
   const [alertStates, setAlertStates] = useState<Record<string, boolean>>({
     battery_low: true,
     predictive_depletion: false,
@@ -296,6 +309,12 @@ export function NotificationContent() {
   const [phone, setPhone] = useState("");
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(
+    DELIVERY_CHANNELS.filter(c => c.defaultChecked).map(c => c.id)
+  );
+  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
+  const [threshold, setThreshold] = useState("20%");
 
   const handleToggle = (id: string, val: boolean) => {
     setAlertStates((prev) => ({ ...prev, [id]: val }));
@@ -403,7 +422,14 @@ export function NotificationContent() {
             >
               <input
                 type="checkbox"
-                defaultChecked={channel.defaultChecked}
+                checked={selectedChannels.includes(channel.id)}
+                onChange={(e) => {
+                  setSelectedChannels(prev => 
+                    e.target.checked 
+                      ? [...prev, channel.id]
+                      : prev.filter(id => id !== channel.id)
+                  );
+                }}
                 className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border border-(--color-border-active) accent-(--color-secondary) cursor-pointer"
               />
               <div className="flex flex-col gap-1 min-w-0">
@@ -435,10 +461,11 @@ export function NotificationContent() {
           <Button
             variant="secondary"
             size="lg"
+            onClick={() => setIsEditingThreshold(prev => !prev)}
             className="shrink-0 w-full sm:w-38.5 h-10 rounded-(--radius) text-sm font-medium gap-1.5"
           >
             <Pencil className="size-4" />
-            Edit
+            {isEditingThreshold ? "Save" : "Edit"}
           </Button>
         </div>
         <div className="flex flex-col gap-2">
@@ -447,8 +474,13 @@ export function NotificationContent() {
           </span>
           <Input
             type="text"
-            defaultValue="20%"
-            className="h-13 w-full rounded-[8px] border border-(--color-border-active) px-7 py-3.25 text-sm bg-(--color-surface-20) focus-visible:border-(--color-border-active)"
+            value={threshold}
+            onChange={(e) => setThreshold(e.target.value)}
+            disabled={!isEditingThreshold}
+            className={cn(
+              "h-13 w-full rounded-[8px] border border-(--color-border-active) px-7 py-3.25 text-sm bg-(--color-surface-20) focus-visible:border-(--color-border-active)",
+              !isEditingThreshold && "opacity-75 cursor-not-allowed bg-(--color-surface-30)"
+            )}
           />
         </div>
       </SectionCard>

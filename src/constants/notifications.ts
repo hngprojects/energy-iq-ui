@@ -1,4 +1,5 @@
 import { BatteryLow, CircleHelp, Sun, TrendingUp } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
 
 export const ALERT_ROWS = [
   {
@@ -27,6 +28,7 @@ export const ALERT_ROWS = [
   },
 ] as const;
 
+
 export const DELIVERY_CHANNELS = [
   {
     id: "whatsapp",
@@ -37,7 +39,9 @@ export const DELIVERY_CHANNELS = [
   {
     id: "email",
     label: "Email",
-    description: "Amaka@energyiq.africa",
+    get description(): string {
+      return useAuthStore.getState().user?.email || "Amaka@energyiq.africa";
+    },
     defaultChecked: true,
     verified: true,
   },
@@ -47,4 +51,4 @@ export const DELIVERY_CHANNELS = [
     description: "Push to mobile and web app",
     defaultChecked: true,
   },
-] as const;
+];

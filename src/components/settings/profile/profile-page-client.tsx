@@ -36,21 +36,6 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-function isOlderThanUserProfile(
-  settingsUpdatedAt: string | undefined,
-  userUpdatedAt: string | undefined,
-) {
-  if (!settingsUpdatedAt || !userUpdatedAt) return false;
-
-  const settingsTime = Date.parse(settingsUpdatedAt);
-  const userTime = Date.parse(userUpdatedAt);
-
-  if (!Number.isFinite(settingsTime) || !Number.isFinite(userTime)) {
-    return false;
-  }
-
-  return settingsTime < userTime;
-}
 
 export function ProfilePageClient() {
   const { user, setUser, logout } = useAuthStore();
