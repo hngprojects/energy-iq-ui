@@ -39,7 +39,6 @@ const FILTER_OPTIONS: { value: AlertFilterType; label: string }[] = [
 ];
 
 const PER_PAGE_OPTIONS = [10, 20, 50];
-const REFRESH_INTERVAL_MS = 30_000;
 
 const ICON_MAP = {
   battery_low: AlertTriangle,
@@ -468,11 +467,6 @@ export function AlertsTable({ initialData = [], isLoading }: AlertsTableProps) {
       isPendingRef.current = false;
     }
   }, [queryClient]);
-
-  useEffect(() => {
-    const interval = setInterval(handleRefresh, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [handleRefresh]);
 
   // Reset to page 1 when filter changes
   const handleFilterChange = (newFilter: AlertFilterType) => {
