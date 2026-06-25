@@ -83,7 +83,12 @@ export async function PATCH(req: NextRequest) {
     }
 
     const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+    const token = req.cookies.get(TOKEN_COOKIE)?.value;
     if (!refreshToken) {
+      if (token) {
+        return NextResponse.json({ accessToken: token, refreshToken: "" });
+      }
+
       return NextResponse.json(
         { message: "Missing refresh token." },
         { status: 401 },
