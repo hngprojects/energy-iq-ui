@@ -75,6 +75,15 @@ function formatDateForApi(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function preferPositivePrimary(
+  primary: number | undefined,
+  fallback: number | undefined,
+  mock: number,
+) {
+  if (typeof primary === "number" && primary > 0) return primary;
+  return fallback ?? primary ?? mock;
+}
+
 function CardSkeleton() {
   return (
     <div className="border-border bg-card animate-pulse rounded-2xl border p-5 space-y-3">
@@ -206,14 +215,18 @@ export function DashboardContent() {
     : d.status.updated;
 
   const isOnline = metrics && !metrics.systemOffline;
-  const savedToday =
-    todaySavings?.results?.totalCostSavedNgn ??
-    metrics?.nairaSavedToday ??
-    d.savedToday.amount;
-  const savedThisMonth =
-    monthSavings?.results?.totalCostSavedNgn ??
-    metrics?.nairaSavedThisMonth ??
-    d.savedMonth.amount;
+  const dashboardSavedToday = metrics?.nairaSavedToday;
+  const dashboardSavedThisMonth = metrics?.nairaSavedThisMonth;
+  const savedToday = preferPositivePrimary(
+    dashboardSavedToday,
+    todaySavings?.results?.totalCostSavedNgn,
+    d.savedToday.amount,
+  );
+  const savedThisMonth = preferPositivePrimary(
+    dashboardSavedThisMonth,
+    monthSavings?.results?.totalCostSavedNgn,
+    d.savedMonth.amount,
+  );
 
   const alertReason =
     metrics && metrics.health.status !== "GREEN" ? metrics.health.reason : null;
