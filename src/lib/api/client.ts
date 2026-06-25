@@ -31,12 +31,12 @@ function getRefreshPromise(): Promise<RefreshTokenResponse> {
           throw new Error("Session refresh failed");
         }
         const { token, refreshToken } = useAuthStore.getState();
-        if (!token || !refreshToken) {
+        if (!token) {
           throw new Error("Session refresh missing tokens");
         }
         return {
           accessToken: token,
-          refreshToken,
+          refreshToken: refreshToken ?? "",
         } satisfies RefreshTokenResponse;
       })
       .finally(() => {
