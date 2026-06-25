@@ -53,7 +53,7 @@ export async function refreshAuthSession(): Promise<boolean> {
     const payload = await response.json().catch(() => null);
     const data = (payload?.data ?? payload) as RefreshTokenResponse | null;
 
-    if (!data?.accessToken || !data?.refreshToken) {
+    if (!data?.accessToken) {
       return false;
     }
 
