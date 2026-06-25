@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { X, Calendar, Mail, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
+import { reportsService } from "@/services/reports-service";
+
+import { cn } from "@/lib/utils";
 
 interface ShareReportModalProps {
   report: Report | null;
@@ -30,6 +33,8 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
 
   const formattedMonthYear = getReportMonthYear(report.date || "April 2026");
 
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -39,14 +44,31 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
     }
   };
 
-  const handleShareEmail = () => {
-    window.location.href = `mailto:?subject=${encodeURIComponent(report.title)}&body=${encodeURIComponent(`Here is the report: ${report.title} (${report.subtitle})`)}`;
+  const handleShareEmail = async () => {
+    if (["1", "2", "3", "4", "5", "6", "7"].includes(report.id)) {
+      window.location.href = `mailto:?subject=${encodeURIComponent(report.title)}&body=${encodeURIComponent(`Here is the report: ${report.title} (${report.subtitle})`)}`;
+      return;
+    }
+
+    setIsSendingEmail(true);
+    const toastId = toast.loading("Sending email report...");
+    try {
+      await reportsService.emailReport(report.id);
+      toast.success("Report email sent successfully!", { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to send email report", { id: toastId });
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const handleShareWhatsApp = () => {
     const text = `Here is the report: ${report.title} (${report.subtitle})`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
+
+  const isReady = report.status?.toUpperCase() === "READY";
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -101,14 +123,34 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
 
             <div className="shrink-0 flex items-center justify-center ml-auto">
               <span
-                className="inline-flex items-center gap-1.5 rounded-[16px] w-16 h-5 pt-0.5 pr-2 pb-0.5 pl-2 text-[10px] font-semibold"
-                style={{ backgroundColor: "var(--color-success-bg)", color: "var(--color-success-alt)" }}
+                className="inline-flex items-center gap-1.5 rounded-[16px] px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor:
+                    report.status?.toUpperCase() === "PENDING"
+                      ? "var(--color-warning-bg)"
+                      : report.status?.toUpperCase() === "CANCELLED"
+                        ? "var(--color-slate-20)"
+                        : "var(--color-success-bg)",
+                  color:
+                    report.status?.toUpperCase() === "PENDING"
+                      ? "var(--color-warning)"
+                      : report.status?.toUpperCase() === "CANCELLED"
+                        ? "var(--color-slate-70)"
+                        : "var(--color-success-alt)",
+                }}
               >
                 <span
                   className="h-1.5 w-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: "var(--color-success-alt)" }}
+                  style={{
+                    backgroundColor:
+                      report.status?.toUpperCase() === "PENDING"
+                        ? "var(--color-warning)"
+                        : report.status?.toUpperCase() === "CANCELLED"
+                          ? "var(--color-slate-70)"
+                          : "var(--color-success-alt)",
+                  }}
                 />
-                {report.status}
+                {report.status?.charAt(0).toUpperCase() + report.status?.slice(1).toLowerCase()}
               </span>
             </div>
           </div>
@@ -117,12 +159,20 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
             <Button
               variant="ghost"
               onClick={handleShareEmail}
-              className="w-[116.5px] sm:w-[194px] h-[77px] flex flex-col items-center justify-center rounded-(--radius) p-3 gap-2 border border-(--color-border-disabled) bg-(--color-slate-20) cursor-pointer hover:bg-(--color-slate-30) hover:border-(--color-slate-50) transition-all hover:text-foreground"
+              disabled={isSendingEmail || !isReady}
+              className={cn(
+                "w-[116.5px] sm:w-[194px] h-[77px] flex flex-col items-center justify-center rounded-(--radius) p-3 gap-2 border border-(--color-border-disabled) bg-(--color-slate-20) cursor-pointer hover:bg-(--color-slate-30) hover:border-(--color-slate-50) transition-all hover:text-foreground",
+                !isReady && "opacity-50 cursor-not-allowed hover:bg-transparent"
+              )}
             >
-              <Mail className="w-8 h-8 text-(--color-surface-100)" />
+              {isSendingEmail ? (
+                <span className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+              ) : (
+                <Mail className="w-8 h-8 text-(--color-surface-100)" />
+              )}
 
               <span className="font-medium text-base text-(--color-surface-100) leading-none">
-                Email
+                {isSendingEmail ? "Sending..." : "Email"}
               </span>
             </Button>
 
