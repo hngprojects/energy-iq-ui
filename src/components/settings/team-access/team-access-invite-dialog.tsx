@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,22 +45,22 @@ export function TeamAccessInviteDialog({
   onOpenChange: (open: boolean) => void;
   onInvite: (values: InviteTeamMemberFormValues) => void;
 }) {
+  const [role, setRole] = useState<TeamAccessRole>("admin");
   const form = useForm<InviteTeamMemberFormValues>({
     resolver: zodResolver(inviteTeamMemberSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
       email: "",
-      password: "",
-      role: "admin",
+      role,
     },
   });
-  const role = form.watch("role");
   const roleLabel = ROLE_LABELS[role];
 
   useEffect(() => {
     if (!open) {
       form.reset();
+      setRole("admin");
     }
   }, [form, open]);
 
@@ -95,16 +95,14 @@ export function TeamAccessInviteDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" className="h-14" placeholder="Create a password" {...form.register("password")} />
-            <FieldError message={form.formState.errors.password?.message} />
-          </div>
-
-          <div className="space-y-2">
             <Label>Access role</Label>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild className="w-full h-14">
-                <Button type="button" variant="outline" className="min-w-full h-14 border border-[#E8E8E8] justify-between rounded-lg px-3">
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-14 w-full justify-between rounded-lg border border-[#E8E8E8] px-3"
+                >
                   <span>{roleLabel}</span>
                   <ChevronDown className="size-4" />
                 </Button>
@@ -118,6 +116,7 @@ export function TeamAccessInviteDialog({
                       role === item && "bg-muted font-medium",
                     )}
                     onClick={() => {
+                      setRole(item);
                       form.setValue("role", item, { shouldValidate: true });
                     }}
                   >
@@ -130,10 +129,12 @@ export function TeamAccessInviteDialog({
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" className="h-12 border border-[]" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" className="h-12 border border-[#E8E8E8]" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-black hover:bg-black h-12">Send Invitation</Button>
+            <Button type="submit" className="h-12 bg-black hover:bg-black">
+              Send Invitation
+            </Button>
           </div>
         </form>
       </DialogContent>

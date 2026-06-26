@@ -45,10 +45,25 @@ interface TeamAccessState {
   inviteModalOpen: boolean;
   openInviteModal: () => void;
   closeInviteModal: () => void;
-  inviteMember: (member: Omit<TeamMember, "id" | "invitedAt">) => void;
+  inviteMember: (member: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: TeamAccessRole;
+  }) => void;
   removeMember: (id: string) => void;
   updateRole: (id: string, role: TeamAccessRole) => void;
   resetMembers: () => void;
+}
+
+function getRolePermissions(role: TeamAccessRole): string {
+  if (role === "admin") return "Full access";
+  if (role === "technician") return "System alerts and metrics only";
+  return "Read-only access";
+}
+
+function getRoleDashboards(role: TeamAccessRole): number {
+  return role === "technician" ? 2 : 1;
 }
 
 export const useTeamAccessStore = create<TeamAccessState>()(
@@ -63,6 +78,9 @@ export const useTeamAccessStore = create<TeamAccessState>()(
           members: [
             {
               ...member,
+              status: "pending",
+              permissions: getRolePermissions(member.role),
+              dashboards: getRoleDashboards(member.role),
               id: `member-${Date.now()}`,
               invitedAt: new Date().toISOString(),
             },
@@ -81,12 +99,8 @@ export const useTeamAccessStore = create<TeamAccessState>()(
               ? {
                   ...member,
                   role,
-                  permissions:
-                    role === "admin"
-                      ? "Full access"
-                      : role === "technician"
-                        ? "System alerts and metrics only"
-                        : "Read-only access",
+                  permissions: getRolePermissions(role),
+                  dashboards: getRoleDashboards(role),
                 }
               : member,
           ),

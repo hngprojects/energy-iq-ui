@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, MoreVertical, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -75,11 +75,32 @@ function MemberMobileCard({
         </div>
       </dl>
       <div className="mt-4 flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" className="border border-[#E8E8E8]" onClick={() => onEditRole(member.role)}>
-          <Pencil className="size-4" />
-          Edit
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={onRemove}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border border-[#E8E8E8]"
+              aria-label={`Edit role for ${member.firstName} ${member.lastName}`}
+            >
+              Edit
+              <ChevronDown className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {(["admin", "technician", "viewer"] as TeamAccessRole[]).map((role) => (
+              <DropdownMenuItem key={role} onClick={() => onEditRole(role)}>
+                Set {ROLE_LABELS[role]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Remove ${member.firstName} ${member.lastName}`}
+          onClick={onRemove}
+        >
           <Trash2 className="size-4" />
         </Button>
       </div>
@@ -123,7 +144,11 @@ export function TeamAccessTable({
                 <td className="px-5 py-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Open actions for ${member.firstName} ${member.lastName}`}
+                      >
                         <MoreVertical className="size-4" />
                       </Button>
                     </DropdownMenuTrigger>

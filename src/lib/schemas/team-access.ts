@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { TEAM_ACCESS_ROLES } from "@/types/team-access";
 
-export const teamAccessRoleSchema = z.enum(["admin", "technician", "viewer"]);
+export const teamAccessRoleSchema = z.enum(TEAM_ACCESS_ROLES);
 
 export const inviteTeamMemberSchema = z.object({
   firstName: z
@@ -14,10 +15,6 @@ export const inviteTeamMemberSchema = z.object({
     .min(2, "Last name must be at least 2 characters")
     .max(40, "Last name must be at most 40 characters"),
   email: z.string().trim().email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(72, "Password must be at most 72 characters"),
   role: teamAccessRoleSchema,
 });
 

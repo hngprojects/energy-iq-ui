@@ -1,4 +1,5 @@
-export type TeamAccessRole = "admin" | "technician" | "viewer";
+export const TEAM_ACCESS_ROLES = ["admin", "technician", "viewer"] as const;
+export type TeamAccessRole = (typeof TEAM_ACCESS_ROLES)[number];
 
 export type TeamAccessStatus = "active" | "pending" | "disabled";
 
