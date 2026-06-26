@@ -1,10 +1,10 @@
 "use client";
 
-import { REPORT_STATUS_COLORS } from "@/constants/reports";
+import { getStatusColors } from "@/constants/reports";
 
 export function ReportStatusBadge({ status }: { status: string }) {
   const normalized = status?.toUpperCase() || "PENDING";
-  const colors = REPORT_STATUS_COLORS[normalized] ?? REPORT_STATUS_COLORS.READY;
+  const colors = getStatusColors(normalized);
   const label = normalized.charAt(0) + normalized.slice(1).toLowerCase();
 
   return (

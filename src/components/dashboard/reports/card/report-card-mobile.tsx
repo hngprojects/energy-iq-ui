@@ -28,10 +28,11 @@ export function ReportCardMobile({
   onDelete,
 }: ReportCardMobileProps) {
   const Icon = REPORT_ICON_MAP[report.iconType];
-  const isMock = ["1", "2", "3", "4", "5", "6", "7"].includes(report.id);
   const isPending = report.status?.toUpperCase() === "PENDING";
-  const showMoreOptions = !isMock || isPending;
   const isReady = report.status?.toUpperCase() === "READY";
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.id);
+  const canDelete = isUuid;
+  const showMoreOptions = canDelete || isPending;
 
   return (
     <div className="bg-card border-border flex w-full flex-col rounded-[8px] border p-6 sm:hidden relative">
@@ -62,7 +63,7 @@ export function ReportCardMobile({
                     Cancel Report
                   </DropdownMenu.Item>
                 )}
-                {!isMock && (
+                {canDelete && (
                   <DropdownMenu.Item
                     onSelect={onDelete}
                     className="cursor-pointer px-4 py-2.5 text-sm text-destructive hover:bg-red-50 outline-none transition-colors flex items-center gap-1.5"

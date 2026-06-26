@@ -2,30 +2,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
-import { reportsService, ReportsPagination } from "@/services/reports-service";
+import { reportsService, ReportsPagination, DEFAULT_PAGINATION } from "@/services/reports-service";
 import { mapApiReportToReport } from "@/components/dashboard/reports/table/reports-table";
 import { Report } from "@/lib/mocks/reports-data";
 import { toast } from "sonner";
 
-const DEFAULT_PAGINATION: ReportsPagination = {
-  total: 0,
-  total_pages: 1,
-  page: 1,
-  has_next: false,
-  has_previous: false,
-};
-
-export function useReports(pageNumber = 1, pageSize = 10) {
+export function useReports(pageNumber = 1, pageSize = 10, reportType?: string) {
   const { isAuthenticated } = useAuthStore();
   const { useUserInverters } = useInverterQueries();
   const { data: inverters } = useUserInverters();
-  const inverterId = inverters?.[0]?.id || "e2af3d6a-decf-46b6-a4a5-fb96e7c1ee80";
+  const inverterId = inverters?.[0]?.id;
 
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["reports", pageNumber, pageSize],
-    queryFn: () => reportsService.getReports(pageNumber, pageSize),
+    queryKey: ["reports", pageNumber, pageSize, reportType ?? "all"],
+    queryFn: () => reportsService.getReports(pageNumber, pageSize, reportType),
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData,
@@ -77,8 +69,8 @@ export function useReports(pageNumber = 1, pageSize = 10) {
       a.download = `${report.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.pdf`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
       a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 0);
       onComplete(report.id, report.title);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to download report";

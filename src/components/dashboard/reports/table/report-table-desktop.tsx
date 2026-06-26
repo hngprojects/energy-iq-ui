@@ -84,6 +84,7 @@ export function ReportTableDesktop({
                 const Icon = REPORT_ICON_MAP[report.iconType];
                 const isReady = report.status?.toUpperCase() === "READY";
                 const isPending = report.status?.toUpperCase() === "PENDING";
+                const canDelete = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.id);
 
                 return (
                   <tr
@@ -198,13 +199,15 @@ export function ReportTableDesktop({
                                   Cancel Report
                                 </DropdownMenu.Item>
                               )}
-                              <DropdownMenu.Item
-                                onSelect={() => onDelete(report.id)}
-                                className="cursor-pointer px-4 py-2.5 text-sm text-destructive hover:bg-red-50 outline-none transition-colors flex items-center gap-1.5"
-                              >
-                                <Trash2 className="size-3.5" />
-                                Delete Report
-                              </DropdownMenu.Item>
+                              {canDelete && (
+                                <DropdownMenu.Item
+                                  onSelect={() => onDelete(report.id)}
+                                  className="cursor-pointer px-4 py-2.5 text-sm text-destructive hover:bg-red-50 outline-none transition-colors flex items-center gap-1.5"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                  Delete Report
+                                </DropdownMenu.Item>
+                              )}
                             </DropdownMenu.Content>
                           </DropdownMenu.Portal>
                         </DropdownMenu.Root>

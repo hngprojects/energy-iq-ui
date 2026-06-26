@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
 import { reportsService } from "@/services/reports-service";
-import { REPORT_STATUS_COLORS } from "@/constants/reports";
+import { getStatusColors } from "@/constants/reports";
 
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,7 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
   };
 
   const formattedMonthYear = getReportMonthYear(report.date || "April 2026");
+  const statusColors = getStatusColors(report.status);
 
   const handleCopyLink = async () => {
     try {
@@ -46,11 +47,6 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
   };
 
   const handleShareEmail = async () => {
-    if (["1", "2", "3", "4", "5", "6", "7"].includes(report.id)) {
-      window.location.href = `mailto:?subject=${encodeURIComponent(report.title)}&body=${encodeURIComponent(`Here is the report: ${report.title} (${report.subtitle})`)}`;
-      return;
-    }
-
     setIsSendingEmail(true);
     const toastId = toast.loading("Sending email report...");
     try {
@@ -127,15 +123,13 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
               <span
                 className="inline-flex items-center gap-1.5 rounded-[16px] px-2 py-0.5 text-[10px] font-semibold"
                 style={{
-                  backgroundColor: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).bg,
-                  color: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).text,
+                  backgroundColor: statusColors.bg,
+                  color: statusColors.text,
                 }}
               >
                 <span
                   className="h-1.5 w-1.5 rounded-full shrink-0"
-                  style={{
-                    backgroundColor: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).text,
-                  }}
+                  style={{ backgroundColor: statusColors.text }}
                 />
                 {report.status?.charAt(0).toUpperCase() + report.status?.slice(1).toLowerCase()}
               </span>

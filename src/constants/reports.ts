@@ -114,7 +114,24 @@ export const REPORT_STATUS_COLORS: Record<string, { bg: string; text: string }> 
     bg: "var(--color-success-bg)",
     text: "var(--color-success-alt)",
   },
+  PROCESSING: {
+    bg: "var(--color-slate-20)",
+    text: "var(--color-slate-70)",
+  },
+  FAILED: {
+    bg: "var(--color-danger-bg)",
+    text: "var(--color-danger)",
+  },
 };
+
+export const REPORT_STATUS_NEUTRAL: { bg: string; text: string } = {
+  bg: "var(--color-slate-20)",
+  text: "var(--color-slate-70)",
+};
+
+export function getStatusColors(status: string): { bg: string; text: string } {
+  return REPORT_STATUS_COLORS[status?.toUpperCase()] ?? REPORT_STATUS_NEUTRAL;
+}
 
 export const REPORT_STAT_CARD_ICON_COLORS: Record<string, string> = {
   periodic: "text-(--color-dark-text)",

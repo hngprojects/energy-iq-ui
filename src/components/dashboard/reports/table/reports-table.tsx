@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { cn } from "@/lib/utils";
@@ -139,10 +139,13 @@ function FilterDropdown({
   );
 }
 
-function filterReports(reports: Report[], filter: ReportFilterType): Report[] {
-  if (filter === "all") return reports;
-  return reports.filter((r) => r.type === filter);
-}
+const FILTER_TO_BACKEND_TYPE: Partial<Record<ReportFilterType, string>> = {
+  Solar: "SOLAR",
+  Alert: "ALERT",
+  Device: "COSTS_AND_SAVINGS",
+  Weekly: "GENERAL",
+  Monthly: "GENERAL",
+};
 
 export function ReportsTable() {
   const [filter, setFilter] = useState<ReportFilterType>("all");
@@ -161,10 +164,10 @@ export function ReportsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { reports, pagination, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports(currentPage, itemsPerPage);
+  const { reports, pagination, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports(currentPage, itemsPerPage, FILTER_TO_BACKEND_TYPE[filter]);
 
   const handleDownload = (report: Report) => {
-    if (downloadingId || completedId) return;
+    if (downloadingId === report.id || completedId === report.id) return;
     downloadReport(
       report,
       (id) => { setDownloadingId(id); setCompletedId(null); },
@@ -172,8 +175,6 @@ export function ReportsTable() {
       () => setDownloadingId(null),
     );
   };
-
-  const displayed = useMemo(() => filterReports(reports, filter), [filter, reports]);
 
   const handleFilterChange = (next: ReportFilterType) => {
     setFilter(next);
@@ -208,7 +209,7 @@ export function ReportsTable() {
             ? Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="bg-card h-51.5 w-full animate-pulse rounded-[8px] border border-border" />
               ))
-            : displayed.map((report) => (
+            : reports.map((report) => (
                 <ReportCardMobile
                   key={report.id}
                   report={report}
@@ -220,7 +221,7 @@ export function ReportsTable() {
                   onDelete={() => deleteReport(report.id)}
                 />
               ))}
-          {!isLoading && displayed.length === 0 && (
+          {!isLoading && reports.length === 0 && (
             <div className="text-muted-foreground py-20 text-center text-sm">
               No reports match this filter.
             </div>
@@ -228,7 +229,7 @@ export function ReportsTable() {
         </div>
 
         <ReportTableDesktop
-          reports={displayed}
+          reports={reports}
           isLoading={isLoading}
           downloadingId={downloadingId}
           completedId={completedId}
@@ -306,7 +307,7 @@ export function ReportsTable() {
 
             const payload = {
               mode: "period" as const,
-              inverterId,
+              inverterId: inverterId ?? "",
               type: backendType,
               name: title || `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
               period,
@@ -344,7 +345,7 @@ export function ReportsTable() {
 
             const payload = {
               mode: "period" as const,
-              inverterId,
+              inverterId: inverterId ?? "",
               type: backendType,
               name: title || `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
               period,

@@ -4,7 +4,7 @@ export type { ReportIconType, ReportFilterType };
 export { FILTER_OPTIONS } from "@/constants/reports";
 
 export type ReportSeverity = "critical" | "warning" | "success";
-export type ReportStatus = "Ready" | "PENDING" | "CANCELLED" | "READY";
+export type ReportStatus = "PENDING" | "CANCELLED" | "READY" | "PROCESSING" | "FAILED";
 
 export interface ReportMetric {
   label: string;
@@ -38,7 +38,7 @@ export const reportsMock: Report[] = [
     title: "Solar Performance - May Wk 1",
     subtitle: "1 - 5 May",
     type: "Solar",
-    status: "Ready",
+    status: "READY",
     date: "5 May 2026",
     iconType: "solar",
     keyMetrics: { value: "189 kWh", label: "Solar" },
@@ -49,7 +49,7 @@ export const reportsMock: Report[] = [
     title: "Week 3 Energy Report",
     subtitle: "27 April - 3 May",
     type: "Weekly",
-    status: "Ready",
+    status: "READY",
     date: "4 May 2026",
     iconType: "file",
     keyMetrics: { value: "312 kWh", label: "Solar" },
@@ -60,7 +60,7 @@ export const reportsMock: Report[] = [
     title: "April Monthly Summary",
     subtitle: "April 2026",
     type: "Monthly",
-    status: "Ready",
+    status: "READY",
     date: "1 May 2026",
     iconType: "calendar",
     keyMetrics: { value: "703 kWh", label: "Solar" },
@@ -71,7 +71,7 @@ export const reportsMock: Report[] = [
     title: "Alert Digest - Week 2",
     subtitle: "27 April - 3 May",
     type: "Alert",
-    status: "Ready",
+    status: "READY",
     date: "30 April 2026",
     iconType: "alert",
     keyMetrics: { value: "14 alerts", label: "Logged" },
@@ -82,7 +82,7 @@ export const reportsMock: Report[] = [
     title: "Week 2 Energy Report",
     subtitle: "20 - 26 April",
     type: "Weekly",
-    status: "Ready",
+    status: "READY",
     date: "27 April 2026",
     iconType: "file",
     keyMetrics: { value: "264 kWh", label: "Solar" },
@@ -93,7 +93,7 @@ export const reportsMock: Report[] = [
     title: "Device Consumption Breakdown",
     subtitle: "13 - 20 April",
     type: "Device",
-    status: "Ready",
+    status: "READY",
     date: "20 April 2026",
     iconType: "chip",
     keyMetrics: { value: "5 alerts", label: "Logged" },
@@ -104,7 +104,7 @@ export const reportsMock: Report[] = [
     title: "Week 1 Energy Report",
     subtitle: "13 - 19 April",
     type: "Weekly",
-    status: "Ready",
+    status: "READY",
     date: "20 April 2026",
     iconType: "file",
     keyMetrics: { value: "261 kWh", label: "Solar" },

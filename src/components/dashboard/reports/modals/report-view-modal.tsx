@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
-import { REPORT_ICON_MAP, REPORT_STATUS_COLORS } from "@/constants/reports";
+import { REPORT_ICON_MAP, getStatusColors } from "@/constants/reports";
 import { cn } from "@/lib/utils";
 
 interface ReportViewModalProps {
@@ -23,6 +23,7 @@ export function ReportViewModal({ report, onClose, onShare, onDownload }: Report
   if (!report) return null;
 
   const Icon = REPORT_ICON_MAP[report.iconType] ?? REPORT_ICON_MAP.solar;
+  const statusColors = getStatusColors(report.status);
 
   return (
     <Dialog open={!!report} onOpenChange={(open) => !open && onClose()}>
@@ -48,15 +49,13 @@ export function ReportViewModal({ report, onClose, onShare, onDownload }: Report
                   <span
                     className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold shrink-0"
                     style={{
-                      backgroundColor: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).bg,
-                      color: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).text,
+                      backgroundColor: statusColors.bg,
+                      color: statusColors.text,
                     }}
                   >
                     <span
                       className="h-1.5 w-1.5 rounded-full shrink-0"
-                      style={{
-                        backgroundColor: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).text,
-                      }}
+                      style={{ backgroundColor: statusColors.text }}
                     />
                     {report.status?.charAt(0).toUpperCase() + report.status?.slice(1).toLowerCase()}
                   </span>

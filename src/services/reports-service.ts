@@ -21,7 +21,7 @@ export interface ReportsSummary {
   solar: number;
 }
 
-const DEFAULT_PAGINATION: ReportsPagination = {
+export const DEFAULT_PAGINATION: ReportsPagination = {
   total: 0,
   total_pages: 1,
   page: 1,
@@ -54,21 +54,15 @@ export const reportsService = {
     );
   },
 
-  getReports: async (pageNumber = 1, pageSize = 10): Promise<GetReportsResult> => {
-    let pagination: ReportsPagination = { ...DEFAULT_PAGINATION, page: pageNumber };
-
-    const reports = await apiFetch<ApiReport[]>(
+  getReports: async (pageNumber = 1, pageSize = 10, reportType?: string): Promise<GetReportsResult> => {
+    const envelope = await apiFetch<{ data: ApiReport[]; meta: { pagination: ReportsPagination } }>(
       "/reports",
       {
         method: "GET",
-        params: { pageNumber, pageSize },
+        params: { pageNumber, pageSize, ...(reportType ? { reportType } : {}) },
         transformResponse: (raw: string) => {
           try {
-            const parsed = JSON.parse(raw);
-            if (parsed?.meta?.pagination) {
-              pagination = parsed.meta.pagination;
-            }
-            return parsed?.data ?? parsed;
+            return JSON.parse(raw);
           } catch {
             return raw;
           }
@@ -77,10 +71,10 @@ export const reportsService = {
       true,
     );
 
-    return {
-      reports: Array.isArray(reports) ? reports : [],
-      pagination,
-    };
+    const reports = Array.isArray(envelope) ? envelope : (envelope?.data ?? []);
+    const pagination: ReportsPagination = (envelope as { meta?: { pagination?: ReportsPagination } })?.meta?.pagination ?? { ...DEFAULT_PAGINATION, page: pageNumber };
+
+    return { reports, pagination };
   },
 
   getReportsSummary: async (): Promise<ReportsSummary> => {
