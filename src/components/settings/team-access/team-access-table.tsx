@@ -1,10 +1,9 @@
 "use client";
 
-import { ChevronDown, MoreVertical, Trash2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { TeamAccessRole, TeamMember } from "@/types/team-access";
+import { TEAM_ACCESS_ROLES, type TeamAccessRole, type TeamMember } from "@/types/team-access";
 
 const ROLE_LABELS: Record<TeamAccessRole, string> = {
   admin: "Admin",
@@ -75,26 +74,18 @@ function MemberMobileCard({
         </div>
       </dl>
       <div className="mt-4 flex items-center justify-end gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border border-[#E8E8E8]"
-              aria-label={`Edit role for ${member.firstName} ${member.lastName}`}
-            >
-              Edit
-              <ChevronDown className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {(["admin", "technician", "viewer"] as TeamAccessRole[]).map((role) => (
-              <DropdownMenuItem key={role} onClick={() => onEditRole(role)}>
-                Set {ROLE_LABELS[role]}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {TEAM_ACCESS_ROLES.map((role) => (
+          <Button
+            key={role}
+            variant="outline"
+            size="sm"
+            className="border border-[#E8E8E8]"
+            onClick={() => onEditRole(role)}
+            aria-label={`Set ${member.firstName} ${member.lastName} as ${ROLE_LABELS[role]}`}
+          >
+            Set {ROLE_LABELS[role]}
+          </Button>
+        ))}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -142,27 +133,28 @@ export function TeamAccessTable({
                 <td className="px-5 py-4"><RoleBadge role={member.role} /></td>
                 <td className="px-5 py-4">{member.permissions}</td>
                 <td className="px-5 py-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                  <div className="flex items-center justify-end gap-2">
+                    {TEAM_ACCESS_ROLES.map((role) => (
                       <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Open actions for ${member.firstName} ${member.lastName}`}
+                        key={role}
+                        variant="outline"
+                        size="sm"
+                        className="border border-[#E8E8E8]"
+                        onClick={() => onEditRole(member.id, role)}
+                        aria-label={`Set ${member.firstName} ${member.lastName} as ${ROLE_LABELS[role]}`}
                       >
-                        <MoreVertical className="size-4" />
+                        {ROLE_LABELS[role]}
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {(["admin", "technician", "viewer"] as TeamAccessRole[]).map((role) => (
-                        <DropdownMenuItem key={role} onClick={() => onEditRole(member.id, role)}>
-                          Set {ROLE_LABELS[role]}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuItem onClick={() => onRemove(member.id)} className="text-destructive">
-                        Remove user
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Remove ${member.firstName} ${member.lastName}`}
+                      onClick={() => onRemove(member.id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
