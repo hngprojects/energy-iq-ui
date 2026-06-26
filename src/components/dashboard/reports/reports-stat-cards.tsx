@@ -73,17 +73,22 @@ function StatCard({
 export function ReportStatCards() {
   const { isAuthenticated } = useAuthStore();
 
-  const { data: summary, isLoading } = useQuery({
-    queryKey: ["reports-summary"],
-    queryFn: () => reportsService.getReportsSummary(),
+  const { data, isLoading } = useQuery({
+    queryKey: ["reports", 1, 10],
+    queryFn: () => reportsService.getReports(1, 10),
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
   });
 
-  const generalCount = summary?.general ?? 0;
-  const solarCount = summary?.solar ?? 0;
-  const alertCount = summary?.alerts ?? 0;
-  const deviceCount = summary?.costsAndSavings ?? 0;
+  const reports = data?.reports ?? [];
+
+  const weeklyCount = reports.filter((r) => r.period === "weekly").length;
+  const monthlyCount = reports.filter((r) => r.period === "monthly").length;
+  const periodicTotal = weeklyCount + monthlyCount;
+
+  const solarCount = reports.filter((r) => r.type === "SOLAR").length;
+  const alertCount = reports.filter((r) => r.type === "ALERT").length;
+  const deviceCount = reports.filter((r) => r.type === "COSTS_AND_SAVINGS").length;
 
   return (
     <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
@@ -92,8 +97,8 @@ export function ReportStatCards() {
         iconColor={REPORT_STAT_CARD_ICON_COLORS.periodic}
         label="Weekly / Monthly"
         mobileLabel="Wk / Mo"
-        value={String(generalCount)}
-        sub="General reports"
+        value={String(periodicTotal)}
+        sub={`${weeklyCount} weekly, ${monthlyCount} monthly`}
         isLoading={isLoading}
       />
       <StatCard

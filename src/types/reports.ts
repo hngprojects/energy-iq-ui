@@ -23,7 +23,7 @@ export interface ApiReport {
   updatedAt: string;
   startDate?: string | null;
   endDate?: string | null;
-  keyMetrics?: any | null;
+  keyMetrics?: Record<string, unknown> | null;
   recurring?: boolean;
   occurrence?: number | null;
   seriesId?: string | null;

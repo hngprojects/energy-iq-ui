@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { Report, ReportFilterType, FILTER_OPTIONS } from "@/lib/mocks/reports-data";
+import type { ReportIconType, ReportStatus } from "@/lib/mocks/reports-data";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ReportViewModal } from "@/components/dashboard/reports/modals/report-view-modal";
@@ -43,19 +44,19 @@ export function mapApiReportToReport(apiRes: ApiReportType): Report {
   let metricLabel = "Solar";
 
   if (apiRes.type === "ALERT") {
-    const alertsCount = apiRes.keyMetrics?.totalAlerts ?? 0;
+    const alertsCount = Number(apiRes.keyMetrics?.totalAlerts ?? 0);
     metricValue = `${alertsCount} alerts`;
     metricLabel = "Logged";
   } else if (apiRes.type === "COSTS_AND_SAVINGS") {
-    const costSaved = apiRes.keyMetrics?.totalCostSavedNgn ?? 0;
+    const costSaved = Number(apiRes.keyMetrics?.totalCostSavedNgn ?? 0);
     metricValue = costSaved > 0
-      ? `₦${costSaved.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      ? `₦${costSaved.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`
       : "₦0";
     metricLabel = "Saved";
   } else {
-    const energy = apiRes.keyMetrics?.totalEnergyConsumedKwh ?? 0;
+    const energy = Number(apiRes.keyMetrics?.totalEnergyConsumedKwh ?? 0);
     if (energy > 0) {
-      metricValue = `${energy.toLocaleString(undefined, { maximumFractionDigits: 0 })} kWh`;
+      metricValue = `${energy.toLocaleString("en-NG", { maximumFractionDigits: 0 })} kWh`;
     }
   }
 
@@ -68,7 +69,7 @@ export function mapApiReportToReport(apiRes: ApiReportType): Report {
   }
 
   const lowerType = type.toLowerCase();
-  let iconType: any = "file";
+  let iconType: ReportIconType = "file";
   if (lowerType === "monthly") iconType = "calendar";
   else if (lowerType === "solar") iconType = "solar";
   else if (lowerType === "alert") iconType = "alert";
@@ -79,7 +80,7 @@ export function mapApiReportToReport(apiRes: ApiReportType): Report {
     title: apiRes.name || `${type} Report`,
     subtitle: displayDateRange || apiRes.period || "weekly",
     type,
-    status: (apiRes.status as any) || "READY",
+    status: (apiRes.status as ReportStatus) || "READY",
     date: new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
       month: "short",
@@ -324,8 +325,9 @@ export function ReportsTable() {
             toast.success("Report generated successfully!", { id: toastId });
             setShowGenerateToast(true);
             invalidate();
-          } catch (err: any) {
-            toast.error(err?.message || "Failed to generate report");
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to generate report";
+            toast.error(message);
           }
         }}
       />
@@ -360,8 +362,9 @@ export function ReportsTable() {
             toast.success("Report scheduled successfully!", { id: toastId });
             setShowScheduleToast(true);
             invalidate();
-          } catch (err: any) {
-            toast.error(err?.message || "Failed to schedule report");
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Failed to schedule report";
+            toast.error(message);
           }
         }}
       />

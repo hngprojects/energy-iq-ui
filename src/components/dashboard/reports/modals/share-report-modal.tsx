@@ -22,6 +22,8 @@ interface ShareReportModalProps {
 }
 
 export function ShareReportModal({ report, open, onClose }: ShareReportModalProps) {
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   if (!report) return null;
 
   const getReportMonthYear = (dateStr: string) => {
@@ -33,8 +35,6 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
   };
 
   const formattedMonthYear = getReportMonthYear(report.date || "April 2026");
-
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const handleCopyLink = async () => {
     try {
@@ -56,9 +56,10 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
     try {
       await reportsService.emailReport(report.id);
       toast.success("Report email sent successfully!", { id: toastId });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send email report";
       console.error(err);
-      toast.error(err?.message || "Failed to send email report", { id: toastId });
+      toast.error(message, { id: toastId });
     } finally {
       setIsSendingEmail(false);
     }

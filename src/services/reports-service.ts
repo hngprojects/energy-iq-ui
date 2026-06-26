@@ -87,8 +87,8 @@ export const reportsService = {
     return apiFetch<ReportsSummary>("/reports/summary", { method: "GET" }, true);
   },
 
-  deleteReport: async (id: string): Promise<any> => {
-    return apiFetch<any>(`/reports/${id}`, { method: "DELETE" }, true);
+  deleteReport: async (id: string): Promise<void> => {
+    return apiFetch<void>(`/reports/${id}`, { method: "DELETE" }, true);
   },
 
   cancelReport: async (id: string): Promise<ApiReport> => {

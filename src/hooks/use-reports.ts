@@ -36,7 +36,6 @@ export function useReports(pageNumber = 1, pageSize = 10) {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["reports"] });
-    queryClient.invalidateQueries({ queryKey: ["reports-summary"] });
   };
 
   const cancelReport = async (id: string) => {
@@ -45,8 +44,9 @@ export function useReports(pageNumber = 1, pageSize = 10) {
       await reportsService.cancelReport(id);
       toast.success("Report cancelled successfully!", { id: toastId });
       invalidate();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to cancel report", { id: toastId });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to cancel report";
+      toast.error(message, { id: toastId });
     }
   };
 
@@ -56,8 +56,9 @@ export function useReports(pageNumber = 1, pageSize = 10) {
       await reportsService.deleteReport(id);
       toast.success("Report deleted successfully!", { id: toastId });
       invalidate();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete report", { id: toastId });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to delete report";
+      toast.error(message, { id: toastId });
     }
   };
 
@@ -79,8 +80,9 @@ export function useReports(pageNumber = 1, pageSize = 10) {
       window.URL.revokeObjectURL(url);
       a.remove();
       onComplete(report.id, report.title);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to download report");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to download report";
+      toast.error(message);
       onError(report.id);
     }
   };
