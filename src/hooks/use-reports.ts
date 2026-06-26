@@ -3,7 +3,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { reportsService, ReportsPagination, DEFAULT_PAGINATION } from "@/services/reports-service";
-import { mapApiReportToReport } from "@/components/dashboard/reports/table/reports-table";
+import { mapApiReportToReport } from "@/lib/reports/map-api-report";
 import { Report } from "@/lib/mocks/reports-data";
 import { toast } from "sonner";
 

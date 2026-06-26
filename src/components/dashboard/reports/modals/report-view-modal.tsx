@@ -57,7 +57,9 @@ export function ReportViewModal({ report, onClose, onShare, onDownload }: Report
                       className="h-1.5 w-1.5 rounded-full shrink-0"
                       style={{ backgroundColor: statusColors.text }}
                     />
-                    {report.status?.charAt(0).toUpperCase() + report.status?.slice(1).toLowerCase()}
+                    {report.status
+                      ? report.status.charAt(0).toUpperCase() + report.status.slice(1).toLowerCase()
+                      : ""}
                   </span>
                 </div>
                 <p className="text-muted-foreground truncate text-xs sm:text-sm">

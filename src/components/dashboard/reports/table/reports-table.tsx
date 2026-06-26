@@ -5,13 +5,12 @@ import { ChevronDown } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { Report, ReportFilterType, FILTER_OPTIONS } from "@/lib/mocks/reports-data";
-import type { ReportIconType, ReportStatus } from "@/lib/mocks/reports-data";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ReportViewModal } from "@/components/dashboard/reports/modals/report-view-modal";
 import { ShareReportModal } from "@/components/dashboard/reports/modals/share-report-modal";
 import { ReportsNotificationToast } from "@/components/dashboard/reports/reports-notification-toast";
-import { GenerateReportModal, formatDateRange } from "@/components/dashboard/reports/modals/generate-report-modal";
+import { GenerateReportModal } from "@/components/dashboard/reports/modals/generate-report-modal";
 import { ScheduleReportModal } from "@/components/dashboard/reports/modals/schedule-report-modal";
 import { ReportCardMobile } from "@/components/dashboard/reports/card/report-card-mobile";
 import { ReportTableDesktop } from "@/components/dashboard/reports/table/report-table-desktop";
@@ -24,73 +23,10 @@ import {
 import { PaginationBar } from "@/components/dashboard/shared/pagination-bar";
 import { reportsService } from "@/services/reports-service";
 import { useReports } from "@/hooks/use-reports";
+import { mapApiReportToReport } from "@/lib/reports/map-api-report";
 import { ApiReport as ApiReportType } from "@/types/reports";
 
-export function mapApiReportToReport(apiRes: ApiReportType): Report {
-  let type = "Weekly";
-  if (apiRes.type === "SOLAR") {
-    type = "Solar";
-  } else if (apiRes.type === "ALERT") {
-    type = "Alert";
-  } else if (apiRes.type === "COSTS_AND_SAVINGS") {
-    type = "Device";
-  } else if (apiRes.period === "monthly") {
-    type = "Monthly";
-  } else if (apiRes.period === "weekly") {
-    type = "Weekly";
-  }
-
-  let metricValue = "0 kWh";
-  let metricLabel = "Solar";
-
-  if (apiRes.type === "ALERT") {
-    const alertsCount = Number(apiRes.keyMetrics?.totalAlerts ?? 0);
-    metricValue = `${alertsCount} alerts`;
-    metricLabel = "Logged";
-  } else if (apiRes.type === "COSTS_AND_SAVINGS") {
-    const costSaved = Number(apiRes.keyMetrics?.totalCostSavedNgn ?? 0);
-    metricValue = costSaved > 0
-      ? `₦${costSaved.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`
-      : "₦0";
-    metricLabel = "Saved";
-  } else {
-    const energy = Number(apiRes.keyMetrics?.totalEnergyConsumedKwh ?? 0);
-    if (energy > 0) {
-      metricValue = `${energy.toLocaleString("en-NG", { maximumFractionDigits: 0 })} kWh`;
-    }
-  }
-
-  let displayDateRange = "";
-  if (apiRes.startDate && apiRes.endDate) {
-    displayDateRange = formatDateRange(apiRes.startDate, apiRes.endDate);
-  } else if (apiRes.referenceDate) {
-    const d = new Date(apiRes.referenceDate);
-    displayDateRange = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  }
-
-  const lowerType = type.toLowerCase();
-  let iconType: ReportIconType = "file";
-  if (lowerType === "monthly") iconType = "calendar";
-  else if (lowerType === "solar") iconType = "solar";
-  else if (lowerType === "alert") iconType = "alert";
-  else if (lowerType === "device") iconType = "chip";
-
-  return {
-    id: apiRes.id,
-    title: apiRes.name || `${type} Report`,
-    subtitle: displayDateRange || apiRes.period || "weekly",
-    type,
-    status: (apiRes.status as ReportStatus) || "READY",
-    date: new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(apiRes.createdAt || Date.now())),
-    iconType,
-    keyMetrics: { value: metricValue, label: metricLabel },
-    recipients: "Me",
-  };
-}
+export { mapApiReportToReport };
 
 function FilterDropdown({
   value,
@@ -147,6 +83,11 @@ const FILTER_TO_BACKEND_TYPE: Partial<Record<ReportFilterType, string>> = {
   Monthly: "GENERAL",
 };
 
+const FILTER_PERIOD: Partial<Record<ReportFilterType, string>> = {
+  Weekly: "weekly",
+  Monthly: "monthly",
+};
+
 export function ReportsTable() {
   const [filter, setFilter] = useState<ReportFilterType>("all");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -164,7 +105,11 @@ export function ReportsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { reports, pagination, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports(currentPage, itemsPerPage, FILTER_TO_BACKEND_TYPE[filter]);
+  const { reports: rawReports, pagination, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports(currentPage, itemsPerPage, FILTER_TO_BACKEND_TYPE[filter]);
+
+  const reports = FILTER_PERIOD[filter]
+    ? rawReports.filter((r) => r.type === filter)
+    : rawReports;
 
   const handleDownload = (report: Report) => {
     if (downloadingId === report.id || completedId === report.id) return;
