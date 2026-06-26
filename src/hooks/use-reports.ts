@@ -1,12 +1,21 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
-import { reportsService } from "@/services/reports-service";
+import { reportsService, ReportsPagination } from "@/services/reports-service";
 import { mapApiReportToReport } from "@/components/dashboard/reports/table/reports-table";
 import { Report } from "@/lib/mocks/reports-data";
 import { toast } from "sonner";
 
-export function useReports() {
+const DEFAULT_PAGINATION: ReportsPagination = {
+  total: 0,
+  total_pages: 1,
+  page: 1,
+  has_next: false,
+  has_previous: false,
+};
+
+export function useReports(pageNumber = 1, pageSize = 10) {
   const { isAuthenticated } = useAuthStore();
   const { useUserInverters } = useInverterQueries();
   const { data: inverters } = useUserInverters();
@@ -14,17 +23,20 @@ export function useReports() {
 
   const queryClient = useQueryClient();
 
-  const { data: apiReports, isLoading } = useQuery({
-    queryKey: ["reports"],
-    queryFn: () => reportsService.getReports(),
+  const { data, isLoading } = useQuery({
+    queryKey: ["reports", pageNumber, pageSize],
+    queryFn: () => reportsService.getReports(pageNumber, pageSize),
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
   });
 
-  const reports: Report[] = (apiReports ?? []).map(mapApiReportToReport);
+  const reports: Report[] = (data?.reports ?? []).map(mapApiReportToReport);
+  const pagination: ReportsPagination = data?.pagination ?? DEFAULT_PAGINATION;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["reports"] });
+    queryClient.invalidateQueries({ queryKey: ["reports-summary"] });
   };
 
   const cancelReport = async (id: string) => {
@@ -75,6 +87,7 @@ export function useReports() {
 
   return {
     reports,
+    pagination,
     isLoading,
     inverterId,
     invalidate,

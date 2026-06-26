@@ -160,7 +160,7 @@ export function ReportsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { reports, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports();
+  const { reports, pagination, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports(currentPage, itemsPerPage);
 
   const handleDownload = (report: Report) => {
     if (downloadingId || completedId) return;
@@ -173,11 +173,6 @@ export function ReportsTable() {
   };
 
   const displayed = useMemo(() => filterReports(reports, filter), [filter, reports]);
-  const totalPages = Math.max(1, Math.ceil(displayed.length / itemsPerPage));
-  const paginatedReports = displayed.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
 
   const handleFilterChange = (next: ReportFilterType) => {
     setFilter(next);
@@ -212,7 +207,7 @@ export function ReportsTable() {
             ? Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="bg-card h-51.5 w-full animate-pulse rounded-[8px] border border-border" />
               ))
-            : paginatedReports.map((report) => (
+            : displayed.map((report) => (
                 <ReportCardMobile
                   key={report.id}
                   report={report}
@@ -232,7 +227,7 @@ export function ReportsTable() {
         </div>
 
         <ReportTableDesktop
-          reports={paginatedReports}
+          reports={displayed}
           isLoading={isLoading}
           downloadingId={downloadingId}
           completedId={completedId}
@@ -244,9 +239,9 @@ export function ReportsTable() {
 
         {!isLoading && (
           <PaginationBar
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={displayed.length}
+            currentPage={pagination.page}
+            totalPages={pagination.total_pages}
+            totalItems={pagination.total}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
             onPerPageChange={(perPage) => { setItemsPerPage(perPage); setCurrentPage(1); }}
