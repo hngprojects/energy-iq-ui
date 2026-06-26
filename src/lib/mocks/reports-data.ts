@@ -1,24 +1,10 @@
+import type { ReportIconType, ReportFilterType } from "@/constants/reports";
+
+export type { ReportIconType, ReportFilterType };
+export { FILTER_OPTIONS } from "@/constants/reports";
+
 export type ReportSeverity = "critical" | "warning" | "success";
-export type ReportStatus = "Ready";
-export type ReportIconType =
-  | "battery_low"
-  | "power_high"
-  | "clock"
-  | "battery_full"
-  | "check"
-  | "solar"
-  | "file"
-  | "alert"
-  | "device"
-  | "calendar"
-  | "chip";
-export type ReportFilterType =
-  | "all"
-  | "Solar"
-  | "Weekly"
-  | "Monthly"
-  | "Alert"
-  | "Device";
+export type ReportStatus = "Ready" | "PENDING" | "CANCELLED" | "READY";
 
 export interface ReportMetric {
   label: string;
@@ -124,15 +110,6 @@ export const reportsMock: Report[] = [
     keyMetrics: { value: "261 kWh", label: "Solar" },
     recipients: "Amaka",
   },
-];
-
-export const FILTER_OPTIONS: { value: ReportFilterType; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "Weekly", label: "Weekly" },
-  { value: "Monthly", label: "Monthly" },
-  { value: "Solar", label: "Solar" },
-  { value: "Alert", label: "Alerts" },
-  { value: "Device", label: "Device" },
 ];
 
 export const reportStatsMock = {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { X, CalendarPlus, Clock3, Calendar } from "lucide-react";
+import { X, CalendarPlus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,20 +11,32 @@ import {
 } from "@/components/ui/dialog";
 import { REPORT_TYPES, type ReportType } from "@/constants/reports";
 
-interface ScheduleReportModalProps {
+interface GenerateReportModalProps {
   open: boolean;
   onClose: () => void;
-  onSaveSchedule: (scheduleDetails: { type: string; time: string; title: string }) => void;
+  onGenerate: (details: { title: string; type: string; startDate: string; endDate: string }) => void;
 }
 
-export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleReportModalProps) {
+function formatDateRange(start: string, end: string): string {
+  if (!start && !end) return "";
+  const fmt = (d: string) => {
+    if (!d) return "";
+    const date = new Date(d + "T00:00:00");
+    return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  };
+  if (start && end) return `${fmt(start)} - ${fmt(end)}`;
+  if (start) return fmt(start);
+  return fmt(end);
+}
+
+export function GenerateReportModal({ open, onClose, onGenerate }: GenerateReportModalProps) {
   const [selectedType, setSelectedType] = useState<ReportType>("weekly");
   const [startDate, setStartDate] = useState("");
-  const [sentTime, setSentTime] = useState("17:00");
+  const [endDate, setEndDate] = useState("");
   const [reportTitle, setReportTitle] = useState("");
 
   const startDateInputRef = useRef<HTMLInputElement>(null);
-  const sentTimeInputRef = useRef<HTMLInputElement>(null);
+  const endDateInputRef = useRef<HTMLInputElement>(null);
 
   const handleStartDateClick = () => {
     if (startDateInputRef.current) {
@@ -37,31 +49,23 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
     }
   };
 
-  const handleSentTimeClick = () => {
-    if (sentTimeInputRef.current) {
+  const handleEndDateClick = () => {
+    if (endDateInputRef.current) {
       try {
-        sentTimeInputRef.current.showPicker();
+        endDateInputRef.current.showPicker();
       } catch {
-        sentTimeInputRef.current.focus();
-        sentTimeInputRef.current.click();
+        endDateInputRef.current.focus();
+        endDateInputRef.current.click();
       }
     }
   };
 
-  const formatTime12h = (time24: string) => {
-    if (!time24) return "5:00 pm";
-    const [hoursStr, minutesStr] = time24.split(":");
-    const hours = parseInt(hoursStr, 10);
-    const ampm = hours >= 12 ? "pm" : "am";
-    const hours12 = hours % 12 || 12;
-    return `${hours12}:${minutesStr} ${ampm}`;
-  };
-
-  const handleSave = () => {
-    onSaveSchedule({
+  const handleGeneratePDF = () => {
+    onGenerate({
+      title: reportTitle || selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
       type: selectedType,
-      time: formatTime12h(sentTime),
-      title: reportTitle || "Weekly Report",
+      startDate,
+      endDate,
     });
     onClose();
   };
@@ -73,7 +77,7 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
         className="fixed top-1/2 left-1/2 z-60 -translate-x-1/2 -translate-y-1/2 bg-card p-6 flex flex-col w-74.25 h-177.75 max-h-[96vh] sm:w-xl sm:h-155.75 sm:max-h-[92vh] max-w-none sm:max-w-none rounded-[8px] border-none shadow-lg focus:outline-none gap-6 overflow-y-auto no-scrollbar"
       >
         <div className="flex flex-col w-full sm:w-132 min-h-165.75 sm:min-h-123.75 justify-between">
-          
+
           <div className="flex items-center justify-between w-full h-10 shrink-0">
             <div className="flex items-center gap-3">
               <div
@@ -89,12 +93,9 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
 
               <div className="flex flex-col justify-center min-w-0">
                 <p className="font-semibold text-base leading-none truncate text-(--color-surface-100)">
-                  <span className="inline sm:hidden">Schedule Report</span>
-                  <span className="hidden sm:inline">Schedule Automatic Report</span>
+                  Generate Report
                 </p>
-                <p
-                  className="hidden sm:block font-normal text-sm leading-none mt-1.5 truncate text-muted-foreground capitalize"
-                >
+                <p className="hidden sm:block font-normal text-sm leading-none mt-1.5 truncate text-muted-foreground capitalize">
                   {selectedType}
                 </p>
               </div>
@@ -111,7 +112,7 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
           </div>
 
           <div className="flex flex-col flex-1 gap-6 mt-4 justify-between">
-            
+
             <div className="flex flex-col gap-2 w-full">
               <span className="font-semibold text-sm leading-none text-(--color-surface-100)">
                 Report Type
@@ -125,7 +126,7 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
                       key={type.id}
                       variant="ghost"
                       onClick={() => setSelectedType(type.id)}
-                      className="flex flex-col items-center justify-center gap-2 w-19.5 sm:w-41.25 h-23.25 rounded-(--radius) border transition-all p-3 cursor-pointer"
+                      className="flex flex-col items-center justify-center gap-2 w-19.5 sm:w-41.25 h-23.25 rounded-(--radius) border p-3 cursor-pointer transition-all"
                       style={{
                         backgroundColor: isSelected
                           ? "var(--color-amber-20)"
@@ -144,9 +145,7 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
                             : "var(--color-slate-70)",
                         }}
                       />
-                      <span
-                        className="text-[10px] sm:text-xs font-semibold leading-none text-(--color-surface-100)"
-                      >
+                      <span className="text-[10px] sm:text-xs font-semibold leading-none text-(--color-surface-100)">
                         {type.label}
                       </span>
                     </Button>
@@ -162,7 +161,7 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
                 </span>
                 <div
                   onClick={handleStartDateClick}
-                  className="relative flex items-center justify-between border border-[#B3B3B3] rounded-lg px-4 h-[52px] bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
                 >
                   <span className="text-sm font-normal text-(--color-surface-100)">
                     {startDate ? startDate : "Select date"}
@@ -170,7 +169,7 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
                   <CalendarPlus className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors" strokeWidth={1.5} />
                   <input
                     ref={startDateInputRef}
-                    id="schedule-start-date"
+                    id="start-date"
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
@@ -179,61 +178,76 @@ export function ScheduleReportModal({ open, onClose, onSaveSchedule }: ScheduleR
                 </div>
               </div>
 
-              {/* Sent Time */}
               <div className="flex flex-col gap-2 w-full sm:w-[256px]">
                 <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                  Sent Time
+                  End Date
                 </span>
                 <div
-                  onClick={handleSentTimeClick}
-                  className="relative flex items-center justify-between border border-[#B3B3B3] rounded-lg px-4 h-[52px] bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  onClick={handleEndDateClick}
+                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
                 >
                   <span className="text-sm font-normal text-(--color-surface-100)">
-                    {formatTime12h(sentTime)}
+                    {endDate ? endDate : "Select date"}
                   </span>
-                  <Clock3 className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors" strokeWidth={1.5} />
+                  <CalendarPlus className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors" strokeWidth={1.5} />
                   <input
-                    ref={sentTimeInputRef}
-                    id="schedule-sent-time"
-                    type="time"
-                    value={sentTime}
-                    onChange={(e) => setSentTime(e.target.value)}
+                    ref={endDateInputRef}
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
                     className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Report Title */}
             <div className="flex flex-col gap-2 w-full">
               <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                Report Title (Optional)
+                Report Title{" "}
+                <span className="font-normal text-(--color-slate-80)">
+                  (Optional)
+                </span>
               </span>
               <Input
-                id="schedule-report-title"
+                id="report-title"
                 type="text"
                 value={reportTitle}
                 onChange={(e) => setReportTitle(e.target.value)}
                 placeholder="Enter your preferred title"
-                className="h-[49px] rounded-lg border border-[#B3B3B3] px-4 py-3 text-sm focus-visible:border-border-active bg-transparent placeholder:text-muted-foreground w-full sm:w-[528px]"
+                className="h-12.25 rounded-lg border border-(--color-slate-60) px-4 py-3 text-sm focus-visible:border-border-active bg-transparent placeholder:text-muted-foreground w-full sm:w-132"
               />
             </div>
 
-            {/* Save Schedule Button */}
-            <div className="w-full shrink-0 mt-2">
+            <div className="flex justify-between items-center w-full gap-4 shrink-0 mt-2">
               <Button
-                onClick={handleSave}
-                className="w-full h-10 rounded-lg text-sm font-semibold bg-secondary text-primary-foreground hover:bg-secondary/80 transition-colors"
+                variant="outline"
+                onClick={onClose}
+                className="w-[116.5px] sm:w-[256px] h-10 rounded-lg text-sm font-semibold transition-colors"
+                style={{
+                  borderColor: "var(--color-border-disabled)",
+                  backgroundColor: "var(--color-surface-10)",
+                  color: "var(--color-surface-100)",
+                }}
               >
-                Save Schedule
+                Share Report
+              </Button>
+              <Button
+                onClick={handleGeneratePDF}
+                className="w-[116.5px] sm:w-[256px] h-10 rounded-lg text-sm font-semibold bg-secondary text-primary-foreground hover:bg-secondary/80 transition-colors"
+              >
+                <span className="sm:hidden">Generate</span>
+                <span className="hidden sm:inline">Generate as PDF</span>
               </Button>
             </div>
 
           </div>
         </div>
 
-        <DialogTitle className="sr-only">Schedule Automatic Report</DialogTitle>
+        <DialogTitle className="sr-only">Generate Report</DialogTitle>
       </DialogContent>
     </Dialog>
   );
 }
+
+export { formatDateRange };

@@ -12,9 +12,29 @@ import {
   Unplug,
   Microchip,
 } from "lucide-react";
-import type { ReportIconType } from "@/lib/mocks/reports-data";
 
 export type ReportType = "weekly" | "monthly" | "solar" | "alerts" | "device" | "custom";
+
+export type ReportIconType =
+  | "battery_low"
+  | "power_high"
+  | "clock"
+  | "battery_full"
+  | "check"
+  | "solar"
+  | "file"
+  | "alert"
+  | "device"
+  | "calendar"
+  | "chip";
+
+export type ReportFilterType =
+  | "all"
+  | "Solar"
+  | "Weekly"
+  | "Monthly"
+  | "Alert"
+  | "Device";
 
 export interface ReportTypeOption {
   id: ReportType;
@@ -52,4 +72,53 @@ export const REPORT_FREQUENCY_LABELS: Record<ReportType, string> = {
   alerts: "On alert",
   device: "Device events",
   custom: "Custom",
+};
+
+export const FILTER_OPTIONS: { value: ReportFilterType; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "Weekly", label: "Weekly" },
+  { value: "Monthly", label: "Monthly" },
+  { value: "Solar", label: "Solar" },
+  { value: "Alert", label: "Alerts" },
+  { value: "Device", label: "Device" },
+];
+
+export const REPORT_BACKEND_TYPE_MAP: Record<ReportType, string> = {
+  weekly: "GENERAL",
+  monthly: "GENERAL",
+  solar: "SOLAR",
+  alerts: "ALERT",
+  device: "COSTS_AND_SAVINGS",
+  custom: "GENERAL",
+};
+
+export const REPORT_PERIOD_MAP: Record<ReportType, string> = {
+  weekly: "weekly",
+  monthly: "monthly",
+  solar: "weekly",
+  alerts: "weekly",
+  device: "weekly",
+  custom: "weekly",
+};
+
+export const REPORT_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  PENDING: {
+    bg: "var(--color-warning-bg)",
+    text: "var(--color-warning)",
+  },
+  CANCELLED: {
+    bg: "var(--color-slate-20)",
+    text: "var(--color-slate-70)",
+  },
+  READY: {
+    bg: "var(--color-success-bg)",
+    text: "var(--color-success-alt)",
+  },
+};
+
+export const REPORT_STAT_CARD_ICON_COLORS: Record<string, string> = {
+  periodic: "text-(--color-dark-text)",
+  solar: "text-(--color-amber-40)",
+  alert: "text-destructive",
+  device: "text-(--color-battery-full)",
 };

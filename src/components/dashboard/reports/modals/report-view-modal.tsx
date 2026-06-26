@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
-import { REPORT_ICON_MAP } from "@/constants/reports";
+import { REPORT_ICON_MAP, REPORT_STATUS_COLORS } from "@/constants/reports";
 import { cn } from "@/lib/utils";
 
 interface ReportViewModalProps {
@@ -48,29 +48,14 @@ export function ReportViewModal({ report, onClose, onShare, onDownload }: Report
                   <span
                     className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold shrink-0"
                     style={{
-                      backgroundColor:
-                        report.status?.toUpperCase() === "PENDING"
-                          ? "var(--color-warning-bg)"
-                          : report.status?.toUpperCase() === "CANCELLED"
-                            ? "var(--color-slate-20)"
-                            : "var(--color-success-bg)",
-                      color:
-                        report.status?.toUpperCase() === "PENDING"
-                          ? "var(--color-warning)"
-                          : report.status?.toUpperCase() === "CANCELLED"
-                            ? "var(--color-slate-70)"
-                            : "var(--color-success-alt)",
+                      backgroundColor: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).bg,
+                      color: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).text,
                     }}
                   >
                     <span
                       className="h-1.5 w-1.5 rounded-full shrink-0"
                       style={{
-                        backgroundColor:
-                          report.status?.toUpperCase() === "PENDING"
-                            ? "var(--color-warning)"
-                            : report.status?.toUpperCase() === "CANCELLED"
-                              ? "var(--color-slate-70)"
-                              : "var(--color-success-alt)",
+                        backgroundColor: (REPORT_STATUS_COLORS[report.status?.toUpperCase()] ?? REPORT_STATUS_COLORS.READY).text,
                       }}
                     />
                     {report.status?.charAt(0).toUpperCase() + report.status?.slice(1).toLowerCase()}
