@@ -14,13 +14,13 @@ const ROLE_LABELS: Record<TeamAccessRole, string> = {
 
 function RoleBadge({ role }: { role: TeamAccessRole }) {
   const styles = {
-    admin: "bg-sky-50 text-sky-700 border-sky-200",
-    technician: "bg-amber-50 text-amber-700 border-amber-200",
-    viewer: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    admin: "bg-[#B7F2CC]/66 text-[#17CC4E]",
+    technician: "bg-[#FDE8B4] text-[#C37B07]",
+    viewer: "bg-emerald-50 text-emerald-700",
   }[role];
 
   return (
-    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium", styles)}>
+    <span className={cn("inline-flex items-center rounded-full border-none px-2.5 py-1 text-xs font-medium", styles)}>
       {ROLE_LABELS[role]}
     </span>
   );
@@ -75,7 +75,7 @@ function MemberMobileCard({
         </div>
       </dl>
       <div className="mt-4 flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEditRole(member.role)}>
+        <Button variant="outline" size="sm" className="border border-[#E8E8E8]" onClick={() => onEditRole(member.role)}>
           <Pencil className="size-4" />
           Edit
         </Button>

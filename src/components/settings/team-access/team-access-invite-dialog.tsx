@@ -66,7 +66,7 @@ export function TeamAccessInviteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg rounded-sm">
         <DialogHeader>
           <DialogTitle>Invite Team Member</DialogTitle>
         </DialogHeader>
@@ -78,33 +78,33 @@ export function TeamAccessInviteDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" placeholder="e.g Amaka" {...form.register("firstName")} />
+              <Input id="firstName" placeholder="e.g Amaka" className="h-14" {...form.register("firstName")} />
               <FieldError message={form.formState.errors.firstName?.message} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" placeholder="e.g Okeke" {...form.register("lastName")} />
+              <Input id="lastName" placeholder="e.g Okeke" className="h-14" {...form.register("lastName")} />
               <FieldError message={form.formState.errors.lastName?.message} />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-            <Input id="email" placeholder="name@company.com" {...form.register("email")} />
+            <Input id="email" placeholder="name@company.com" className="h-14" {...form.register("email")} />
             <FieldError message={form.formState.errors.email?.message} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="Create a password" {...form.register("password")} />
+            <Input id="password" type="password" className="h-14" placeholder="Create a password" {...form.register("password")} />
             <FieldError message={form.formState.errors.password?.message} />
           </div>
 
           <div className="space-y-2">
             <Label>Access role</Label>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="w-full justify-between rounded-lg px-3">
+              <DropdownMenuTrigger asChild className="w-full h-14">
+                <Button type="button" variant="outline" className="min-w-full h-14 border border-[#E8E8E8] justify-between rounded-lg px-3">
                   <span>{roleLabel}</span>
                   <ChevronDown className="size-4" />
                 </Button>
@@ -130,10 +130,10 @@ export function TeamAccessInviteDialog({
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" className="h-12 border border-[]" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Send Invitation</Button>
+            <Button type="submit" className="bg-black hover:bg-black h-12">Send Invitation</Button>
           </div>
         </form>
       </DialogContent>

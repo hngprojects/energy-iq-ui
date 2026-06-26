@@ -53,7 +53,7 @@ export function TeamAccessPageClient() {
             Manage users, assign specific system roles, and control administrative access levels.
           </p>
         </div>
-        <Button onClick={openInviteModal} className="w-full lg:w-auto">
+        <Button onClick={openInviteModal} className="w-full lg:w-auto bg-black hover:bg-black h-12">
           <Plus className="size-4" />
           Add New User
         </Button>
