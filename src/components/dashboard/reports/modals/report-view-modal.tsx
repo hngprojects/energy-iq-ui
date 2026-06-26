@@ -9,18 +9,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
-import { REPORT_ICON_MAP } from "@/constants/reports";
+import { REPORT_ICON_MAP, getStatusColors } from "@/constants/reports";
+import { cn } from "@/lib/utils";
 
 interface ReportViewModalProps {
   report: Report | null;
   onClose: () => void;
   onShare?: (report: Report) => void;
+  onDownload?: (report: Report) => void;
 }
 
-export function ReportViewModal({ report, onClose, onShare }: ReportViewModalProps) {
+export function ReportViewModal({ report, onClose, onShare, onDownload }: ReportViewModalProps) {
   if (!report) return null;
 
   const Icon = REPORT_ICON_MAP[report.iconType] ?? REPORT_ICON_MAP.solar;
+  const statusColors = getStatusColors(report.status);
 
   return (
     <Dialog open={!!report} onOpenChange={(open) => !open && onClose()}>
@@ -28,8 +31,8 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
         showCloseButton={false}
         className="fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-card rounded-lg p-6 gap-6 flex flex-col w-74.25 sm:w-113 sm:max-w-113 max-w-74.25"
       >
-        {/* Inner content wrapper */}
         <div className="flex flex-col gap-6 w-full">
+          {/* Header */}
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <div
@@ -38,19 +41,32 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
               >
                 <Icon className="size-4 text-primary" />
               </div>
-
-              {/* Name and date */}
               <div className="flex flex-col gap-2 overflow-hidden">
-                <p className="text-foreground truncate text-sm sm:text-base font-semibold">
-                  {report.title}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-foreground truncate text-sm sm:text-base font-semibold">
+                    {report.title}
+                  </p>
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold shrink-0"
+                    style={{
+                      backgroundColor: statusColors.bg,
+                      color: statusColors.text,
+                    }}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: statusColors.text }}
+                    />
+                    {report.status
+                      ? report.status.charAt(0).toUpperCase() + report.status.slice(1).toLowerCase()
+                      : ""}
+                  </span>
+                </div>
                 <p className="text-muted-foreground truncate text-xs sm:text-sm">
                   {report.subtitle}
                 </p>
               </div>
             </div>
-
-            {/* Close button */}
             <Button
               variant="ghost"
               onClick={onClose}
@@ -61,6 +77,7 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
             </Button>
           </div>
 
+          {/* Stat tiles — restored design */}
           <div className="flex items-stretch gap-[13.5px] sm:gap-4">
             <div
               className="flex flex-1 flex-col rounded-sm border bg-muted"
@@ -221,11 +238,15 @@ export function ReportViewModal({ report, onClose, onShare }: ReportViewModalPro
             </Button>
 
             <Button
-              className="gap-1.5 text-sm font-medium cursor-pointer
-                w-29.5 sm:w-48 h-10
-                rounded-(--radius)
-                px-(--spacing-4,16px) py-(--spacing-2,8px)
-                hover:opacity-80 transition-opacity"
+              onClick={() => {
+                onDownload?.(report);
+                onClose();
+              }}
+              disabled={report.status?.toUpperCase() !== "READY"}
+              className={cn(
+                "gap-1.5 text-sm font-medium cursor-pointer w-29.5 h-10 sm:w-48 rounded-(--radius) px-(--spacing-4,16px) py-(--spacing-2,8px) hover:opacity-80 transition-opacity",
+                report.status?.toUpperCase() !== "READY" && "opacity-50 cursor-not-allowed hover:bg-transparent"
+              )}
               style={{ backgroundColor: "var(--secondary)", color: "var(--color-surface-white)" }}
             >
               Download PDF
