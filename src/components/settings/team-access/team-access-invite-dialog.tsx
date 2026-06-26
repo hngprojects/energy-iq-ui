@@ -19,7 +19,7 @@ import {
   inviteTeamMemberSchema,
   type InviteTeamMemberFormValues,
 } from "@/lib/schemas/team-access";
-import type { TeamAccessRole } from "@/types/team-access";
+import { TEAM_ACCESS_ROLES, type TeamAccessRole } from "@/types/team-access";
 
 const ROLE_LABELS: Record<TeamAccessRole, string> = {
   admin: "Admin",
@@ -73,7 +73,7 @@ export function TeamAccessInviteDialog({
         </DialogHeader>
 
         <form
-          className="space-y-4"
+          className="w-full space-y-4"
           onSubmit={form.handleSubmit((values) => onInvite(values))}
         >
           <div className="grid gap-4 sm:grid-cols-2">
@@ -95,7 +95,7 @@ export function TeamAccessInviteDialog({
             <FieldError message={form.formState.errors.email?.message} />
           </div>
 
-          <div className="space-y-2">
+          <div className="w-full space-y-2">
             <Label>Access role</Label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -108,8 +108,8 @@ export function TeamAccessInviteDialog({
                   <ChevronDown className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="min-w-[14rem]">
-                {(["admin", "technician", "viewer"] as TeamAccessRole[]).map((item) => (
+              <DropdownMenuContent className="w-full min-w-0" style={{ width: "var(--radix-dropdown-menu-trigger-width)" }}>
+                {TEAM_ACCESS_ROLES.map((item) => (
                   <DropdownMenuItem
                     key={item}
                     className={cn(
