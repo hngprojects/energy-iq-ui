@@ -86,14 +86,6 @@ export function TeamAccessPageClient() {
             lastName: values.lastName,
             email: values.email,
             role: values.role,
-            status: "active",
-            permissions:
-              values.role === "admin"
-                ? "Full access"
-                : values.role === "technician"
-                  ? "System alerts and metrics only"
-                  : "Read-only access",
-            dashboards: values.role === "technician" ? 2 : 1,
           });
           toast.success(`Invitation sent to ${values.firstName}`);
         }}

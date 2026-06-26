@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,15 +57,16 @@ export function TeamAccessInviteDialog({
   });
   const roleLabel = ROLE_LABELS[role];
 
-  useEffect(() => {
-    if (!open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
       form.reset();
       setRole("admin");
     }
-  }, [form, open]);
+    onOpenChange(nextOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg rounded-sm">
         <DialogHeader>
           <DialogTitle>Invite Team Member</DialogTitle>
@@ -129,7 +130,12 @@ export function TeamAccessInviteDialog({
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" className="h-12 border border-[#E8E8E8]" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 border border-[#E8E8E8]"
+              onClick={() => handleOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" className="h-12 bg-black hover:bg-black">
