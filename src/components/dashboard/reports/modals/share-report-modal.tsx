@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Copy, ExternalLink, Link2, Mail, Share2, X } from "lucide-react";
+import { Copy, ExternalLink, Mail, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
 import { getStatusColors } from "@/constants/reports";
-import { useReportShareStore } from "@/stores/report-share-store";
 
 interface ShareReportModalProps {
   report: Report | null;
@@ -15,8 +14,8 @@ interface ShareReportModalProps {
   onClose: () => void;
 }
 
-function getFallbackShareUrl(report: Report) {
-  return `${window.location.origin}/dashboard/reports/${report.id}`;
+function getShareUrl(report: Report) {
+  return `${window.location.origin}/reports/public/${report.id}`;
 }
 
 export function ShareReportModal({
@@ -25,11 +24,6 @@ export function ShareReportModal({
   onClose,
 }: ShareReportModalProps) {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const link = useReportShareStore((state) =>
-    report ? state.getLink(report.id) : undefined,
-  );
-  const upsertLink = useReportShareStore((state) => state.upsertLink);
 
   const statusColors = useMemo(() => {
     if (!report) return { bg: "", text: "" };
@@ -38,43 +32,12 @@ export function ShareReportModal({
 
   if (!report) return null;
 
-  const generatedUrl = link?.shareUrl ?? "";
+  const shareUrl = getShareUrl(report);
   const isReady = report.status?.toUpperCase() === "READY";
-  const isExpired = link?.isExpired || (link?.expiresAt ? new Date(link.expiresAt) <= new Date() : false);
-  const hasLink = Boolean(generatedUrl) && !isExpired;
-
-  const handleGenerateLink = async () => {
-    setIsGenerating(true);
-    const toastId = toast.loading("Generating share link...");
-    try {
-      const shareUrl = `${window.location.origin}/reports/public/${report.id}`;
-      const expiresAt = new Date(
-        Date.now() + 14 * 24 * 60 * 60 * 1000,
-      ).toISOString();
-
-      upsertLink({
-        reportId: report.id,
-        shareUrl,
-        expiresAt,
-        isExpired: false,
-      });
-
-      toast.success("Share link generated", { id: toastId });
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to generate share link";
-      toast.error(message, { id: toastId });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleCopyLink = async () => {
     try {
-      const url = generatedUrl || getFallbackShareUrl(report);
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
@@ -82,14 +45,12 @@ export function ShareReportModal({
   };
 
   const handleOpenLink = () => {
-    const url = generatedUrl || getFallbackShareUrl(report);
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleShareEmail = async () => {
-    const shareUrl = generatedUrl || getFallbackShareUrl(report);
     setIsSendingEmail(true);
-    const toastId = toast.loading("Sending email report...");
+    const toastId = toast.loading("Opening email client...");
     try {
       const mailtoSubject = encodeURIComponent(report.title);
       const mailtoBody = encodeURIComponent(
@@ -108,7 +69,6 @@ export function ShareReportModal({
   };
 
   const handleShareWhatsApp = () => {
-    const shareUrl = generatedUrl || getFallbackShareUrl(report);
     const text = `Here is the report: ${report.title} (${report.subtitle})\n${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
@@ -133,7 +93,7 @@ export function ShareReportModal({
                   Share Report
                 </p>
                 <p className="text-muted-foreground truncate text-sm">
-                  Generate a public link, copy it, or open the PDF view.
+                  Copy the public link, open the PDF view, or share via email/WhatsApp.
                 </p>
               </div>
             </div>
@@ -176,45 +136,25 @@ export function ShareReportModal({
                 </span>
               </div>
 
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <Link2 className="text-muted-foreground size-4" />
-                <span className="text-foreground font-medium">
-                  {hasLink ? "Generated link" : "No public link yet"}
-                </span>
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {!hasLink ? (
-                <Button
-                  type="button"
-                  onClick={handleGenerateLink}
-                  disabled={!isReady || isGenerating}
-                  className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Link2 className="size-4" />
-                  {isGenerating ? "Generating..." : "Generate Link"}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90"
-                  >
-                    <Copy className="size-4" />
-                    Copy Link
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleOpenLink}
-                    className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90"
-                  >
-                    <ExternalLink className="size-4" />
-                    Open Link
-                  </Button>
-                </>
-              )}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                onClick={handleCopyLink}
+                className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90"
+              >
+                <Copy className="size-4" />
+                Copy Link
+              </Button>
+              <Button
+                type="button"
+                onClick={handleOpenLink}
+                className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90"
+              >
+                <ExternalLink className="size-4" />
+                Open Link
+              </Button>
             </div>
 
             <div className="border-t border-border pt-5">
@@ -259,16 +199,9 @@ export function ShareReportModal({
               </div>
             </div>
 
-            {hasLink && link?.expiresAt ? (
-              <p className="text-muted-foreground text-xs">
-                Expires on {new Date(link.expiresAt).toLocaleDateString()}
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-xs">
-                Free plan links expire after 14 days. Paid plan links can remain
-                active.
-              </p>
-            )}
+            <p className="text-muted-foreground text-xs">
+              Anyone with the link can view this report.
+            </p>
           </div>
         </div>
 
