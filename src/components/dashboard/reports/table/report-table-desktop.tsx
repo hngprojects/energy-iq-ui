@@ -138,7 +138,7 @@ export function ReportTableDesktop({
                           onClick={() => onView(report)}
                           className="bg-secondary text-primary-foreground hover:bg-secondary/80 w-16.5 h-10 rounded-lg gap-1.5 py-2 px-4 text-sm font-medium transition-colors"
                         >
-                          View
+                          Share
                         </Button>
 
                         {downloadingId === report.id ? (

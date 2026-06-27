@@ -98,7 +98,7 @@ export function ReportCardMobile({
             onClick={onView}
             className="bg-secondary text-primary-foreground hover:bg-secondary/80 flex h-10 flex-1 items-center justify-center rounded-lg p-[8px_16px] text-xs font-medium"
           >
-            View
+            Share
           </Button>
           <Button
             onClick={onDownload}
