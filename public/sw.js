@@ -1,4 +1,5 @@
-const CACHE_NAME = "energy-iq-v2";
+const CACHE_NAME = "energy-iq-v3";
+const MAX_RUNTIME_CACHE_ITEMS = 40;
 const STATIC_ASSETS = [
   "/offline.html",
   "/manifest.json",
@@ -9,6 +10,19 @@ const STATIC_ASSETS = [
   "/icons/android-chrome-512x512.png",
   "/icons/apple-touch-icon.png",
 ];
+
+async function trimCache(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length <= maxItems) return;
+  await Promise.all(keys.slice(0, keys.length - maxItems).map((key) => cache.delete(key)));
+}
+
+function shouldRuntimeCache(url) {
+  if (url.pathname.startsWith("/_next/static/")) return true;
+  if (url.pathname.match(/\.(?:svg|ico|woff2?)$/i)) return true;
+  return false;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -60,9 +74,12 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/_next/")) {
     event.respondWith(
       fetch(request).then((response) => {
-        if (url.pathname.startsWith("/_next/static/") && response.ok) {
+        if (shouldRuntimeCache(url) && response.ok) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(request, clone))
+            .then(() => trimCache(CACHE_NAME, MAX_RUNTIME_CACHE_ITEMS));
         }
         return response;
       }),
@@ -86,11 +103,12 @@ self.addEventListener("fetch", (event) => {
         cached ||
         fetch(request)
           .then((response) => {
-            if (response.ok) {
+            if (response.ok && shouldRuntimeCache(url)) {
               const clone = response.clone();
               caches
                 .open(CACHE_NAME)
-                .then((cache) => cache.put(request, clone));
+                .then((cache) => cache.put(request, clone))
+                .then(() => trimCache(CACHE_NAME, MAX_RUNTIME_CACHE_ITEMS));
             }
             return response;
           })

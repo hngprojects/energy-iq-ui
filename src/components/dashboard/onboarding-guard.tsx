@@ -15,6 +15,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const search = searchParams.toString();
   const currentUrl = `${pathname}${search ? `?${search}` : ""}`;
+  const hashParams =
+    typeof window === "undefined"
+      ? new URLSearchParams()
+      : new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const hasIncomingOAuthToken =
+    searchParams.has("accessToken") ||
+    searchParams.has("token") ||
+    hashParams.has("accessToken") ||
+    hashParams.has("token");
 
   const isFullyOnboarded =
     status?.onboardingComplete === true &&
@@ -24,6 +33,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!_hasHydrated) return;
+    if (hasIncomingOAuthToken) return;
 
     if (!isAuthenticated) {
       router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
@@ -41,6 +51,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
   }, [
     _hasHydrated,
+    hasIncomingOAuthToken,
     isAuthenticated,
     isLoading,
     isError,
@@ -57,7 +68,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   }, [isFullyOnboarded, user?.id]);
 
   // IMPORTANT: Wait for hydration before rendering anything or redirecting
-  if (!_hasHydrated) {
+  if (!_hasHydrated || hasIncomingOAuthToken) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />

@@ -126,7 +126,7 @@ export function DateRangeModal({
                 value={startDate}
                 max={endDate || undefined}
                 onChange={(e) => onStartChange(e.target.value)}
-                className="flex-1 bg-transparent cursor-pointer text-sm text-foreground focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                className="flex-1 bg-transparent cursor-pointer text-sm text-foreground focus:outline-none scheme-light dark:scheme-dark"
               />
             </div>
           </div>
@@ -154,7 +154,7 @@ export function DateRangeModal({
                 value={endDate}
                 min={startDate || undefined}
                 onChange={(e) => onEndChange(e.target.value)}
-                className="flex-1 bg-transparent cursor-pointer text-sm text-foreground focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                className="flex-1 bg-transparent cursor-pointer text-sm text-foreground focus:outline-none scheme-light dark:scheme-dark"
               />
             </div>
           </div>

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "./password-input";
 import { cn } from "@/lib/utils";
-import type { InverterType } from "./inverter-type-step";
 import { INVERTER_CONFIG, type InverterFieldConfig } from "./inverter-config";
 import { getSolarmanEmailError } from "@/lib/schemas/onboarding";
 import { AuthInput } from "@/components/auth/auth-input";

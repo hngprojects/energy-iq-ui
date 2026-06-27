@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Sun, Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
@@ -20,6 +21,7 @@ import {
 } from "@/components/dashboard/charts/energy-usage-chart";
 import { AIAssistantBanner } from "@/components/dashboard/ai/ai-assistant-banner";
 import { dashboardMock as d } from "@/lib/mocks/dashboard-data";
+import { InverterService } from "@/services/inverter-service";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -69,6 +71,19 @@ function formatDataAge(seconds: number): string {
   return `${Math.floor(seconds / 3600)}h ago`;
 }
 
+function formatDateForApi(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function preferPositivePrimary(
+  primary: number | undefined,
+  fallback: number | undefined,
+  mock: number,
+) {
+  if (typeof primary === "number" && primary > 0) return primary;
+  return fallback ?? primary ?? mock;
+}
+
 function CardSkeleton() {
   return (
     <div className="border-border bg-card animate-pulse rounded-2xl border p-5 space-y-3">
@@ -116,6 +131,7 @@ export function DashboardContent() {
 
   const { data: inverters, isLoading: invertersLoading } = useUserInverters();
   const inverterId = inverters?.[0]?.id;
+  const energyPeriod = period.toLowerCase();
 
   const {
     data: metrics,
@@ -128,7 +144,33 @@ export function DashboardContent() {
     data: energyUsage,
     isLoading: energyLoading,
     refetch: refetchEnergy,
-  } = useEnergyUsage(inverterId, period.toLowerCase());
+  } = useEnergyUsage(inverterId, energyPeriod);
+
+  const today = formatDateForApi(new Date());
+  const monthStart = formatDateForApi(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
+
+  const { data: todaySavings, refetch: refetchTodaySavings } = useQuery({
+    queryKey: ["dashboard-savings", inverterId, "today", today],
+    enabled: !!inverterId,
+    queryFn: () =>
+      InverterService.getSavingsMetrics(inverterId!, {
+        date: today,
+        startDate: today,
+        endDate: today,
+      }),
+  });
+
+  const { data: monthSavings, refetch: refetchMonthSavings } = useQuery({
+    queryKey: ["dashboard-savings", inverterId, "month", monthStart, today],
+    enabled: !!inverterId,
+    queryFn: () =>
+      InverterService.getSavingsMetrics(inverterId!, {
+        startDate: monthStart,
+        endDate: today,
+      }),
+  });
 
   // const { data: powerConsumption, refetch: refetchPower } =
   //   usePowerConsumption(inverterId);
@@ -142,6 +184,8 @@ export function DashboardContent() {
     await Promise.allSettled([
       refetchMetrics(),
       refetchEnergy(),
+      refetchTodaySavings(),
+      refetchMonthSavings(),
       // refetchPower(),
     ]);
     setIsRefreshing(false);
@@ -171,6 +215,18 @@ export function DashboardContent() {
     : d.status.updated;
 
   const isOnline = metrics && !metrics.systemOffline;
+  const dashboardSavedToday = metrics?.nairaSavedToday;
+  const dashboardSavedThisMonth = metrics?.nairaSavedThisMonth;
+  const savedToday = preferPositivePrimary(
+    dashboardSavedToday,
+    todaySavings?.results?.totalCostSavedNgn,
+    d.savedToday.amount,
+  );
+  const savedThisMonth = preferPositivePrimary(
+    dashboardSavedThisMonth,
+    monthSavings?.results?.totalCostSavedNgn,
+    d.savedMonth.amount,
+  );
 
   const alertReason =
     metrics && metrics.health.status !== "GREEN" ? metrics.health.reason : null;
@@ -270,7 +326,9 @@ export function DashboardContent() {
                   : "Active"
                 : d.running.note
             }
-            pillTone="muted"
+            pillTone={
+              metrics ? (metrics.systemOffline ? "muted" : "success") : "muted"
+            }
           />
         </div>
       )}
@@ -281,12 +339,12 @@ export function DashboardContent() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <SavedMonthCard
-            amount={metrics?.nairaSavedThisMonth ?? d.savedMonth.amount}
+            amount={savedThisMonth}
             months={months}
             active={active}
           />
           <SavedTodayCard
-            amount={metrics?.nairaSavedToday ?? d.savedToday.amount}
+            amount={savedToday}
           />
           {/* <PowerUsageCard zones={zones} /> */}
         </div>

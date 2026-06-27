@@ -1,6 +1,11 @@
 import { useAuthStore } from "@/stores/auth-store";
 import type { RefreshTokenResponse } from "@/types/auth";
 
+/** Wipe stale client state before applying a new OAuth callback token. */
+export function resetAuthForOAuthCallback(): void {
+  useAuthStore.getState().clearClientAuth();
+}
+
 export async function persistTokensToSession(
   token: string,
   refreshToken: string,
@@ -48,7 +53,7 @@ export async function refreshAuthSession(): Promise<boolean> {
     const payload = await response.json().catch(() => null);
     const data = (payload?.data ?? payload) as RefreshTokenResponse | null;
 
-    if (!data?.accessToken || !data?.refreshToken) {
+    if (!data?.accessToken) {
       return false;
     }
 

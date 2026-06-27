@@ -12,12 +12,13 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ user, className }: UserAvatarProps) {
+  const profilePhoto = user.profilePhoto ?? user.profileUrl;
   const initials =
     `${user.firstName?.charAt(0) ?? ""}${user.lastName?.charAt(0) ?? ""}`.toUpperCase() ||
     user.email?.charAt(0).toUpperCase() ||
     "U";
 
-  if (user.profilePhoto) {
+  if (profilePhoto) {
     return (
       <div
         className={cn(
@@ -26,7 +27,7 @@ export function UserAvatar({ user, className }: UserAvatarProps) {
         )}
       >
         <Image
-          src={user.profilePhoto}
+          src={profilePhoto}
           alt={`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Profile photo"}
           fill
           sizes="2.5rem"

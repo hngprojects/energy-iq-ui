@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
+import { GoogleAuthSync } from "@/components/auth/google-auth-sync";
 
 const QueryProvider = ({ children }: { children: ReactNode }) => {
   const [client] = useState(
@@ -12,14 +13,19 @@ const QueryProvider = ({ children }: { children: ReactNode }) => {
             refetchOnWindowFocus: false,
             retry: 1,
             staleTime: 1000 * 60 * 5, // 5 minutes
-            gcTime: 1000 * 60 * 60 * 24, // 24 hours
+            gcTime: 1000 * 60 * 30, // 30 minutes
             refetchOnReconnect: "always",
           },
         },
       }),
   );
 
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <GoogleAuthSync />
+      {children}
+    </QueryClientProvider>
+  );
 };
 
 export default QueryProvider;

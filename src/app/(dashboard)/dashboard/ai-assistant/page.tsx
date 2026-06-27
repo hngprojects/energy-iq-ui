@@ -1,12 +1,10 @@
 "use client";
-import { Download, History, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
 import { ChatHistoryList } from "@/components/dashboard/ai/chat-history-list";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
 import { useChatHistory } from "@/hooks/use-chat-queries";
-import { blockClick, blockKeyPress } from "@/lib/block-interaction";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function AIAssistantPage() {
@@ -29,39 +27,9 @@ export default function AIAssistantPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div />
         <div className="flex items-center justify-end gap-2">
-          <Tooltip
-            content="Chat history (coming soon)"
-            side="bottom"
-            align="end"
-          >
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              aria-label="Chat history"
-              aria-disabled="true"
-              onClick={blockClick}
-              onKeyDown={blockKeyPress}
-              className="h-9 w-9 text-muted-foreground hover:bg-muted cursor-not-allowed opacity-50"
-            >
-              <History className="h-6 w-6" />
-            </Button>
-          </Tooltip>
-          <Tooltip content="Download (coming soon)" side="bottom" align="end">
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              aria-label="Download"
-              aria-disabled="true"
-              onClick={blockClick}
-              onKeyDown={blockKeyPress}
-              className="h-9 w-9 text-muted-foreground hover:bg-muted cursor-not-allowed opacity-50"
-            >
-              <Download className="h-6 w-6" />
-            </Button>
-          </Tooltip>
           <Button
             asChild
             variant="secondary"
@@ -101,12 +69,16 @@ export default function AIAssistantPage() {
             <p className="text-sm text-destructive">
               Failed to load chat history.
             </p>
-            <Button variant="outline" size="sm" onClick={refreshHistory}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void refreshHistory()}
+            >
               Retry
             </Button>
           </div>
         ) : history.length > 0 ? (
-          <div className="px-4 pb-8 sm:px-6">
+          <div className="pb-8 sm:px-6">
             <ChatHistoryList key={userId} history={history} userId={userId} />
           </div>
         ) : (

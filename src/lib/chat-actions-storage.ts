@@ -74,6 +74,37 @@ export function createLocalChatTitle(message: string) {
   return `${normalized.slice(0, 67).trimEnd()}...`;
 }
 
+export function sanitizeChatTitle(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw
+    .trim()
+    .replace(/^```[a-z]*\n?/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  if (!trimmed) return undefined;
+  if (/^new chat$/i.test(trimmed)) return undefined;
+  if (/^json/i.test(trimmed)) return undefined;
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return undefined;
+
+  try {
+    JSON.parse(trimmed);
+    return undefined;
+  } catch {
+    return createLocalChatTitle(trimmed);
+  }
+}
+
+export function getFirstUserMessageTitle(
+  messages: Array<{ role?: string; content?: string }> | undefined,
+) {
+  const firstUserMessage = messages
+    ?.find((message) => message.role === "user")
+    ?.content?.trim();
+
+  return firstUserMessage ? createLocalChatTitle(firstUserMessage) : undefined;
+}
+
 export function saveLocalChatTitle(
   storageKey: string,
   chatId: string,

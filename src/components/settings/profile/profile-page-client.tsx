@@ -2,17 +2,18 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Pencil, Check, Loader2, Upload } from "lucide-react";
 
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { useProfileQueries } from "@/hooks/use-profile-queries";
-import { useCurrentUserSync } from "@/hooks/use-current-user-sync";
 import { SelectField } from "@/components/settings/select-field";
 import { PhotoUploadDialog } from "./photo-upload-dialog";
 import { PhotoSuccessDialog } from "./photo-success-dialog";
+import { DeleteAccountDialog } from "./delete-account-dialog";
 import { ProfileUpdateRequest } from "@/types/profile";
 import { ProfileService } from "@/services/profile-service";
 import { toast } from "sonner";
@@ -35,26 +36,71 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+
 export function ProfilePageClient() {
-  const { user } = useAuthStore();
-  const { useUpdateProfile } = useProfileQueries();
-  const { isLoading: isSyncingUser } = useCurrentUserSync();
+  const { user, setUser, logout } = useAuthStore();
+  const router = useRouter();
+  const { usePersonalSettings, useUpdateProfile, useDeleteAccount } =
+    useProfileQueries();
+  const {
+    data: personalSettings,
+    isLoading: isLoadingPersonalSettings,
+  } = usePersonalSettings();
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [profileSaved, setProfileSaved] = React.useState(false);
   const [photoDialogOpen, setPhotoDialogOpen] = React.useState(false);
   const [photoSuccessOpen, setPhotoSuccessOpen] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const profileValues = React.useMemo<ProfileFormValues>(
+    () => ({
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      businessName:
+        personalSettings?.businessName ?? user?.businessName ?? "",
+      businessType:
+        personalSettings?.businessType ?? user?.businessType ?? "",
+      state: personalSettings?.state ?? user?.state ?? "",
+      city: personalSettings?.city ?? user?.city ?? "",
+    }),
+    [
+      personalSettings?.businessName,
+      personalSettings?.businessType,
+      personalSettings?.city,
+      personalSettings?.state,
+      user?.businessName,
+      user?.businessType,
+      user?.city,
+      user?.firstName,
+      user?.lastName,
+      user?.state,
+    ],
+  );
 
-  const { setUser } = useAuthStore();
+  const { mutate: deleteAccount, isPending: deletePending } = useDeleteAccount(() => {
+    setDeleteDialogOpen(false);
+    logout();
+    router.replace("/login");
+  });
+
+  const handleDeleteConfirm = () => {
+    if (!user?.id) {
+      toast.error("Unable to delete account right now. Please refresh and try again.");
+      return;
+    }
+    deleteAccount(user.id);
+  };
   const resolvedLang = (user?.aiLanguage ?? "").toLowerCase();
   const initialLang =
     resolvedLang === "pidgin" || resolvedLang === "english" ? resolvedLang : "";
   const [aiLanguage, setAiLanguage] = React.useState(initialLang);
   const [langSaving, setLangSaving] = React.useState(false);
 
-  React.useEffect(() => {
+  const [prevInitialLang, setPrevInitialLang] = React.useState(initialLang);
+  if (initialLang !== prevInitialLang) {
     setAiLanguage(initialLang);
-  }, [initialLang]);
+    setPrevInitialLang(initialLang);
+  }
 
   const handleLanguageSave = async () => {
     if (!aiLanguage || langSaving) return;
@@ -80,39 +126,51 @@ export function ProfilePageClient() {
     control,
     register,
     handleSubmit,
-    watch,
     reset,
     setValue,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      firstName: user?.firstName ?? "",
-      lastName: user?.lastName ?? "",
-      businessName: user?.businessName ?? "",
-      businessType: user?.businessType ?? "",
-      state: user?.state ?? "",
-      city: user?.city ?? "",
-    },
+    defaultValues: profileValues,
   });
 
-  const selectedState = watch("state");
+  const selectedState = useWatch({ control, name: "state" });
   const cityOptions = selectedState
     ? (CITIES_BY_STATE[selectedState] ?? [])
     : [];
 
   React.useEffect(() => {
     if (!isEditing) {
-      reset({
-        firstName: user?.firstName ?? "",
-        lastName: user?.lastName ?? "",
-        businessName: user?.businessName ?? "",
-        businessType: user?.businessType ?? "",
-        state: user?.state ?? "",
-        city: user?.city ?? "",
-      });
+      reset(profileValues);
     }
-  }, [user, isEditing, reset]);
+  }, [profileValues, isEditing, reset]);
+
+  React.useEffect(() => {
+    if (!personalSettings || !user) return;
+
+    const nextUser = {
+      ...user,
+      businessName: personalSettings.businessName ?? user.businessName,
+      businessType: personalSettings.businessType ?? user.businessType,
+      state: personalSettings.state ?? user.state,
+      city: personalSettings.city ?? user.city,
+      aiLanguage: personalSettings.aiLanguage ?? user.aiLanguage,
+      profilePhoto: personalSettings.profileUrl ?? user.profilePhoto,
+      profileUrl: personalSettings.profileUrl ?? user.profileUrl,
+    };
+
+    if (
+      nextUser.businessName !== user.businessName ||
+      nextUser.businessType !== user.businessType ||
+      nextUser.state !== user.state ||
+      nextUser.city !== user.city ||
+      nextUser.aiLanguage !== user.aiLanguage ||
+      nextUser.profilePhoto !== user.profilePhoto ||
+      nextUser.profileUrl !== user.profileUrl
+    ) {
+      setUser(nextUser);
+    }
+  }, [personalSettings, setUser, user]);
 
   const updateProfile = useUpdateProfile(() => {
     setIsEditing(false);
@@ -137,22 +195,16 @@ export function ProfilePageClient() {
 
   const handleCancel = () => {
     setIsEditing(false);
-    reset({
-      firstName: user?.firstName ?? "",
-      lastName: user?.lastName ?? "",
-      businessName: user?.businessName ?? "",
-      businessType: user?.businessType ?? "",
-      state: user?.state ?? "",
-      city: user?.city ?? "",
-    });
+    reset(profileValues);
   };
 
   const sectionTitle = profileSaved
     ? "User Profile"
     : "Personal and Business Information.";
-  const hasPhoto = !!user?.profilePhoto;
+  const profilePhoto = user?.profilePhoto ?? user?.profileUrl;
+  const hasPhoto = !!profilePhoto;
 
-  if (isSyncingUser && !user) {
+  if (!user || isLoadingPersonalSettings) {
     return (
       <div className="space-y-4">
         <div className="mb-6">
@@ -197,7 +249,7 @@ export function ProfilePageClient() {
           <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#D1D5DB]">
             {hasPhoto ? (
               <Image
-                src={user!.profilePhoto!}
+                src={profilePhoto!}
                 alt="Profile photo"
                 fill
                 className="object-cover"
@@ -481,6 +533,27 @@ export function ProfilePageClient() {
         </p>
       </div>
 
+      {/* ── Danger Zone ── */}
+      <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-destructive">
+              Danger Zone
+            </h2>
+            <p className="mt-0.5 text-sm text-[#5D5C5D]">
+              Permanently delete your account and all associated data. This action is irreversible.
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={() => setDeleteDialogOpen(true)}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-destructive px-4 text-sm font-medium text-white hover:text-white transition-colors hover:bg-destructive/90 sm:w-auto cursor-pointer"
+          >
+            Delete Account
+          </Button>
+        </div>
+      </div>
+
       <PhotoUploadDialog
         open={photoDialogOpen}
         onOpenChange={setPhotoDialogOpen}
@@ -490,6 +563,13 @@ export function ProfilePageClient() {
       <PhotoSuccessDialog
         open={photoSuccessOpen}
         onOpenChange={setPhotoSuccessOpen}
+      />
+
+      <DeleteAccountDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        isPending={deletePending}
       />
     </div>
   );

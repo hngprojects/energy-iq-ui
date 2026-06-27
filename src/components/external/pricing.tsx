@@ -43,8 +43,8 @@ const pricingTiers: PricingTier[] = [
   {
     id: "pro",
     label: "PRO",
-    monthlyPrice: "₦9,900",
-    yearlyPrice: "₦99,000",
+    monthlyPrice: "₦500",
+    yearlyPrice: "₦5,900",
     monthlyPeriod: "/ Mo",
     yearlyPeriod: "/ Yr",
     description:
@@ -66,10 +66,10 @@ const pricingTiers: PricingTier[] = [
   {
     id: "enterprise",
     label: "ENTERPRISE",
-    monthlyPrice: "Custom",
-    yearlyPrice: "Custom",
-    monthlyPeriod: "",
-    yearlyPeriod: "",
+    monthlyPrice: "₦1,500",
+    yearlyPrice: "₦17,000",
+    monthlyPeriod: "/ Mo",
+    yearlyPeriod: "/ Yr",
     description: "for installers, EPC Contractors and mini-grids",
     features: [
       "Multi - Site/ System Management",
@@ -127,7 +127,7 @@ export function PricingSection() {
           className="mb-12 text-center"
         >
           <h2 className="text-title1 mx-auto w-full max-w-180 leading-tight font-semibold lg:text-5xl">
-            Start free. <br /> <span className="text-primary">Upgrade</span>
+            Start free. <br /> <span className="text-primary">Upgrade </span>
             when it pays for itself.
           </h2>
         </motion.div>
@@ -162,7 +162,7 @@ export function PricingSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="mx-auto grid w-full max-w-240 grid-cols-1 items-center gap-6 md:grid-cols-3"
+          className="mx-auto grid w-full max-w-240 grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {pricingTiers.map((tier) => (
             <motion.div
@@ -193,15 +193,17 @@ export function PricingSection() {
                     ? tier.monthlyPrice
                     : tier.yearlyPrice}
                 </span>
-                <span
-                  className={`text-base font-medium md:text-2xl ${
-                    tier.highlighted ? "text-[#F6F6F6]" : "text-secondary"
-                  }`}
-                >
-                  {billingPeriod === "monthly"
-                    ? tier.monthlyPeriod
-                    : tier.yearlyPeriod}
-                </span>
+                {tier.id !== "free" && (
+                  <span
+                    className={`text-base font-medium md:text-2xl ${
+                      tier.highlighted ? "text-[#F6F6F6]" : "text-secondary"
+                    }`}
+                  >
+                    {billingPeriod === "monthly"
+                      ? tier.monthlyPeriod
+                      : tier.yearlyPeriod}
+                  </span>
+                )}
               </div>
 
               <h3
@@ -252,7 +254,7 @@ export function PricingSection() {
                         : "secondary"
                   }
                   className={`w-full cursor-pointer p-3 text-base font-medium transition-all ${
-                    tier.ctaVariant === "primary" 
+                    tier.ctaVariant === "primary"
                       ? "bg-primary text-[#F6F6F6] hover:bg-[#D07A0E]"
                       : tier.ctaVariant === "outline" && tier.highlighted
                         ? "border border-white text-white hover:border-gray-200 hover:bg-white hover:text-gray-900"

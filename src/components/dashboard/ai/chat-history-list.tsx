@@ -1,13 +1,19 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Battery, Sun, MessageCircle } from "lucide-react";
 import { ChatActionsMenu } from "@/components/dashboard/ai/chat-actions-menu";
 import { ChatEmptyState } from "@/components/dashboard/ai/chat-empty-state";
+import { PaginationBar } from "@/components/dashboard/shared/pagination-bar";
 import { Button } from "@/components/ui/button";
+import { chatService } from "@/services/chat-service";
 import {
+  createLocalChatTitle,
+  getFirstUserMessageTitle,
   getChatActionsStorageKey,
   loadStoredChatActions,
+  sanitizeChatTitle,
   saveStoredChatActions,
 } from "@/lib/chat-actions-storage";
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
@@ -17,6 +23,7 @@ import type { ChatSession } from "@/types/chat";
 type FilterType = "All" | "Solar" | "Alerts" | "General";
 type ViewFilter = FilterType | "Archived";
 type TagType = "Solar" | "Alert" | "General" | "Report";
+const CHAT_PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 interface ChatHistoryListProps {
   history: ChatSession[];
@@ -89,9 +96,44 @@ function formatChatTimestamp(chat: ChatSession) {
   });
 }
 
+function resolveStoredOrBackendTitle(
+  chat: ChatSession,
+  renamedTitles: Record<string, string>,
+) {
+  return (
+    renamedTitles[chat.id] ??
+    sanitizeChatTitle(chat.title) ??
+    getFirstUserMessageTitle(chat.messages) ??
+    sanitizeChatTitle(chat.description)
+  );
+}
+
+function getFirstApiUserMessageTitle(
+  messages: Array<Record<string, unknown>>,
+  userId: string,
+) {
+  const firstUserMessage = messages.find((message) => {
+    const senderId = message.senderId ?? message.sender_id ?? message.userId;
+    const role = String(message.role ?? message.senderRole ?? "").toLowerCase();
+    return senderId === userId || role === "user";
+  });
+
+  const content =
+    typeof firstUserMessage?.content === "string"
+      ? firstUserMessage.content
+      : typeof firstUserMessage?.textContent === "string"
+        ? firstUserMessage.textContent
+        : typeof firstUserMessage?.message === "string"
+          ? firstUserMessage.message
+          : undefined;
+
+  const trimmed = content?.trim();
+  return trimmed ? createLocalChatTitle(trimmed) : undefined;
+}
+
 function getTag(chat: ChatSession): TagType {
   if (chat.tag) return chat.tag === "Report" ? "General" : chat.tag;
-  const text = `${chat.title} ${chat.description ?? ""}`.toLowerCase();
+  const text = `${chat.title} ${chat.description ?? ""} ${getFirstUserMessageTitle(chat.messages) ?? ""}`.toLowerCase();
 
   // Solar/PV related
   if (
@@ -169,13 +211,148 @@ function RowIcon({ tag }: { tag: TagType }) {
   );
 }
 
+function ChatHistoryRow({
+  chat,
+  selectedId,
+  userId,
+  actions,
+  filter,
+  updateActions,
+  setFilter,
+}: {
+  chat: ChatSession;
+  selectedId?: string;
+  userId: string;
+  actions: StoredChatActions;
+  filter: ViewFilter;
+  updateActions: (updater: (prev: StoredChatActions) => StoredChatActions) => void;
+  setFilter: (filter: ViewFilter) => void;
+}) {
+  const router = useRouter();
+  const tag = getTag(chat);
+  const baseTitle = resolveStoredOrBackendTitle(chat, actions.renamedTitles);
+  const needsFirstMessageFallback = !baseTitle;
+  const { data: firstMessageTitle } = useQuery({
+    queryKey: ["chat-first-message-title", chat.id, userId],
+    enabled: needsFirstMessageFallback,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const messages = await chatService.getChatMessages(chat.id, userId);
+      return getFirstApiUserMessageTitle(
+        messages as unknown as Array<Record<string, unknown>>,
+        userId,
+      );
+    },
+  });
+  const title = baseTitle ?? firstMessageTitle ?? "Untitled chat";
+
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-3 px-5 py-4 transition-colors hover:bg-muted/40",
+        selectedId === chat.id && "bg-muted/60",
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => router.push(`/dashboard/ai-assistant/${chat.id}`)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            router.push(`/dashboard/ai-assistant/${chat.id}`);
+          }
+        }}
+        className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 bg-transparent text-left"
+      >
+        <RowIcon tag={tag} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {actions.pinnedIds.includes(chat.id) ? "Pinned - " : ""}
+            {title}
+          </p>
+          {chat.description ? (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {chat.description}
+            </p>
+          ) : null}
+          <div className="mt-2">
+            <TagBadge tag={tag} />
+          </div>
+        </div>
+      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        {filter === "Archived" && actions.archivedIds.includes(chat.id) ? (
+          <button
+            type="button"
+            onClick={() =>
+              updateActions((prev) => ({
+                ...prev,
+                archivedIds: prev.archivedIds.filter((id) => id !== chat.id),
+              }))
+            }
+            className="px-2 py-1 text-xs text-primary hover:underline"
+          >
+            Unarchive
+          </button>
+        ) : (
+          <>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              {formatChatTimestamp(chat)}
+            </span>
+            <ChatActionsMenu
+              chatId={chat.id}
+              title={title}
+              isPinned={actions.pinnedIds.includes(chat.id)}
+              onRename={(id, nextTitle) =>
+                updateActions((prev) => ({
+                  ...prev,
+                  renamedTitles: {
+                    ...prev.renamedTitles,
+                    [id]: nextTitle,
+                  },
+                }))
+              }
+              onPin={(id) =>
+                updateActions((prev) => ({
+                  ...prev,
+                  pinnedIds: prev.pinnedIds.includes(id)
+                    ? prev.pinnedIds.filter((item) => item !== id)
+                    : [...prev.pinnedIds, id],
+                }))
+              }
+              onArchive={(id) => {
+                updateActions((prev) => ({
+                  ...prev,
+                  archivedIds: prev.archivedIds.includes(id)
+                    ? prev.archivedIds
+                    : [...prev.archivedIds, id],
+                }));
+                setFilter("Archived");
+              }}
+              onDelete={(id) =>
+                updateActions((prev) => ({
+                  ...prev,
+                  deletedIds: prev.deletedIds.includes(id)
+                    ? prev.deletedIds
+                    : [...prev.deletedIds, id],
+                }))
+              }
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ChatHistoryList({
   history,
   selectedId,
   userId,
 }: ChatHistoryListProps) {
-  const router = useRouter();
   const [filter, setFilter] = useState<ViewFilter>("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const storageKey = getChatActionsStorageKey(userId);
 
@@ -194,11 +371,7 @@ export function ChatHistoryList({
   };
 
   const visibleChats = useMemo(() => {
-    const normalizedHistory = history.map((chat) => ({
-      ...chat,
-      title: actions.renamedTitles[chat.id] ?? chat.title,
-    }));
-    return normalizedHistory
+    return history
       .filter((chat) => !actions.deletedIds.includes(chat.id))
       .filter((chat) => {
         if (filter === "Archived") return actions.archivedIds.includes(chat.id);
@@ -222,6 +395,12 @@ export function ChatHistoryList({
       !actions.deletedIds.includes(chat.id) &&
       !actions.archivedIds.includes(chat.id),
   );
+  const totalPages = Math.max(1, Math.ceil(visibleChats.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedChats = visibleChats.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage,
+  );
   const groups = useMemo(() => {
     const orderedLabels: ChatGroup["label"][] = [
       "Today",
@@ -232,10 +411,10 @@ export function ChatHistoryList({
     return orderedLabels
       .map((label) => ({
         label,
-        chats: visibleChats.filter((chat) => getGroupLabel(chat) === label),
+        chats: paginatedChats.filter((chat) => getGroupLabel(chat) === label),
       }))
       .filter((group) => group.chats.length > 0);
-  }, [visibleChats]);
+  }, [paginatedChats]);
   const filters: ViewFilter[] = [
     "All",
     "Solar",
@@ -253,7 +432,10 @@ export function ChatHistoryList({
           <Button
             key={item}
             variant={filter === item ? "outline" : "ghost"}
-            onClick={() => setFilter(item)}
+            onClick={() => {
+              setFilter(item);
+              setCurrentPage(1);
+            }}
             className={cn(
               "h-auto rounded-lg px-4 py-1.5 text-sm font-medium shadow-none",
               filter === item
@@ -278,111 +460,17 @@ export function ChatHistoryList({
             </div>
             <div className="divide-y divide-border">
               {group.chats.map((chat) => {
-                const tag = getTag(chat);
                 return (
-                  <div
+                  <ChatHistoryRow
                     key={chat.id}
-                    className={cn(
-                      "flex items-start gap-3 px-5 py-4 transition-colors hover:bg-muted/40",
-                      selectedId === chat.id && "bg-muted/60",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(`/dashboard/ai-assistant/${chat.id}`)
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          router.push(`/dashboard/ai-assistant/${chat.id}`);
-                        }
-                      }}
-                      className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 bg-transparent text-left"
-                    >
-                      <RowIcon tag={tag} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {actions.pinnedIds.includes(chat.id)
-                            ? "Pinned - "
-                            : ""}
-                          {chat.title || "Untitled chat"}
-                        </p>
-                        {chat.description ? (
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {chat.description}
-                          </p>
-                        ) : null}
-                        <div className="mt-2">
-                          <TagBadge tag={tag} />
-                        </div>
-                      </div>
-                    </button>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {filter === "Archived" &&
-                      actions.archivedIds.includes(chat.id) ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateActions((prev) => ({
-                              ...prev,
-                              archivedIds: prev.archivedIds.filter(
-                                (id) => id !== chat.id,
-                              ),
-                            }))
-                          }
-                          className="px-2 py-1 text-xs text-primary hover:underline"
-                        >
-                          Unarchive
-                        </button>
-                      ) : (
-                        <>
-                          <span className="whitespace-nowrap text-xs text-muted-foreground">
-                            {formatChatTimestamp(chat)}
-                          </span>
-                          <ChatActionsMenu
-                            chatId={chat.id}
-                            title={chat.title}
-                            isPinned={actions.pinnedIds.includes(chat.id)}
-                            onRename={(id, nextTitle) =>
-                              updateActions((prev) => ({
-                                ...prev,
-                                renamedTitles: {
-                                  ...prev.renamedTitles,
-                                  [id]: nextTitle,
-                                },
-                              }))
-                            }
-                            onPin={(id) =>
-                              updateActions((prev) => ({
-                                ...prev,
-                                pinnedIds: prev.pinnedIds.includes(id)
-                                  ? prev.pinnedIds.filter((item) => item !== id)
-                                  : [...prev.pinnedIds, id],
-                              }))
-                            }
-                            onArchive={(id) => {
-                              updateActions((prev) => ({
-                                ...prev,
-                                archivedIds: prev.archivedIds.includes(id)
-                                  ? prev.archivedIds
-                                  : [...prev.archivedIds, id],
-                              }));
-                              setFilter("Archived");
-                            }}
-                            onDelete={(id) =>
-                              updateActions((prev) => ({
-                                ...prev,
-                                deletedIds: prev.deletedIds.includes(id)
-                                  ? prev.deletedIds
-                                  : [...prev.deletedIds, id],
-                              }))
-                            }
-                          />
-                        </>
-                      )}
-                    </div>
-                  </div>
+                    chat={chat}
+                    selectedId={selectedId}
+                    userId={userId}
+                    actions={actions}
+                    filter={filter}
+                    updateActions={updateActions}
+                    setFilter={setFilter}
+                  />
                 );
               })}
             </div>
@@ -400,6 +488,20 @@ export function ChatHistoryList({
           </div>
         ) : null}
       </div>
+      <PaginationBar
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        totalItems={visibleChats.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onPerPageChange={(perPage) => {
+          setItemsPerPage(perPage);
+          setCurrentPage(1);
+        }}
+        perPageOptions={CHAT_PAGE_SIZE_OPTIONS}
+        itemLabel="chats"
+        className="rounded-xl border border-border bg-card"
+      />
     </div>
   );
 }

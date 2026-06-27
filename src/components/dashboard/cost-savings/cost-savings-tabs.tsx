@@ -142,18 +142,16 @@ function CostSavingsTabsInner({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {isSetupComplete ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={openSetup}
-              className="gap-2 border-primary/40 text-primary hover:bg-primary/5"
-            >
-              <Settings2 className="h-4 w-4" />
-              Savings setup
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={openSetup}
+            className="gap-2 border-primary/40 text-primary hover:bg-primary/5"
+          >
+            <Settings2 className="h-4 w-4" />
+            {isSetupComplete ? "Savings setup" : "Set up savings"}
+          </Button>
           {activeTab === "summary" ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

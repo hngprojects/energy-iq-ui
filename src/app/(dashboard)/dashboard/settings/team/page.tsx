@@ -1,10 +1,5 @@
-import { ComingSoonDashboard } from "@/components/dashboard/coming-soon";
+import { TeamAccessPageClient } from "@/components/settings/team-access/team-access-page-client";
 
 export default function TeamAccessPage() {
-  return (
-    <ComingSoonDashboard
-      feature="Team & Access"
-      description="Control organisational hierarchies by assigning specific user roles, permissions, and administrative access levels."
-    />
-  );
+  return <TeamAccessPageClient />;
 }

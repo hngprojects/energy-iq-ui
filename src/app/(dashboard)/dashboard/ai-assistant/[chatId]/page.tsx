@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Battery,
   Download,
+  Loader2,
   Mic,
   Send,
   Sun,
@@ -28,8 +29,10 @@ import type {
 } from "@/types/chat";
 import { useChatSocket } from "@/hooks/use-chat-socket";
 import {
+  getFirstUserMessageTitle,
   getChatActionsStorageKey,
   loadStoredChatActions,
+  sanitizeChatTitle,
   saveStoredChatActions,
 } from "@/lib/chat-actions-storage";
 import type { StoredChatActions } from "@/lib/chat-actions-storage";
@@ -40,11 +43,9 @@ import {
   linkChatMessageCards,
   saveChatMessageCards,
 } from "@/lib/chat-cards-storage";
-
 interface ChatDetailPageProps {
   params: Promise<{ chatId: string }>;
 }
-
 function formatChatHeaderDateTime(chatInfoDate?: string) {
   const rawDate = chatInfoDate ?? new Date().toISOString();
   const date = new Date(rawDate);
@@ -81,12 +82,10 @@ function formatChatHeaderDateTime(chatInfoDate?: string) {
     .toLowerCase();
   return `${dateLabel}, ${timeLabel}`;
 }
-
 interface ParseResult {
   cards: AiResponseCard[];
   summary: string;
 }
-
 function parseAlertCards(raw: string): ParseResult | null {
   let parsed: Record<string, unknown>[];
   try {
@@ -95,7 +94,6 @@ function parseAlertCards(raw: string): ParseResult | null {
     return null;
   }
   if (!Array.isArray(parsed) || parsed.length === 0) return null;
-
   const cards: AiResponseCard[] = parsed.map((item) => ({
     type: "alert" as AiResponseCardType,
     headline: String(item.type || item.message || "Alert")
@@ -109,13 +107,11 @@ function parseAlertCards(raw: string): ParseResult | null {
         : "info") as "critical" | "warning" | "info",
     dataPoint: String(item.type || ""),
   }));
-
   return {
     cards,
     summary: `Found ${parsed.length} alert${parsed.length > 1 ? "s" : ""}`,
   };
 }
-
 export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -124,7 +120,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const chatId = resolvedParams.chatId;
   const { chatInfo, messages, setMessages, loading, error } =
     useActiveChat(chatId);
-
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const streamingMessageIdRef = useRef<string | null>(null);
@@ -132,7 +127,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   const userInitials = getUserInitials(user);
   const storageKey = getChatActionsStorageKey(userId);
   const processedSocketIdsRef = useRef<Set<string>>(new Set());
-
   const [actions, setActions] = useState<StoredChatActions>(() =>
     loadStoredChatActions(storageKey),
   );
@@ -143,13 +137,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     null,
   );
   const hasShownLimitToastRef = useRef(false);
-
   const activeStreamingId = streamingMessageIdRef.current;
-
   const lastUserMessageRef = useRef<string>("");
-
   const MAX_CHARS = 3000;
-
   const {
     connected,
     connecting,
@@ -160,21 +150,18 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     subscribeToSystemMessages,
     subscribeToCards,
   } = useChatSocket(chatId);
-
   const clearSendingTimeout = useCallback(() => {
     if (sendingTimeoutRef.current) {
       clearTimeout(sendingTimeoutRef.current);
       sendingTimeoutRef.current = null;
     }
   }, []);
-
   const clearCardsWaitTimeout = useCallback(() => {
     if (cardsWaitTimeoutRef.current) {
       clearTimeout(cardsWaitTimeoutRef.current);
       cardsWaitTimeoutRef.current = null;
     }
   }, []);
-
   const scheduleCardsWaitFallback = useCallback(
     (messageId: string) => {
       clearCardsWaitTimeout();
@@ -191,7 +178,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     },
     [clearCardsWaitTimeout, setMessages],
   );
-
   const startSendingTimeout = useCallback(
     (assistantMessageId: string) => {
       clearSendingTimeout();
@@ -224,7 +210,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     },
     [clearSendingTimeout, setMessages],
   );
-
   const updateActions = (
     updater: (prev: StoredChatActions) => StoredChatActions,
   ) => {
@@ -234,11 +219,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       return next;
     });
   };
-
   useEffect(() => {
     setActions(loadStoredChatActions(storageKey));
   }, [storageKey]);
-
   useEffect(() => {
     pendingMessageSentRef.current = false;
     streamingMessageIdRef.current = null;
@@ -247,29 +230,23 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     setSending(false);
     processedSocketIdsRef.current.clear();
   }, [chatId, clearCardsWaitTimeout, clearSendingTimeout]);
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
-
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
-
   useEffect(() => {
     return () => {
       clearSendingTimeout();
       clearCardsWaitTimeout();
     };
   }, [clearCardsWaitTimeout, clearSendingTimeout]);
-
   useEffect(() => {
     if (!socketError || !activeStreamingId) return;
-
     streamingMessageIdRef.current = null;
     setSending(false);
     clearSendingTimeout();
-
     setMessages((prev) =>
       prev.map((message) =>
         message.id === activeStreamingId
@@ -283,12 +260,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       ),
     );
   }, [socketError, activeStreamingId, clearSendingTimeout, setMessages]);
-
   useEffect(() => {
     return subscribeToSystemMessages((incoming) => {
       const isGeneratedId =
         typeof incoming.id === "string" && incoming.id.startsWith("socket-");
-
       let dedupKey: string | undefined;
       if (incoming.isChunk) {
         dedupKey = incoming.id;
@@ -297,17 +272,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       } else {
         dedupKey = `${incoming.chatId || chatId}:${incoming.text}`;
       }
-
+      if (!incoming.text && !incoming.isFinal && !streamingMessageIdRef.current)
+        return;
       if (dedupKey && processedSocketIdsRef.current.has(dedupKey)) return;
       if (dedupKey) processedSocketIdsRef.current.add(dedupKey);
 
-      if (!incoming.text && !incoming.isFinal && !streamingMessageIdRef.current)
-        return;
-
       const activeStreamingId = streamingMessageIdRef.current;
-
       const isCompleteMessage = incoming.isFinal;
-
       // === JSON data dump handler (runs BEFORE word-by-word) ===
       if (
         incoming.isChunk &&
@@ -321,7 +292,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         } catch {
           // not valid JSON — fall through
         }
-
         if (result) {
           const { cards: parsedCards, summary: parsedContent } = result;
           setMessages((prev) => {
@@ -360,20 +330,22 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         }
       }
 
+      if (isCompleteMessage && activeStreamingId) {
+        sessionStorage.removeItem(`pending-chat-message:${chatId}`);
+        streamingMessageIdRef.current = null;
+        setSending(false);
+        clearSendingTimeout();
+      }
+
       setMessages((prev) => {
         if (!activeStreamingId) {
           if (incoming.isChunk) return prev;
-
           const lastAssistantIdx = [...prev]
             .reverse()
             .findIndex((m) => m.role === "assistant" || m.role === "ai");
-
           if (lastAssistantIdx !== -1) {
             const idx = prev.length - 1 - lastAssistantIdx;
             const lastAssistant = prev[idx];
-
-            // Clean-text replacement: when new_system_msg arrives with
-            // complete text after streaming, replace streamed content
             if (incoming.isFinal && incoming.text) {
               const lastAssistant = prev[idx];
               const realId =
@@ -382,11 +354,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 !incoming.id.startsWith("assistant-stream")
                   ? incoming.id
                   : lastAssistant.id;
-
               if (realId !== lastAssistant.id) {
                 linkChatMessageCards(chatId, lastAssistant.id, realId);
               }
-
               if (lastAssistant.cards?.length) {
                 saveChatMessageCards(chatId, {
                   messageId: realId,
@@ -394,16 +364,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   cards: lastAssistant.cards,
                 });
               }
-
               const hasCards = Boolean(lastAssistant.cards?.length);
               const waitingForCards = Boolean(incoming.awaitingCards);
-
               if (waitingForCards) {
                 scheduleCardsWaitFallback(realId);
               } else {
                 clearCardsWaitTimeout();
               }
-
               return prev.map((m, i) =>
                 i === idx
                   ? {
@@ -419,7 +386,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   : m,
               );
             }
-
             // Only update if it's empty/failed
             if (!lastAssistant.content?.trim() || lastAssistant.failed) {
               return prev.map((m, i) =>
@@ -436,7 +402,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               );
             }
           }
-
           // Otherwise create a new message
           const newMessageId = incoming.id || `assistant-${Date.now()}`;
           streamingMessageIdRef.current = incoming.isFinal
@@ -453,16 +418,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             },
           ];
         }
-
         return prev.map((message) => {
           if (message.id !== activeStreamingId) return message;
-
           if (isCompleteMessage) {
             const rawContent = incoming.text || message.content;
             const existingCards = message.cards || [];
             let parsedContent = rawContent;
             let cards = existingCards;
-
             try {
               const r = parseAlertCards(rawContent);
               if (r) {
@@ -484,18 +446,15 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             } catch {
               // Not JSON — keep raw text as-is
             }
-
             const realId =
               incoming.id &&
               !incoming.id.startsWith("socket-") &&
               !incoming.id.startsWith("assistant-stream")
                 ? incoming.id
                 : message.id;
-
             if (realId !== message.id) {
               linkChatMessageCards(chatId, message.id, realId);
             }
-
             if (cards.length > 0) {
               saveChatMessageCards(chatId, {
                 messageId: realId,
@@ -503,15 +462,12 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 cards,
               });
             }
-
             const waitingForCards = Boolean(incoming.awaitingCards);
-
             if (waitingForCards) {
               scheduleCardsWaitFallback(realId);
             } else {
               clearCardsWaitTimeout();
             }
-
             return parsedContent.trim() || cards.length > 0
               ? {
                   ...message,
@@ -531,12 +487,10 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   timestamp: formatMessageTime(incoming.timestamp),
                 };
           }
-
           // Non-final: keep streaming
           const rawText = incoming.text || "";
           let cards = message.cards;
           let appendContent = rawText;
-
           if (rawText.trim().startsWith("[")) {
             const r = parseAlertCards(rawText);
             if (r) {
@@ -544,7 +498,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               appendContent = r.summary;
             }
           }
-
           const currentContent = message.content || "";
           const needsSpace =
             currentContent.length > 0 &&
@@ -554,9 +507,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             incoming.isChunk && appendContent === rawText
               ? `${currentContent}${needsSpace ? " " : ""}${rawText}`
               : appendContent;
-
           const hasStructuredCards = Boolean(cards && cards.length > 0);
-
           return {
             ...message,
             content: nextContent,
@@ -567,15 +518,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           };
         });
       });
-
       if (incoming.sessionId) {
         localStorage.setItem(`chat-session:${chatId}`, incoming.sessionId);
-      }
-
-      if (isCompleteMessage) {
-        streamingMessageIdRef.current = null;
-        setSending(false);
-        clearSendingTimeout();
       }
     });
   }, [
@@ -586,34 +530,25 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     setMessages,
     subscribeToSystemMessages,
   ]);
-
   useEffect(() => {
     return subscribeToCards((payload) => {
       const normalizedCards = normalizeBackendCards(payload.cards);
       if (normalizedCards.length === 0) return;
-
       clearCardsWaitTimeout();
-
       const activeStreamingId = streamingMessageIdRef.current;
       const userPrompt = lastUserMessageRef.current;
-
       setMessages((prev) => {
         const targetId =
           activeStreamingId ??
           [...prev].reverse().find((m) => m.role === "assistant")?.id;
-
         if (!targetId) return prev;
-
         let mergedCards: AiResponseCard[] = [];
-
         const next = prev.map((message) => {
           if (message.id !== targetId) return message;
-
           mergedCards = mergeAiResponseCards(
             message.cards ?? [],
             normalizedCards,
           );
-
           return {
             ...message,
             cards: mergedCards,
@@ -624,7 +559,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             error: undefined,
           };
         });
-
         if (mergedCards.length > 0) {
           saveChatMessageCards(chatId, {
             messageId: targetId,
@@ -632,10 +566,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
             cards: mergedCards,
           });
         }
-
         return next;
       });
-
       streamingMessageIdRef.current = null;
       setSending(false);
       clearSendingTimeout();
@@ -647,26 +579,21 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     setMessages,
     subscribeToCards,
   ]);
-
   useEffect(() => {
     if (!socketError) return;
-
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
     if (!raw) {
       clearSocketError();
       return;
     }
-
     setMessages((prev) => {
       const hasPendingNotice = prev.some(
         (message) =>
           message.role === "system" &&
           message.id === `pending-socket-error-${chatId}`,
       );
-
       if (hasPendingNotice) return prev;
-
       return [
         ...prev,
         {
@@ -683,57 +610,147 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }, [chatId, setMessages, socketError, clearSocketError]);
 
   useEffect(() => {
-    if (!connected) return;
+    if (!connected) {
+      return;
+    }
     if (loading) return;
     if (pendingMessageSentRef.current) return;
-
     const key = `pending-chat-message:${chatId}`;
     const raw = sessionStorage.getItem(key);
     if (!raw) return;
 
-    // Immediately remove from storage to prevent double-send on remount
+    pendingMessageSentRef.current = true;
     sessionStorage.removeItem(key);
 
     let text = "";
     let timestamp: string | undefined;
-
     try {
       const pending = JSON.parse(raw) as {
         content?: string;
         timestamp?: string;
       };
-
       text = pending.content?.trim() ?? "";
       timestamp = pending.timestamp;
     } catch {
       return;
     }
-
     if (!text) return;
 
-    pendingMessageSentRef.current = true;
+    const lastMessage = messages[messages.length - 1];
+    const lastIsCompleteAI =
+      (lastMessage?.role === "assistant" || lastMessage?.role === "ai") &&
+      !lastMessage?.isStreaming &&
+      !lastMessage?.failed &&
+      (lastMessage?.content?.trim() || lastMessage?.cards?.length);
+
+    if (lastIsCompleteAI) {
+      pendingMessageSentRef.current = false;
+      return;
+    }
+
+    let duplicateUserIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].role === "user" && messages[i].content.trim() === text) {
+        duplicateUserIndex = i;
+        break;
+      }
+    }
+    const isDuplicate = duplicateUserIndex !== -1;
+    if (isDuplicate) {
+      const messagesAfterDuplicate = messages.slice(duplicateUserIndex + 1);
+      const nextUserIndex = messagesAfterDuplicate.findIndex(
+        (m) => m.role === "user",
+      );
+      const responseWindow =
+        nextUserIndex === -1
+          ? messagesAfterDuplicate
+          : messagesAfterDuplicate.slice(0, nextUserIndex);
+      const hasAssistantResponse = responseWindow.some(
+        (m) => (m.role === "assistant" || m.role === "ai") && !m.failed,
+      );
+
+      streamingMessageIdRef.current = null;
+      setSending(false);
+
+      if (hasAssistantResponse) {
+        pendingMessageSentRef.current = false;
+        return;
+      }
+
+      const assistantMessageId = `assistant-stream-${Date.now()}`;
+      streamingMessageIdRef.current = assistantMessageId;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: "assistant" as const,
+          content: "",
+          timestamp: formatMessageTime(),
+          isStreaming: true,
+          awaitingCards: true,
+        },
+      ]);
+      setSending(true);
+      lastUserMessageRef.current = text;
+
+      try {
+        sendMessage(text);
+        startSendingTimeout(assistantMessageId);
+      } catch (error) {
+        sessionStorage.setItem(
+          key,
+          JSON.stringify({
+            content: text,
+            timestamp,
+          }),
+        );
+        pendingMessageSentRef.current = false;
+        streamingMessageIdRef.current = null;
+        setSending(false);
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  role: "assistant" as const,
+                  content: message.content || "",
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Unable to send your first message. Please try again.",
+                  isStreaming: false,
+                  awaitingCards: false,
+                  failed: true,
+                }
+              : message,
+          ),
+        );
+      }
+      return;
+    }
 
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
-
     setMessages((prev) => {
       const alreadyExists = prev.some(
-        (message) => message.role === "user" && message.content.trim() === text,
+        (m) => m.role === "user" && m.content.trim() === text,
       );
 
+      const newMessages: ChatMessage[] = alreadyExists
+        ? []
+        : [
+            {
+              id: `pending-${chatId}`,
+              role: "user" as const,
+              content: text,
+              timestamp: formatMessageTime(timestamp),
+              userInitials,
+            },
+          ];
+
       return [
-        ...(alreadyExists
-          ? prev
-          : [
-              ...prev,
-              {
-                id: `pending-${chatId}`,
-                role: "user" as const,
-                content: text,
-                timestamp: formatMessageTime(timestamp),
-                userInitials,
-              },
-            ]),
+        ...prev,
+        ...newMessages,
         {
           id: assistantMessageId,
           role: "assistant" as const,
@@ -744,9 +761,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         },
       ];
     });
-
     setSending(true);
-
+    lastUserMessageRef.current = text;
     try {
       sendMessage(text);
       startSendingTimeout(assistantMessageId);
@@ -761,7 +777,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       pendingMessageSentRef.current = false;
       streamingMessageIdRef.current = null;
       setSending(false);
-
       setMessages((prev) =>
         prev.map((message) =>
           message.id === assistantMessageId
@@ -774,6 +789,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                     ? error.message
                     : "Unable to send your first message. Please try again.",
                 isStreaming: false,
+                awaitingCards: false,
                 failed: true,
               }
             : message,
@@ -790,7 +806,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     startSendingTimeout,
     userInitials,
   ]);
-
   const resetComposer = () => {
     const el = textareaRef.current;
     if (!el) return;
@@ -801,20 +816,16 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       wrapper.classList.add("items-center");
     }
   };
-
   const formatMessageTime = (value?: string) => {
     const date = value ? new Date(value) : new Date();
-
     return date.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
   };
-
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending) return;
-
     if (!connected) {
       setMessages((prev) => [
         ...prev,
@@ -831,11 +842,9 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       ]);
       return;
     }
-
     setInput("");
     resetComposer();
     setSending(true);
-
     const userMessage: ChatMessage = {
       id: `local-${Date.now()}`,
       role: "user",
@@ -843,10 +852,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       timestamp: formatMessageTime(),
       userInitials,
     };
-
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
-
     const assistantPlaceholder: ChatMessage = {
       id: assistantMessageId,
       role: "assistant",
@@ -855,11 +862,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       isStreaming: true,
       awaitingCards: true,
     };
-
     setMessages((prev) => [...prev, userMessage, assistantPlaceholder]);
-
     sessionStorage.removeItem(`pending-chat-message:${chatId}`);
-
     try {
       lastUserMessageRef.current = text;
       sendMessage(text);
@@ -868,7 +872,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       joinActiveChats();
       streamingMessageIdRef.current = null;
       setSending(false);
-
       setMessages((prev) =>
         prev.map((message) =>
           message.id === assistantMessageId
@@ -881,6 +884,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                     ? error.message
                     : "Unable to send message. Please try again.",
                 isStreaming: false,
+                awaitingCards: false,
                 failed: true,
               }
             : message,
@@ -888,11 +892,18 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       );
     }
   };
-
   const handleRetry = (failedAssistantId: string) => {
-    const text = lastUserMessageRef.current;
+    const failedIndex = messages.findIndex((m) => m.id === failedAssistantId);
+    const previousUserMessage =
+      failedIndex === -1
+        ? undefined
+        : messages
+            .slice(0, failedIndex)
+            .reverse()
+            .find((m) => m.role === "user");
+    const text =
+      previousUserMessage?.content.trim() || lastUserMessageRef.current;
     if (!text) return;
-
     if (!connected) {
       setMessages((prev) => [
         ...prev,
@@ -908,10 +919,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       ]);
       return;
     }
-
     const assistantMessageId = `assistant-stream-${Date.now()}`;
     streamingMessageIdRef.current = assistantMessageId;
-
     setMessages((prev) => [
       ...prev.filter((m) => m.id !== failedAssistantId),
       {
@@ -923,8 +932,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         awaitingCards: true,
       },
     ]);
-
     setSending(true);
+    lastUserMessageRef.current = text;
     try {
       sendMessage(text);
       startSendingTimeout(assistantMessageId);
@@ -932,7 +941,6 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       joinActiveChats();
       streamingMessageIdRef.current = null;
       setSending(false);
-
       setMessages((prev) =>
         prev.map((message) =>
           message.id === assistantMessageId
@@ -953,14 +961,13 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
       );
     }
   };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (!input.trim() || sending || connecting || !connected) return;
       void handleSend();
     }
   };
-
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const el = e.currentTarget;
     el.style.height = "auto";
@@ -989,14 +996,16 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
 
   const title =
     actions.renamedTitles[chatId] ??
-    chatInfo?.title ??
+    sanitizeChatTitle(chatInfo?.title) ??
+    getFirstUserMessageTitle(messages) ??
     (loading ? "Loading chat..." : "Chat");
+
   const dateLabel = formatChatHeaderDateTime(
     chatInfo?.updatedAt ?? chatInfo?.createdAt ?? chatInfo?.dateLabel,
   );
 
   return (
-    <div className="relative flex h-[calc(100vh-130px)] w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100vh-140px)]">
+    <div className="relative flex h-[calc(100dvh-130px)] w-full max-w-full flex-col overflow-hidden bg-background text-foreground md:h-[calc(100dvh-140px)]">
       <div className="border-b border-border bg-card px-3 py-3 md:px-6 md:py-4 shadow-sm">
         <div className="max-w-7xl mx-auto w-full flex shrink-0 items-center gap-2 md:gap-3 ">
           <Button
@@ -1079,13 +1088,22 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
           </div>
         </div>
       </div>
-
-      <div className="flex-1 overflow-y-auto px-6 py-6 pb-32 max-w-7xl mx-auto w-full">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">Today</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
+      <div className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto px-4 py-6 pb-36 sm:px-6">
+        {chatInfo && (
+          <div className="mb-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">
+              {
+                formatChatHeaderDateTime(
+                  chatInfo?.updatedAt ??
+                    chatInfo?.createdAt ??
+                    chatInfo?.dateLabel,
+                ).split(",")[0]
+              }
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+        )}
         {error ? (
           <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error.message}
@@ -1101,20 +1119,17 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                 }`}
               >
                 <div className="h-8 w-8 shrink-0 rounded-full bg-muted" />
-
                 <div className="flex flex-col gap-2">
                   <div
                     className={`h-4 rounded-full bg-muted ${
                       i % 2 === 1 ? "w-24 self-end" : "w-32"
                     }`}
                   />
-
                   <div
                     className={`h-10 rounded-xl bg-muted ${
                       i % 2 === 1 ? "w-48 self-end" : "w-64"
                     }`}
                   />
-
                   <div
                     className={`h-4 rounded-full bg-muted/60 ${
                       i % 2 === 1 ? "w-16 self-end" : "w-20"
@@ -1137,9 +1152,8 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
         )}
         <div ref={bottomRef} />
       </div>
-
-      <div className="fixed bottom-0 right-0 left-0 z-10 border-t border-border bg-card px-6 py-4 lg:left-60">
-        <div className="max-w-7xl mx-auto w-full flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-2.5">
+      <div className="fixed bottom-0 right-0 left-0 z-10 border-t border-border bg-card px-3 py-3 sm:px-6 sm:py-4 lg:left-60">
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2.5 sm:gap-3 sm:px-4">
           <AttachMenu
             comingSoon
             comingSoonLabel="Attachments (coming soon)"
@@ -1174,7 +1188,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
               )}
             />
           </div>
-          <div className="flex justify-end">
+          <div className="hidden justify-end sm:flex">
             <span className="text-xs text-muted-foreground tabular-nums">
               {input.length}/{MAX_CHARS}
             </span>
@@ -1207,7 +1221,11 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
                   : "bg-muted text-muted-foreground hover:bg-muted",
               )}
             >
-              <Send className="h-3.5 w-3.5" />
+              {sending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5" />
+              )}
             </Button>
           </div>
         </div>
@@ -1215,4 +1233,3 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
     </div>
   );
 }
-
