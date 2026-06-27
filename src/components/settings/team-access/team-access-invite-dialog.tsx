@@ -97,7 +97,7 @@ export function TeamAccessInviteDialog({
 
           <div className="w-full space-y-2">
             <Label>Access role</Label>
-            <DropdownMenu>
+            <DropdownMenu className="w-full">
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
@@ -108,7 +108,7 @@ export function TeamAccessInviteDialog({
                   <ChevronDown className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-full min-w-0" style={{ width: "var(--radix-dropdown-menu-trigger-width)" }}>
+              <DropdownMenuContent className="w-full">
                 {TEAM_ACCESS_ROLES.map((item) => (
                   <DropdownMenuItem
                     key={item}

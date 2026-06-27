@@ -33,7 +33,11 @@ function StatusDot({ status }: { status: TeamMember["status"] }) {
     disabled: "bg-gray-400",
   }[status];
 
-  return <span className={cn("inline-block size-2.5 rounded-full", colors)} />;
+  return (
+    <span className={cn("inline-block size-2.5 rounded-full", colors)} role="img" aria-label={status}>
+      <span className="sr-only">{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+    </span>
+  );
 }
 
 function StatusLegend() {
@@ -46,6 +50,10 @@ function StatusLegend() {
       <span className="flex items-center gap-1.5">
         <span className="inline-block size-2 rounded-full bg-amber-500" />
         Pending
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="inline-block size-2 rounded-full bg-gray-400" />
+        Disabled
       </span>
     </div>
   );
@@ -86,7 +94,7 @@ function MemberMobileCard({
       <div className="mt-4 flex items-center justify-end gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${member.firstName} ${member.lastName}`}>
+            <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${member.firstName} ${member.lastName}`} aria-haspopup="menu">
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -147,7 +155,7 @@ export function TeamAccessTable({
                 <td className="px-5 py-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${member.firstName} ${member.lastName}`}>
+                      <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${member.firstName} ${member.lastName}`} aria-haspopup="menu">
                         <MoreVertical className="size-4" />
                       </Button>
                     </DropdownMenuTrigger>

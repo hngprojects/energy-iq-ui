@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
-import { reportsService } from "@/services/reports-service";
 import { getStatusColors } from "@/constants/reports";
 import { useReportShareStore } from "@/stores/report-share-store";
 
@@ -41,7 +40,8 @@ export function ShareReportModal({
 
   const generatedUrl = link?.shareUrl ?? "";
   const isReady = report.status?.toUpperCase() === "READY";
-  const hasLink = Boolean(generatedUrl);
+  const isExpired = link?.isExpired || (link?.expiresAt ? new Date(link.expiresAt) <= new Date() : false);
+  const hasLink = Boolean(generatedUrl) && !isExpired;
 
   const handleGenerateLink = async () => {
     setIsGenerating(true);
@@ -87,14 +87,19 @@ export function ShareReportModal({
   };
 
   const handleShareEmail = async () => {
+    const shareUrl = generatedUrl || getFallbackShareUrl(report);
     setIsSendingEmail(true);
     const toastId = toast.loading("Sending email report...");
     try {
-      await reportsService.emailReport(report.id);
-      toast.success("Report email sent successfully!", { id: toastId });
+      const mailtoSubject = encodeURIComponent(report.title);
+      const mailtoBody = encodeURIComponent(
+        `Here is the report: ${report.title} (${report.subtitle})\n\nPublic link: ${shareUrl}`,
+      );
+      window.location.href = `mailto:?subject=${mailtoSubject}&body=${mailtoBody}`;
+      toast.success("Email client opened", { id: toastId });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to send email report";
+        err instanceof Error ? err.message : "Failed to open email client";
       console.error(err);
       toast.error(message, { id: toastId });
     } finally {
@@ -103,7 +108,8 @@ export function ShareReportModal({
   };
 
   const handleShareWhatsApp = () => {
-    const text = `Here is the report: ${report.title} (${report.subtitle})`;
+    const shareUrl = generatedUrl || getFallbackShareUrl(report);
+    const text = `Here is the report: ${report.title} (${report.subtitle})\n${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
