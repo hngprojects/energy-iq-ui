@@ -74,9 +74,9 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="fixed top-1/2 left-1/2 z-60 -translate-x-1/2 -translate-y-1/2 bg-card p-6 flex flex-col w-74.25-h-177.75ax-h-[96vh] sm:w-xl sm:h-155.75 sm:max-h-[92vh] max-w-none sm:max-w-none rounded-[8px] border-none shadow-lg focus:outline-none gap-6 overflow-y-auto no-scrollbar"
+        className="fixed top-1/2 left-1/2 z-60 -translate-x-1/2 -translate-y-1/2 bg-card p-4 sm:p-6 flex flex-col w-74.25 h-177.75 max-h-[96vh] sm:w-xl sm:h-155.75 sm:max-h-[92vh] max-w-none sm:max-w-none rounded-[8px] border-none shadow-lg focus:outline-none gap-6 overflow-y-auto no-scrollbar"
       >
-        <div className="flex flex-col w-62.25 sm:w-132 min-h-165.75 sm:min-h-123.75 justify-between">
+        <div className="flex flex-col w-full sm:w-132 min-h-165.75 sm:min-h-123.75 justify-between">
 
           <div className="flex items-center justify-between w-full h-10 shrink-0">
             <div className="flex items-center gap-3">
@@ -161,7 +161,7 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                 </span>
                 <div
                   onClick={handleStartDateClick}
-                  className="relative flex items-center justify-between border border-[#B3B3B3] rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
                 >
                   <span className="text-sm font-normal text-(--color-surface-100)">
                     {startDate ? startDate : "Select date"}
@@ -184,7 +184,7 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                 </span>
                 <div
                   onClick={handleEndDateClick}
-                  className="relative flex items-center justify-between border border-[#B3B3B3] rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
                 >
                   <span className="text-sm font-normal text-(--color-surface-100)">
                     {endDate ? endDate : "Select date"}
@@ -215,7 +215,7 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                 value={reportTitle}
                 onChange={(e) => setReportTitle(e.target.value)}
                 placeholder="Enter your preferred title"
-                className="h-12.25 rounded-lg border border-[#B3B3B3] px-4 py-3 text-sm focus-visible:border-border-active bg-transparent placeholder:text-muted-foreground w-full sm:w-132"
+                className="h-12.25 rounded-lg border border-(--color-slate-60) px-4 py-3 text-sm focus-visible:border-border-active bg-transparent placeholder:text-muted-foreground w-full sm:w-132"
               />
             </div>
 
@@ -236,7 +236,8 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                 onClick={handleGeneratePDF}
                 className="w-[116.5px] sm:w-[256px] h-10 rounded-lg text-sm font-semibold bg-secondary text-primary-foreground hover:bg-secondary/80 transition-colors"
               >
-                Generate as PDF
+                <span className="sm:hidden">Generate</span>
+                <span className="hidden sm:inline">Generate as PDF</span>
               </Button>
             </div>
 

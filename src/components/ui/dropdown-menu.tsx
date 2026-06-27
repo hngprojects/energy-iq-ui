@@ -7,6 +7,7 @@ interface DropdownMenuProps {
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  className?: string;
 }
 
 const DropdownContext = React.createContext<{
@@ -15,7 +16,7 @@ const DropdownContext = React.createContext<{
   align?: "start" | "end" | "center";
 } | null>(null);
 
-export function DropdownMenu({ children }: DropdownMenuProps) {
+export function DropdownMenu({ children, className }: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -36,7 +37,7 @@ export function DropdownMenu({ children }: DropdownMenuProps) {
 
   return (
     <DropdownContext.Provider value={{ open, setOpen }}>
-      <div ref={containerRef} className="relative inline-block text-left">
+      <div ref={containerRef} className={cn("relative inline-block text-left", className)}>
         {children}
       </div>
     </DropdownContext.Provider>
@@ -119,13 +120,23 @@ export function DropdownMenuItem({
     if (onClick) onClick(e);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleItemClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+    }
+  };
+
   return (
     <div
+      role="menuitem"
+      tabIndex={0}
       className={cn(
         "relative flex cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-muted focus:bg-muted hover:text-foreground focus:text-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
         className,
       )}
       onClick={handleItemClick}
+      onKeyDown={handleKeyDown}
       {...props}
     >
       {children}

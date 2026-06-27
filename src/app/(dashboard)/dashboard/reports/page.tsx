@@ -1,5 +1,5 @@
 import { ReportStatCards } from "@/components/dashboard/reports/reports-stat-cards";
-import { ReportsTable } from "@/components/dashboard/reports/reports-table";
+import { ReportsTable } from "@/components/dashboard/reports/table/reports-table";
 
 export default function ReportsPage() {
   return (
