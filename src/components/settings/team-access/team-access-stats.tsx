@@ -10,7 +10,7 @@ export function TeamAccessStatsCards({ stats }: { stats: TeamAccessStats }) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <Card key={item.label} size="sm" className="gap-2">
           <CardHeader className="px-4 pt-4">

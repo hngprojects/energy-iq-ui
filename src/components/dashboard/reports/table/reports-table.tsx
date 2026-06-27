@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { Report, ReportFilterType, FILTER_OPTIONS } from "@/lib/mocks/reports-data";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ReportViewModal } from "@/components/dashboard/reports/modals/report-view-modal";
 import { ShareReportModal } from "@/components/dashboard/reports/modals/share-report-modal";
 import { ReportsNotificationToast } from "@/components/dashboard/reports/reports-notification-toast";
 import { GenerateReportModal } from "@/components/dashboard/reports/modals/generate-report-modal";
@@ -90,7 +89,6 @@ const FILTER_PERIOD: Partial<Record<ReportFilterType, string>> = {
 
 export function ReportsTable() {
   const [filter, setFilter] = useState<ReportFilterType>("all");
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [shareReport, setShareReport] = useState<Report | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [completedId, setCompletedId] = useState<string | null>(null);
@@ -129,20 +127,22 @@ export function ReportsTable() {
   return (
     <>
       <div className="flex w-full flex-col gap-4 sm:gap-0 sm:bg-card sm:border-border sm:overflow-hidden sm:rounded-xl sm:border">
-        <div className="flex h-auto w-full items-center justify-between gap-3 sm:border-border sm:h-19.75 sm:flex-row sm:justify-between sm:border-b sm:px-6 lg:gap-2">
-          <FilterDropdown value={filter} onChange={handleFilterChange} />
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:w-auto">
+        <div className="flex h-auto w-full flex-col gap-3 border-border sm:h-19.75 sm:flex-row sm:items-center sm:justify-between sm:border-b sm:px-6 lg:gap-2">
+          <div className="w-full sm:w-auto">
+            <FilterDropdown value={filter} onChange={handleFilterChange} />
+          </div>
+          <div className="flex w-full gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Button
               variant="outline"
               onClick={() => setShowScheduleModal(true)}
-              className="border-border text-foreground h-8 w-35 rounded-lg border bg-transparent p-[8px_16px] text-xs font-medium sm:h-10 sm:w-35.75 sm:text-sm"
+              className="border-border text-foreground h-11 flex-1 rounded-lg border bg-transparent px-3 text-xs font-medium sm:h-10 sm:flex-none sm:w-35.75 sm:text-sm"
             >
               <span className="sm:hidden">Schedule</span>
               <span className="hidden sm:inline">Schedule Report</span>
             </Button>
             <Button
               onClick={() => setShowGenerateModal(true)}
-              className="bg-secondary text-primary-foreground hover:bg-secondary/80 h-8 w-35 rounded-lg p-[8px_16px] text-xs font-medium sm:h-10 sm:w-35.75 sm:text-sm"
+              className="bg-secondary text-primary-foreground hover:bg-secondary/80 h-11 flex-1 rounded-lg px-3 text-xs font-medium sm:h-10 sm:flex-none sm:w-35.75 sm:text-sm"
             >
               Generate Report
             </Button>
@@ -158,7 +158,7 @@ export function ReportsTable() {
                 <ReportCardMobile
                   key={report.id}
                   report={report}
-                  onView={() => setSelectedReport(report)}
+                  onView={() => setShareReport(report)}
                   downloadingId={downloadingId}
                   completedId={completedId}
                   onDownload={() => handleDownload(report)}
@@ -178,7 +178,7 @@ export function ReportsTable() {
           isLoading={isLoading}
           downloadingId={downloadingId}
           completedId={completedId}
-          onView={setSelectedReport}
+          onView={(report) => setShareReport(report)}
           onDownload={handleDownload}
           onCancel={cancelReport}
           onDelete={deleteReport}
@@ -196,13 +196,6 @@ export function ReportsTable() {
           />
         )}
       </div>
-
-      <ReportViewModal
-        report={selectedReport}
-        onClose={() => setSelectedReport(null)}
-        onShare={(report) => setShareReport(report)}
-        onDownload={handleDownload}
-      />
 
       <ShareReportModal
         report={shareReport}

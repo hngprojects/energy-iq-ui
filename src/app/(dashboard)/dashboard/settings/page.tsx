@@ -42,7 +42,7 @@ const SETTING_CARDS = [
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6 p-4 sm:p-0">
+    <div className="space-y-6 sm:p-0">
       <div>
         <h1 className="text-2xl font-bold text-dark-text">Settings Overview</h1>
         <p className="mt-1 text-sm text-[#5D5C5D]">
