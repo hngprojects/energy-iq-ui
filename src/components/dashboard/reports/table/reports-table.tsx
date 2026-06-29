@@ -23,7 +23,6 @@ import { PaginationBar } from "@/components/dashboard/shared/pagination-bar";
 import { reportsService } from "@/services/reports-service";
 import { useReports } from "@/hooks/use-reports";
 import { mapApiReportToReport } from "@/lib/reports/map-api-report";
-import { ApiReport as ApiReportType } from "@/types/reports";
 
 export { mapApiReportToReport };
 

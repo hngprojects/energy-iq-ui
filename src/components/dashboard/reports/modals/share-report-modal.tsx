@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Copy, ExternalLink, Mail, Share2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Copy, Link2, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Report } from "@/lib/mocks/reports-data";
+import { reportsService } from "@/services/reports-service";
 import { getStatusColors } from "@/constants/reports";
+import { useReportShareStore } from "@/stores/report-share-store";
+import { cn } from "@/lib/utils";
 
 interface ShareReportModalProps {
   report: Report | null;
@@ -14,28 +17,169 @@ interface ShareReportModalProps {
   onClose: () => void;
 }
 
-function getShareUrl(report: Report) {
-  return `${window.location.origin}/reports/public/${report.id}`;
+function formatRemainingDays(expiresAt?: string) {
+  if (!expiresAt) return 14;
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-export function ShareReportModal({
-  report,
-  open,
-  onClose,
-}: ShareReportModalProps) {
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
+function getTokenFromShareUrl(shareUrl: string): string | null {
+  const match = shareUrl.match(/\/share\/([^/?#]+)/);
+  return match?.[1] ?? null;
+}
+
+function SharePlatformIcon({
+  platform,
+}: {
+  platform: "whatsapp" | "email" | "telegram" | "facebook" | "share";
+}) {
+  if (platform === "share") {
+    return <Share2 className="size-4" />;
+  }
+
+  if (platform === "email") {
+    return (
+      <svg viewBox="0 0 24 24" className="size-10" aria-hidden="true">
+        <rect width="24" height="24" rx="12" fill="#111827" />
+        <path
+          d="M6 8.5h12v7H6v-7Zm1.2.9L12 13l4.8-3.6"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (platform === "telegram") {
+    return (
+      <svg viewBox="0 0 24 24" className="size-10" aria-hidden="true">
+        <rect width="24" height="24" rx="12" fill="#229ED9" />
+        <path
+          d="M6.7 12.1 17 7.6l-1.6 8.4c-.1.4-.5.6-.9.4l-3-2.2-1.8 1.7c-.2.2-.6.2-.8 0l.3-2.4 6.1-5.5-7.5 4.7c-.3.2-.6.1-.7-.2-.1-.3 0-.6.3-.7Z"
+          fill="#fff"
+        />
+      </svg>
+    );
+  }
+
+  if (platform === "facebook") {
+    return (
+      <svg viewBox="0 0 24 24" className="size-10" aria-hidden="true">
+        <rect width="24" height="24" rx="12" fill="#1877F2" />
+        <path
+          d="M13.1 20v-6.2h2.1l.3-2.4h-2.4V9.8c0-.7.2-1.1 1.1-1.1h1.3V6.5c-.6-.1-1.3-.2-2.1-.2-2 0-3.4 1.2-3.4 3.4v1.7H8.1v2.4h1.8V20h3.2Z"
+          fill="#fff"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className="size-10" aria-hidden="true">
+      <rect width="24" height="24" rx="12" fill="#25D366" />
+      <path
+        d="M12 6.2a5.8 5.8 0 0 0-5 8.8L6 19l4.1-1a5.8 5.8 0 1 0 1.9-11.8Zm2.9 8.3c-.1.3-.7.6-1 .7-.3.1-.6.1-1-.1-.3-.1-.8-.3-1.5-.8-1.2-.8-2-1.9-2.2-2.1-.2-.2-1-1.4-1-2.7 0-.8.4-1.2.6-1.4.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .4.3.1.3.5 1.1.6 1.2.1.2.1.3 0 .5-.1.2-.2.3-.3.5-.1.1-.2.3-.1.5.1.2.4.8 1 1.3.8.7 1.4 1 1.6 1.1.2.1.3.1.4-.1.1-.2.6-.7.8-1 .2-.2.3-.2.5-.1.2.1 1.1.5 1.2.6.2.1.4.1.5.2.1 0 .1.3 0 .6Z"
+        fill="#fff"
+      />
+    </svg>
+  );
+}
+
+function ShareTargetButton({
+  label,
+  platform,
+  onClick,
+}: {
+  label: string;
+  platform: "whatsapp" | "email" | "telegram" | "facebook" | "share";
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onClick}
+      className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background p-2 hover:bg-muted"
+      aria-label={label}
+    >
+      <SharePlatformIcon platform={platform} />
+      <span className="text-[10px] font-medium leading-none text-foreground">
+        {label}
+      </span>
+    </Button>
+  );
+}
+
+export function ShareReportModal({ report, open, onClose }: ShareReportModalProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const link = useReportShareStore((state) =>
+    report ? state.getLink(report.id) : undefined,
+  );
+  const upsertLink = useReportShareStore((state) => state.upsertLink);
 
   const statusColors = useMemo(() => {
     if (!report) return { bg: "", text: "" };
     return getStatusColors(report.status);
   }, [report]);
 
+  useEffect(() => {
+    if (!report || !open || link?.shareUrl) return;
+
+    let cancelled = false;
+    reportsService
+      .getShareableLink(report.id)
+      .then((shareUrl) => {
+        if (cancelled || !shareUrl) return;
+        upsertLink({
+          reportId: report.id,
+          shareUrl,
+          expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          isExpired: false,
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [link?.shareUrl, open, report, upsertLink]);
+
   if (!report) return null;
 
-  const shareUrl = getShareUrl(report);
+  const shareUrl = link?.shareUrl ?? "";
+  const hasLink = Boolean(shareUrl);
   const isReady = report.status?.toUpperCase() === "READY";
+  const remainingDays = formatRemainingDays(link?.expiresAt);
+  const previewLabel = hasLink ? shareUrl : "Create share link";
+  const expiryText = `Generated link will expire in ${remainingDays} day${remainingDays === 1 ? "" : "s"}`;
 
-  const handleCopyLink = async () => {
+  const handleGenerateLink = async () => {
+    setIsGenerating(true);
+    const toastId = toast.loading("Generating share link...");
+
+    try {
+      const generatedUrl = await reportsService.generateShareableLink(report.id);
+      upsertLink({
+        reportId: report.id,
+        shareUrl: generatedUrl,
+        expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        isExpired: false,
+      });
+      toast.success("Link generated successfully", { id: toastId });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to generate share link";
+      toast.error(message, { id: toastId });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyPreviewLink = async () => {
+    if (!shareUrl) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard");
@@ -44,40 +188,24 @@ export function ShareReportModal({
     }
   };
 
-  const handleOpenLink = () => {
-    window.open(shareUrl, "_blank", "noopener,noreferrer");
-  };
-
-  const handleShareEmail = async () => {
-    setIsSendingEmail(true);
-    const toastId = toast.loading("Opening email client...");
+  const handleShare = async () => {
+    if (!shareUrl || !navigator.share) return;
     try {
-      const mailtoSubject = encodeURIComponent(report.title);
-      const mailtoBody = encodeURIComponent(
-        `Here is the report: ${report.title} (${report.subtitle})\n\nPublic link: ${shareUrl}`,
-      );
-      window.location.href = `mailto:?subject=${mailtoSubject}&body=${mailtoBody}`;
-      toast.success("Email client opened", { id: toastId });
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to open email client";
-      console.error(err);
-      toast.error(message, { id: toastId });
-    } finally {
-      setIsSendingEmail(false);
+      await navigator.share({
+        title: report.title,
+        text: `Energy Report for ${report.title}`,
+        url: shareUrl,
+      });
+    } catch {
+      // user cancelled or platform does not support the call cleanly
     }
-  };
-
-  const handleShareWhatsApp = () => {
-    const text = `Here is the report: ${report.title} (${report.subtitle})\n${shareUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="sm:max-w-lg rounded-md border-none bg-card p-0 shadow-2xl"
+        className="rounded-md border-none bg-card p-0 shadow-2xl sm:max-w-lg"
       >
         <div className="flex max-h-[90vh] flex-col overflow-hidden">
           <div className="flex items-start justify-between border-b border-border px-5 py-4 sm:px-6">
@@ -89,11 +217,11 @@ export function ShareReportModal({
                 <Share2 className="size-4 text-black" />
               </div>
               <div className="min-w-0">
-                <p className="text-foreground truncate text-base font-semibold">
+                <p className="truncate text-base font-semibold text-foreground">
                   Share Report
                 </p>
-                <p className="text-muted-foreground truncate text-sm">
-                  Copy the public link, open the PDF view, or share via email/WhatsApp.
+                <p className="truncate text-sm text-muted-foreground">
+                  Generate a preview link and share it safely.
                 </p>
               </div>
             </div>
@@ -113,10 +241,10 @@ export function ShareReportModal({
             <div className="rounded-sm border border-border bg-muted/40 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-foreground truncate text-sm font-semibold">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     {report.title}
                   </p>
-                  <p className="text-muted-foreground truncate text-xs">
+                  <p className="truncate text-xs text-muted-foreground">
                     {report.subtitle}
                   </p>
                 </div>
@@ -135,73 +263,50 @@ export function ShareReportModal({
                     report.status?.slice(1).toLowerCase()}
                 </span>
               </div>
-
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {!hasLink ? (
               <Button
                 type="button"
-                onClick={handleCopyLink}
-                className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90"
+                onClick={handleGenerateLink}
+                disabled={!isReady || isGenerating}
+                className={cn(
+                  "h-12 w-full justify-center rounded-sm bg-black text-white hover:bg-black/90 disabled:cursor-not-allowed disabled:opacity-50",
+                  !isReady && "opacity-60",
+                )}
               >
-                <Copy className="size-4" />
-                Copy Link
+                <Link2 className="size-4" />
+                {isGenerating ? "Generating share link..." : "Generate share link"}
               </Button>
-              <Button
-                type="button"
-                onClick={handleOpenLink}
-                className="h-12 justify-center rounded-sm bg-black text-white hover:bg-black/90"
-              >
-                <ExternalLink className="size-4" />
-                Open Link
-              </Button>
-            </div>
-
-            <div className="border-t border-border pt-5">
-              <p className="mb-3 text-sm font-medium text-foreground">
-                Share on:
-              </p>
-              <div className="flex gap-4 w-full flex-col sm:flex-row">
-                <Button
-                  variant="ghost"
-                  onClick={handleShareEmail}
-                  disabled={isSendingEmail || !isReady}
-                  className="w-full sm:flex-1 h-19.25 flex flex-col items-center justify-center rounded-(--radius) p-3 gap-2 border border-(--color-border-disabled) bg-(--color-slate-20) cursor-pointer hover:bg-(--color-slate-30) hover:border-(--color-slate-50) transition-all hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isSendingEmail ? (
-                    <span className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
-                  ) : (
-                    <Mail className="w-8 h-8 text-(--color-surface-100)" />
-                  )}
-
-                  <span className="font-medium text-base text-(--color-surface-100) leading-none">
-                    {isSendingEmail ? "Sending..." : "Email"}
-                  </span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={handleShareWhatsApp}
-                  className="w-full sm:flex-1 h-19.25 flex flex-col items-center justify-center rounded-(--radius) p-3 gap-2 border border-(--color-border-disabled) bg-(--color-slate-20) cursor-pointer hover:bg-(--color-slate-30) hover:border-(--color-slate-50) transition-all hover:text-(--color-battery-full)"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="var(--color-battery-full)"
-                    className="w-8 h-8"
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3 rounded-sm border border-border bg-muted/30 px-4 py-3">
+                  <p className="min-w-0 truncate text-sm text-foreground">
+                    {previewLabel}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyPreviewLink}
+                    className="h-8 shrink-0 px-3 text-sm"
                   >
-                    <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.761.459 3.477 1.332 4.992L2 22l5.131-1.347c1.455.795 3.097 1.213 4.87 1.213 5.506 0 9.988-4.482 9.988-9.988C22 6.482 17.518 2 12.012 2zm0 18.293c-1.579 0-3.123-.424-4.475-1.226l-.321-.191-3.323.872.887-3.238-.21-.334c-.878-1.401-1.342-3.018-1.342-4.697 0-4.707 3.829-8.536 8.536-8.536 4.707 0 8.536 3.829 8.536 8.536 0 4.707-3.83 8.536-8.536 8.536z" />
-                  </svg>
+                    <Copy className="size-3.5" />
+                    Copy link
+                  </Button>
+                </div>
 
-                  <span className="font-medium text-base text-(--color-surface-100) leading-none">
-                    WhatsApp
-                  </span>
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <ShareTargetButton label="WhatsApp" platform="whatsapp" onClick={handleShare} />
+                  <ShareTargetButton label="Email" platform="email" onClick={handleShare} />
+                  <ShareTargetButton label="Telegram" platform="telegram" onClick={handleShare} />
+                  <ShareTargetButton label="Facebook" platform="facebook" onClick={handleShare} />
+                  <ShareTargetButton label="Share" platform="share" onClick={handleShare} />
+                </div>
               </div>
-            </div>
+            )}
 
-            <p className="text-muted-foreground text-xs">
-              Anyone with the link can view this report.
-            </p>
+            <p className="text-xs text-muted-foreground">{expiryText}</p>
           </div>
         </div>
 
