@@ -4,11 +4,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 async function resolveShareToken(token: string): Promise<string | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL;
-  if (!baseUrl) return null;
-
   const response = await fetch(
-    `${baseUrl.replace(/\/+$/, "")}/api/v1/reports/share/${encodeURIComponent(token)}`,
+    `/api/proxy/reports/share/${encodeURIComponent(token)}`,
     {
       method: "GET",
       cache: "no-store",
