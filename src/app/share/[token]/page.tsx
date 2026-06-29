@@ -1,12 +1,14 @@
-import { notFound, redirect } from "next/navigation";
+"use client";
 
-const API_BASE_URL = process.env.API_BASE_URL;
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-async function fetchShareableFileUrl(token: string): Promise<string | null> {
-  if (!API_BASE_URL) return null;
+async function resolveShareToken(token: string): Promise<string | null> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL;
+  if (!baseUrl) return null;
 
   const response = await fetch(
-    `${API_BASE_URL.replace(/\/+$/, "")}/api/v1/reports/share/${encodeURIComponent(token)}`,
+    `${baseUrl.replace(/\/+$/, "")}/api/v1/reports/share/${encodeURIComponent(token)}`,
     {
       method: "GET",
       cache: "no-store",
@@ -25,18 +27,49 @@ async function fetchShareableFileUrl(token: string): Promise<string | null> {
   return data;
 }
 
-export default async function ShareTokenPage({
+export default function ShareTokenPage({
   params,
 }: {
-  params: Promise<{ token: string }>;
+  params: { token: string };
 }) {
-  const { token } = await params;
-  const fileUrl = await fetchShareableFileUrl(token);
+  const [status, setStatus] = useState<"loading" | "error">("loading");
 
-  if (!fileUrl) {
-    notFound();
-  }
+  useEffect(() => {
+    let cancelled = false;
 
-  redirect(fileUrl);
+    resolveShareToken(params.token)
+      .then((fileUrl) => {
+        if (cancelled) return;
+
+        if (!fileUrl) {
+          setStatus("error");
+          return;
+        }
+
+        window.location.replace(fileUrl);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setStatus("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [params.token]);
+
+  useEffect(() => {
+    if (status === "error") {
+      toast.error("Unable to open shared report");
+    }
+  }, [status]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+        Loading shared report...
+      </div>
+    </div>
+  );
 }
-

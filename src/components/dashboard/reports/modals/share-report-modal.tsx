@@ -188,9 +188,32 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
     }
   };
 
-  const handleShare = async () => {
+  const handleShareFile = async () => {
     if (!shareUrl || !navigator.share) return;
+
+    const token = getTokenFromShareUrl(shareUrl);
+    if (!token) return;
+
     try {
+      const fileUrl = await reportsService.getSharedReportFileUrl(token);
+      if (!fileUrl) return;
+
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `${report.title}.pdf`, {
+        type: blob.type || "application/pdf",
+      });
+
+      const canShareFile = navigator.canShare?.({ files: [file] });
+      if (canShareFile) {
+        await navigator.share({
+          title: report.title,
+          text: `Energy Report for ${report.title}`,
+          files: [file],
+        });
+        return;
+      }
+
       await navigator.share({
         title: report.title,
         text: `Energy Report for ${report.title}`,
@@ -297,11 +320,11 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <ShareTargetButton label="WhatsApp" platform="whatsapp" onClick={handleShare} />
-                  <ShareTargetButton label="Email" platform="email" onClick={handleShare} />
-                  <ShareTargetButton label="Telegram" platform="telegram" onClick={handleShare} />
-                  <ShareTargetButton label="Facebook" platform="facebook" onClick={handleShare} />
-                  <ShareTargetButton label="Share" platform="share" onClick={handleShare} />
+                  <ShareTargetButton label="WhatsApp" platform="whatsapp" onClick={handleShareFile} />
+                  <ShareTargetButton label="Email" platform="email" onClick={handleShareFile} />
+                  <ShareTargetButton label="Telegram" platform="telegram" onClick={handleShareFile} />
+                  <ShareTargetButton label="Facebook" platform="facebook" onClick={handleShareFile} />
+                  <ShareTargetButton label="Share" platform="share" onClick={handleShareFile} />
                 </div>
               </div>
             )}
