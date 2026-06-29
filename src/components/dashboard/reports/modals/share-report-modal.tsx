@@ -208,7 +208,6 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
       if (canShareFile) {
         await navigator.share({
           title: report.title,
-          text: `Energy Report for ${report.title}`,
           files: [file],
         });
         return;
@@ -216,7 +215,7 @@ export function ShareReportModal({ report, open, onClose }: ShareReportModalProp
 
       await navigator.share({
         title: report.title,
-        text: `Energy Report for ${report.title}`,
+        text: "",
         url: shareUrl,
       });
     } catch {
