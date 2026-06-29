@@ -54,6 +54,30 @@ export const reportsService = {
     );
   },
 
+  generateShareableLink: async (id: string): Promise<string> => {
+    return apiFetch<string>(
+      `/reports/${id}/generate-link`,
+      { method: "POST" },
+      true,
+    );
+  },
+
+  getShareableLink: async (id: string): Promise<string> => {
+    return apiFetch<string>(
+      `/reports/${id}/shareable-link`,
+      { method: "GET" },
+      true,
+    );
+  },
+
+  getSharedReportFileUrl: async (token: string): Promise<string> => {
+    return apiFetch<string>(
+      `/reports/share/${token}`,
+      { method: "GET" },
+      true,
+    );
+  },
+
   getReports: async (pageNumber = 1, pageSize = 10, reportType?: string): Promise<GetReportsResult> => {
     const envelope = await apiFetch<{ data: ApiReport[]; meta: { pagination: ReportsPagination } }>(
       "/reports",
