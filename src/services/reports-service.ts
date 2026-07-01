@@ -40,7 +40,7 @@ export const reportsService = {
 
   downloadReport: async (id: string): Promise<Blob> => {
     return apiFetch<Blob>(
-      `/reports/download/${id}`,
+      `/reports/${id}/download`,
       { method: "GET", responseType: "blob" },
       true,
     );
@@ -79,14 +79,22 @@ export const reportsService = {
   },
 
   getReports: async (pageNumber = 1, pageSize = 10, reportType?: string): Promise<GetReportsResult> => {
-    const envelope = await apiFetch<{ data: ApiReport[]; meta: { pagination: ReportsPagination } }>(
+    const envelope = await apiFetch<{ success: boolean; reportsData: ApiReport[]; meta: { pagination: ReportsPagination } }>(
       "/reports",
       {
         method: "GET",
         params: { pageNumber, pageSize, ...(reportType ? { reportType } : {}) },
         transformResponse: (raw: string) => {
           try {
-            return JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && "success" in parsed && "data" in parsed) {
+              return {
+                success: parsed.success,
+                reportsData: parsed.data,
+                meta: parsed.meta,
+              };
+            }
+            return parsed;
           } catch {
             return raw;
           }
@@ -95,8 +103,8 @@ export const reportsService = {
       true,
     );
 
-    const reports = Array.isArray(envelope) ? envelope : (envelope?.data ?? []);
-    const pagination: ReportsPagination = (envelope as { meta?: { pagination?: ReportsPagination } })?.meta?.pagination ?? { ...DEFAULT_PAGINATION, page: pageNumber };
+    const reports = envelope?.reportsData ?? [];
+    const pagination: ReportsPagination = envelope?.meta?.pagination ?? { ...DEFAULT_PAGINATION, page: pageNumber };
 
     return { reports, pagination };
   },
@@ -110,6 +118,6 @@ export const reportsService = {
   },
 
   cancelReport: async (id: string): Promise<ApiReport> => {
-    return apiFetch<ApiReport>(`/reports/cancel/${id}`, { method: "PATCH" }, true);
+    return apiFetch<ApiReport>(`/reports/${id}/cancel`, { method: "PATCH" }, true);
   },
 };
