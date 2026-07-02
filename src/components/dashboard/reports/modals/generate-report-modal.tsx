@@ -30,10 +30,18 @@ interface GenerateReportModalProps {
   onGenerate: (details: GenerateReportDetails) => void;
 }
 
+interface GenerateReportModalProps {
+  open: boolean;
+  onClose: () => void;
+  onGenerate: (details: GenerateReportDetails) => void;
+  onGenerateAndShare?: (details: GenerateReportDetails) => void;
+}
+
 export function GenerateReportModal({
   open,
   onClose,
   onGenerate,
+  onGenerateAndShare,
 }: GenerateReportModalProps) {
   const [selectedPeriod, setSelectedPeriod] =
     useState<ReportPeriodId>("weekly");
@@ -361,7 +369,29 @@ export function GenerateReportModal({
             <div className="flex justify-between items-center w-full gap-4 shrink-0 mt-2">
               <Button
                 variant="outline"
-                onClick={onClose}
+                onClick={() => {
+                  const details: GenerateReportDetails = {
+                    title:
+                      reportTitle ||
+                      selectedPeriod.charAt(0).toUpperCase() +
+                        selectedPeriod.slice(1),
+                    period: selectedPeriod,
+                    type: selectedType,
+                    backendType,
+                    recurring: showRecurring ? recurring : false,
+                  };
+
+                  if (isPeriodMode) {
+                    details.referenceDate =
+                      referenceDate || new Date().toISOString().split("T")[0];
+                  } else {
+                    details.startDate = startDate;
+                    details.endDate = endDate;
+                  }
+
+                  onGenerateAndShare?.(details);
+                  onClose();
+                }}
                 className="w-[116.5px] sm:w-[256px] h-10 rounded-lg text-sm font-semibold transition-colors"
                 style={{
                   borderColor: "var(--color-border-disabled)",
