@@ -142,5 +142,5 @@ export const REPORT_STAT_CARD_ICON_COLORS: Record<string, string> = {
   periodic: "text-(--color-dark-text)",
   solar: "text-(--color-amber-40)",
   alert: "text-destructive",
-  device: "text-(--color-battery-full)",
+  costsAndSavings: "text-(--color-battery-full)",
 };

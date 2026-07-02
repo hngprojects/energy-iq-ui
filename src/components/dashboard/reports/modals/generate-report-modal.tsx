@@ -247,6 +247,11 @@ export function GenerateReportModal({
                       className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
                     />
                   </div>
+                  {!referenceDate && (
+                    <p className="text-xs text-muted-foreground leading-normal">
+                      Defaults to today if left unselected.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">

@@ -1,7 +1,7 @@
 import type { ApiReport } from "@/types/reports";
 import type { Report } from "@/lib/mocks/reports-data";
 import type { ReportIconType, ReportStatus } from "@/lib/mocks/reports-data";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange, formatSingleDate } from "@/lib/utils";
 
 export function mapApiReportToReport(apiRes: ApiReport): Report {
   let type = "Weekly";
@@ -42,11 +42,7 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
   if (apiRes.startDate && apiRes.endDate) {
     displayDateRange = formatDateRange(apiRes.startDate, apiRes.endDate);
   } else if (apiRes.referenceDate) {
-    const d = new Date(apiRes.referenceDate);
-    displayDateRange = d.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    });
+    displayDateRange = formatSingleDate(apiRes.referenceDate);
   }
 
   let iconType: ReportIconType = "file";
@@ -55,17 +51,22 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
   else if (apiRes.type === "COSTS_AND_SAVINGS") iconType = "dollar";
   else if (apiRes.period === "monthly") iconType = "calendar";
 
+  const createdDate = new Date(apiRes.createdAt || Date.now());
+  const formattedCreatedDate = Number.isNaN(createdDate.getTime())
+    ? ""
+    : new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(createdDate);
+
   return {
     id: apiRes.id,
     title: apiRes.name || `${type} Report`,
     subtitle: displayDateRange || apiRes.period || "weekly",
     type,
     status: (apiRes.status as ReportStatus) || "READY",
-    date: new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(apiRes.createdAt || Date.now())),
+    date: formattedCreatedDate,
     iconType,
     keyMetrics: { value: metricValue, label: metricLabel },
     recipients: "Me",

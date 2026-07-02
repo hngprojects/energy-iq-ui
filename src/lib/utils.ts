@@ -17,14 +17,19 @@ export function formatNairaOrDash(value: number | null | undefined): string {
   return `₦${Math.round(value).toLocaleString()}`;
 }
 
+export function formatSingleDate(d: string): string {
+  if (!d) return "";
+  const date = new Date(d.includes("T") ? d : d + "T00:00:00");
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
 export function formatDateRange(start: string, end: string): string {
   if (!start && !end) return "";
-  const fmt = (d: string) => {
-    if (!d) return "";
-    const date = new Date(d.includes("T") ? d : d + "T00:00:00");
-    return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  };
-  if (start && end) return `${fmt(start)} - ${fmt(end)}`;
-  if (start) return fmt(start);
-  return fmt(end);
+
+  const startFmt = formatSingleDate(start);
+  const endFmt = formatSingleDate(end);
+
+  if (startFmt && endFmt) return `${startFmt} - ${endFmt}`;
+  return startFmt || endFmt;
 }

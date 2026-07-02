@@ -129,7 +129,7 @@ export function ReportStatCards() {
       />
       <StatCard
         Icon={DollarSign}
-        iconColor="text-(--color-battery-full)"
+        iconColor={REPORT_STAT_CARD_ICON_COLORS.costsAndSavings}
         label="Costs & Savings"
         value={String(summary?.costsAndSavings ?? 0)}
         sub="Cost & savings reports"
