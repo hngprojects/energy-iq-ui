@@ -242,9 +242,9 @@ export function ReportsTable() {
         open={showGenerateModal}
         onClose={() => setShowGenerateModal(false)}
         onGenerate={async (details) => {
-          try {
-            const toastId = toast.loading("Generating report...");
+          const toastId = toast.loading("Generating report...");
 
+          try {
             let payload: CreateReportPayload;
 
             if (details.period === "weekly" || details.period === "monthly") {
@@ -280,7 +280,7 @@ export function ReportsTable() {
           } catch (err: unknown) {
             const message =
               err instanceof Error ? err.message : "Failed to generate report";
-            toast.error(message);
+            toast.error(message, { id: toastId });
           }
         }}
       />
