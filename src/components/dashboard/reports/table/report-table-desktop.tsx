@@ -68,13 +68,48 @@ export function ReportTableDesktop({
       <table className="w-full min-w-6xl">
         <thead>
           <tr className="border-border border-b bg-muted/30">
-            <th style={{ width: 300 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Name</th>
-            <th style={{ width: 138 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Type</th>
-            <th style={{ width: 138 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Status</th>
-            <th style={{ width: 138 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Key Metrics</th>
-            <th style={{ width: 138 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Recipients</th>
-            <th style={{ width: 138 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Date</th>
-            <th style={{ width: 162 }} className="text-muted-foreground h-11 px-6 text-left text-sm font-medium">Actions</th>
+            <th
+              style={{ width: 300 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Name
+            </th>
+            <th
+              style={{ width: 138 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Type
+            </th>
+            <th
+              style={{ width: 138 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Status
+            </th>
+            <th
+              style={{ width: 138 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Key Metrics
+            </th>
+            <th
+              style={{ width: 138 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Recipients
+            </th>
+            <th
+              style={{ width: 138 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Date
+            </th>
+            <th
+              style={{ width: 162 }}
+              className="text-muted-foreground h-11 px-6 text-left text-sm font-medium"
+            >
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -84,7 +119,10 @@ export function ReportTableDesktop({
                 const Icon = REPORT_ICON_MAP[report.iconType];
                 const isReady = report.status?.toUpperCase() === "READY";
                 const isPending = report.status?.toUpperCase() === "PENDING";
-                const canDelete = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.id);
+                const canDelete =
+                  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                    report.id,
+                  );
 
                 return (
                   <tr
@@ -97,14 +135,21 @@ export function ReportTableDesktop({
                           <Icon className="text-foreground size-4" />
                         </div>
                         <div className="overflow-hidden">
-                          <p className="text-foreground truncate text-base font-semibold">{report.title}</p>
-                          <p className="text-muted-foreground mt-0.5 truncate text-sm">{report.subtitle}</p>
+                          <p className="text-foreground truncate text-base font-semibold">
+                            {report.title}
+                          </p>
+                          <p className="text-muted-foreground mt-0.5 truncate text-sm">
+                            {report.subtitle}
+                          </p>
                         </div>
                       </div>
                     </td>
 
                     <td className="w-34.5 p-[12px_24px]">
-                      <span className="font-sans text-sm font-normal leading-none tracking-normal" style={{ color: "var(--color-slate-80)" }}>
+                      <span
+                        className="font-sans text-sm font-normal leading-none tracking-normal"
+                        style={{ color: "var(--color-slate-80)" }}
+                      >
                         {report.type}
                       </span>
                     </td>
@@ -114,22 +159,32 @@ export function ReportTableDesktop({
                     </td>
 
                     <td className="w-34.5 p-[12px_24px]">
-                      <div className="inline-flex flex-col items-end">
-                        <p className="font-sans text-sm font-semibold leading-none tracking-normal whitespace-nowrap" style={{ color: "var(--color-amber-60)" }}>
+                      <div className="flex flex-col w-full">
+                        <p
+                          className="font-sans text-sm font-semibold leading-none tracking-normal whitespace-nowrap text-left"
+                          style={{ color: "var(--color-amber-60)" }}
+                        >
                           {report.keyMetrics.value}
                         </p>
-                        <p className="font-sans mt-1 text-xs font-normal leading-none tracking-normal whitespace-nowrap" style={{ color: "var(--color-slate-70)" }}>
+                        <p
+                          className="font-sans mt-1 text-xs font-normal leading-none tracking-normal whitespace-nowrap text-left"
+                          style={{ color: "var(--color-slate-70)" }}
+                        >
                           {report.keyMetrics.label}
                         </p>
                       </div>
                     </td>
 
                     <td className="w-34.5 p-[12px_24px]">
-                      <span className="text-foreground text-sm hover:underline cursor-pointer">{report.recipients}</span>
+                      <span className="text-foreground text-sm hover:underline cursor-pointer">
+                        {report.recipients}
+                      </span>
                     </td>
 
                     <td className="w-34.5 p-[12px_24px]">
-                      <span className="text-muted-foreground text-sm">{report.date}</span>
+                      <span className="text-muted-foreground text-sm">
+                        {report.date}
+                      </span>
                     </td>
 
                     <td className="w-40.5 p-[12px_24px] text-right">
@@ -166,7 +221,8 @@ export function ReportTableDesktop({
                             disabled={!isReady}
                             className={cn(
                               "flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--color-border-disabled) transition-colors hover:bg-(--color-slate-30) p-0 text-foreground hover:text-foreground",
-                              !isReady && "opacity-50 cursor-not-allowed hover:bg-transparent"
+                              !isReady &&
+                                "opacity-50 cursor-not-allowed hover:bg-transparent",
                             )}
                             aria-label="Download report"
                           >
@@ -219,7 +275,10 @@ export function ReportTableDesktop({
 
           {!isLoading && reports.length === 0 && (
             <tr>
-              <td colSpan={7} className="text-muted-foreground py-20 text-center text-sm">
+              <td
+                colSpan={7}
+                className="text-muted-foreground py-20 text-center text-sm"
+              >
                 No reports match this filter.
               </td>
             </tr>

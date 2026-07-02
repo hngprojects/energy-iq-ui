@@ -40,13 +40,15 @@ export const reportsService = {
 
   downloadReport: async (id: string): Promise<Blob> => {
     return apiFetch<Blob>(
-      `/reports/download/${id}`,
+      `/reports/${id}/download`,
       { method: "GET", responseType: "blob" },
       true,
     );
   },
 
-  emailReport: async (id: string): Promise<{ success: boolean; message: string }> => {
+  emailReport: async (
+    id: string,
+  ): Promise<{ success: boolean; message: string }> => {
     return apiFetch<{ success: boolean; message: string }>(
       `/reports/email-report/${id}`,
       { method: "POST" },
@@ -71,22 +73,39 @@ export const reportsService = {
   },
 
   getSharedReportFileUrl: async (token: string): Promise<string> => {
-    return apiFetch<string>(
-      `/reports/share/${token}`,
-      { method: "GET" },
-      true,
-    );
+    return apiFetch<string>(`/reports/share/${token}`, { method: "GET" }, true);
   },
 
-  getReports: async (pageNumber = 1, pageSize = 10, reportType?: string): Promise<GetReportsResult> => {
-    const envelope = await apiFetch<{ data: ApiReport[]; meta: { pagination: ReportsPagination } }>(
+  getReports: async (
+    pageNumber = 1,
+    pageSize = 10,
+    reportType?: string,
+  ): Promise<GetReportsResult> => {
+    const envelope = await apiFetch<{
+      success: boolean;
+      reportsData: ApiReport[];
+      meta: { pagination: ReportsPagination };
+    }>(
       "/reports",
       {
         method: "GET",
         params: { pageNumber, pageSize, ...(reportType ? { reportType } : {}) },
         transformResponse: (raw: string) => {
           try {
-            return JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            if (
+              parsed &&
+              typeof parsed === "object" &&
+              "success" in parsed &&
+              "data" in parsed
+            ) {
+              return {
+                success: parsed.success,
+                reportsData: parsed.data,
+                meta: parsed.meta,
+              };
+            }
+            return parsed;
           } catch {
             return raw;
           }
@@ -95,14 +114,21 @@ export const reportsService = {
       true,
     );
 
-    const reports = Array.isArray(envelope) ? envelope : (envelope?.data ?? []);
-    const pagination: ReportsPagination = (envelope as { meta?: { pagination?: ReportsPagination } })?.meta?.pagination ?? { ...DEFAULT_PAGINATION, page: pageNumber };
+    const reports = envelope?.reportsData ?? [];
+    const pagination: ReportsPagination = envelope?.meta?.pagination ?? {
+      ...DEFAULT_PAGINATION,
+      page: pageNumber,
+    };
 
     return { reports, pagination };
   },
 
   getReportsSummary: async (): Promise<ReportsSummary> => {
-    return apiFetch<ReportsSummary>("/reports/summary", { method: "GET" }, true);
+    return apiFetch<ReportsSummary>(
+      "/reports/summary",
+      { method: "GET" },
+      true,
+    );
   },
 
   deleteReport: async (id: string): Promise<void> => {
@@ -110,6 +136,10 @@ export const reportsService = {
   },
 
   cancelReport: async (id: string): Promise<ApiReport> => {
-    return apiFetch<ApiReport>(`/reports/cancel/${id}`, { method: "PATCH" }, true);
+    return apiFetch<ApiReport>(
+      `/reports/${id}/cancel`,
+      { method: "PATCH" },
+      true,
+    );
   },
 };
