@@ -290,7 +290,7 @@ export function ReportsTable() {
             } else {
               payload = {
                 mode: "custom-date",
-                inverterId: inverterId ?? "",
+                inverterId: inverterId,
                 type: details.backendType,
                 name: details.title,
                 recurring: false,
