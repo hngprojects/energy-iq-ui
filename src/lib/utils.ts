@@ -16,3 +16,15 @@ export function formatNairaOrDash(value: number | null | undefined): string {
   if (value == null) return "—";
   return `₦${Math.round(value).toLocaleString()}`;
 }
+
+export function formatDateRange(start: string, end: string): string {
+  if (!start && !end) return "";
+  const fmt = (d: string) => {
+    if (!d) return "";
+    const date = new Date(d + "T00:00:00");
+    return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  };
+  if (start && end) return `${fmt(start)} - ${fmt(end)}`;
+  if (start) return fmt(start);
+  return fmt(end);
+}

@@ -4,71 +4,99 @@ import React, { useState, useRef } from "react";
 import { X, CalendarPlus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { REPORT_TYPES, type ReportType } from "@/constants/reports";
+  PERIOD_OPTIONS,
+  REPORT_TYPE_OPTIONS,
+  type ReportPeriodId,
+  type ReportTypeId,
+} from "@/constants/reports";
+import { cn } from "@/lib/utils";
+
+export type GenerateReportDetails = {
+  title: string;
+  period: ReportPeriodId;
+  type: ReportTypeId;
+  backendType: "GENERAL" | "SOLAR" | "ALERT" | "COSTS_AND_SAVINGS";
+  referenceDate?: string;
+  startDate?: string;
+  endDate?: string;
+  recurring: boolean;
+};
 
 interface GenerateReportModalProps {
   open: boolean;
   onClose: () => void;
-  onGenerate: (details: { title: string; type: string; startDate: string; endDate: string }) => void;
+  onGenerate: (details: GenerateReportDetails) => void;
 }
 
-function formatDateRange(start: string, end: string): string {
-  if (!start && !end) return "";
-  const fmt = (d: string) => {
-    if (!d) return "";
-    const date = new Date(d + "T00:00:00");
-    return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  };
-  if (start && end) return `${fmt(start)} - ${fmt(end)}`;
-  if (start) return fmt(start);
-  return fmt(end);
-}
-
-export function GenerateReportModal({ open, onClose, onGenerate }: GenerateReportModalProps) {
-  const [selectedType, setSelectedType] = useState<ReportType>("weekly");
+export function GenerateReportModal({
+  open,
+  onClose,
+  onGenerate,
+}: GenerateReportModalProps) {
+  const [selectedPeriod, setSelectedPeriod] =
+    useState<ReportPeriodId>("weekly");
+  const [selectedType, setSelectedType] = useState<ReportTypeId>("general");
+  const [referenceDate, setReferenceDate] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [reportTitle, setReportTitle] = useState("");
+  const [recurring, setRecurring] = useState(false);
 
+  const referenceDateInputRef = useRef<HTMLInputElement>(null);
   const startDateInputRef = useRef<HTMLInputElement>(null);
   const endDateInputRef = useRef<HTMLInputElement>(null);
 
-  const handleStartDateClick = () => {
-    if (startDateInputRef.current) {
+  const typeOption = REPORT_TYPE_OPTIONS.find((k) => k.id === selectedType);
+  const backendType = typeOption?.backendValue ?? "GENERAL";
+
+  const handleDatePickerClick = (
+    ref: React.RefObject<HTMLInputElement | null>,
+  ) => {
+    if (ref.current) {
       try {
-        startDateInputRef.current.showPicker();
+        ref.current.showPicker();
       } catch {
-        startDateInputRef.current.focus();
-        startDateInputRef.current.click();
+        ref.current.focus();
+        ref.current.click();
       }
     }
   };
 
-  const handleEndDateClick = () => {
-    if (endDateInputRef.current) {
-      try {
-        endDateInputRef.current.showPicker();
-      } catch {
-        endDateInputRef.current.focus();
-        endDateInputRef.current.click();
-      }
-    }
-  };
+  const isPeriodMode =
+    selectedPeriod === "weekly" || selectedPeriod === "monthly";
+  const showRecurring = selectedPeriod !== "custom";
 
   const handleGeneratePDF = () => {
-    onGenerate({
-      title: reportTitle || selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
+    const details: GenerateReportDetails = {
+      title:
+        reportTitle ||
+        selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1),
+      period: selectedPeriod,
       type: selectedType,
-      startDate,
-      endDate,
-    });
+      backendType,
+      recurring: showRecurring ? recurring : false,
+    };
+
+    if (isPeriodMode) {
+      details.referenceDate =
+        referenceDate || new Date().toISOString().split("T")[0];
+    } else {
+      details.startDate = startDate;
+      details.endDate = endDate;
+    }
+
+    onGenerate(details);
     onClose();
   };
+
+  const recurringHelperText =
+    recurring && selectedPeriod === "weekly"
+      ? "Runs every Monday at midnight, generating a report for the past week."
+      : recurring && selectedPeriod === "monthly"
+        ? "Runs at the end of the month at midnight, generating a report for the month."
+        : "";
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -77,13 +105,9 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
         className="fixed top-1/2 left-1/2 z-60 -translate-x-1/2 -translate-y-1/2 bg-card p-4 sm:p-6 flex flex-col w-74.25 h-177.75 max-h-[96vh] sm:w-xl sm:h-155.75 sm:max-h-[92vh] max-w-none sm:max-w-none rounded-[8px] border-none shadow-lg focus:outline-none gap-6 overflow-y-auto no-scrollbar"
       >
         <div className="flex flex-col w-full sm:w-132 min-h-165.75 sm:min-h-123.75 justify-between">
-
           <div className="flex items-center justify-between w-full h-10 shrink-0">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex shrink-0 items-center justify-center"
-                style={{ backgroundColor: "var(--color-border-disabled)" }}
-              >
+              <div className="w-10 h-10 rounded-full flex shrink-0 items-center justify-center bg-(--color-border-disabled)">
                 <Calendar
                   className="w-3.75 h-3.75"
                   style={{ color: "var(--color-secondary)" }}
@@ -96,7 +120,7 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                   Generate Report
                 </p>
                 <p className="hidden sm:block font-normal text-sm leading-none mt-1.5 truncate text-muted-foreground capitalize">
-                  {selectedType}
+                  {selectedPeriod}
                 </p>
               </div>
             </div>
@@ -112,21 +136,24 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
           </div>
 
           <div className="flex flex-col flex-1 gap-6 mt-4 justify-between">
-
+            {/* Section 1 — Report Period */}
             <div className="flex flex-col gap-2 w-full">
               <span className="font-semibold text-sm leading-none text-(--color-surface-100)">
-                Report Type
+                Report Period
               </span>
               <div className="grid grid-cols-3 gap-2 sm:gap-[16.5px] w-full">
-                {REPORT_TYPES.map((type) => {
-                  const isSelected = selectedType === type.id;
-                  const IconComp = type.icon;
+                {PERIOD_OPTIONS.map((opt) => {
+                  const isSelected = selectedPeriod === opt.id;
+                  const IconComp = opt.icon;
                   return (
                     <Button
-                      key={type.id}
+                      key={opt.id}
                       variant="ghost"
-                      onClick={() => setSelectedType(type.id)}
-                      className="flex flex-col items-center justify-center gap-2 w-19.5 sm:w-41.25 h-23.25 rounded-(--radius) border p-3 cursor-pointer transition-all"
+                      onClick={() => {
+                        setSelectedPeriod(opt.id);
+                        setRecurring(false);
+                      }}
+                      className="flex flex-col items-center justify-center gap-2 w-19.5 sm:w-41.25 h-23.25 rounded-lg border p-3 cursor-pointer transition-all"
                       style={{
                         backgroundColor: isSelected
                           ? "var(--color-amber-20)"
@@ -146,7 +173,7 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                         }}
                       />
                       <span className="text-[10px] sm:text-xs font-semibold leading-none text-(--color-surface-100)">
-                        {type.label}
+                        {opt.label}
                       </span>
                     </Button>
                   );
@@ -154,54 +181,166 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
-              <div className="flex flex-col gap-2 w-full sm:w-[256px]">
-                <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                  Start Date
-                </span>
-                <div
-                  onClick={handleStartDateClick}
-                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
-                >
-                  <span className="text-sm font-normal text-(--color-surface-100)">
-                    {startDate ? startDate : "Select date"}
-                  </span>
-                  <CalendarPlus className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors" strokeWidth={1.5} />
-                  <input
-                    ref={startDateInputRef}
-                    id="start-date"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 w-full sm:w-[256px]">
-                <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                  End Date
-                </span>
-                <div
-                  onClick={handleEndDateClick}
-                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
-                >
-                  <span className="text-sm font-normal text-(--color-surface-100)">
-                    {endDate ? endDate : "Select date"}
-                  </span>
-                  <CalendarPlus className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors" strokeWidth={1.5} />
-                  <input
-                    ref={endDateInputRef}
-                    id="end-date"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                  />
-                </div>
+            {/* Section 2 — Report Type */}
+            <div className="flex flex-col gap-2 w-full">
+              <span className="font-semibold text-sm leading-none text-(--color-surface-100)">
+                Report Type
+              </span>
+              <p className="text-xs text-muted-foreground leading-none">
+                You can choose a different report type from the default.
+              </p>
+              <div className="grid grid-cols-4 gap-2 sm:gap-[16.5px] w-full mt-2">
+                {REPORT_TYPE_OPTIONS.map((opt) => {
+                  const isSelected = selectedType === opt.id;
+                  const IconComp = opt.icon;
+                  return (
+                    <Button
+                      key={opt.id}
+                      variant="ghost"
+                      onClick={() => setSelectedType(opt.id)}
+                      className="flex flex-col items-center justify-center gap-2 w-14.5 sm:w-30.75 h-23.25 rounded-lg border p-3 cursor-pointer transition-all"
+                      style={{
+                        backgroundColor: isSelected
+                          ? "var(--color-amber-20)"
+                          : "var(--color-slate-10)",
+                        borderColor: isSelected
+                          ? "var(--color-amber-30)"
+                          : "var(--color-border-disabled)",
+                      }}
+                    >
+                      <IconComp
+                        className="size-5 transition-colors"
+                        strokeWidth={1.5}
+                        style={{
+                          color: isSelected
+                            ? "var(--color-amber-60)"
+                            : "var(--color-slate-70)",
+                        }}
+                      />
+                      <span className="text-[10px] sm:text-xs font-semibold leading-none text-(--color-surface-100)">
+                        {opt.label}
+                      </span>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
+            {/* Date Fields (conditional) */}
+            {isPeriodMode ? (
+              <div className="flex flex-col w-full sm:w-[256px] gap-2">
+                <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
+                  Reference Date
+                </span>
+                <div
+                  onClick={() => handleDatePickerClick(referenceDateInputRef)}
+                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                >
+                  <span className="text-sm font-normal text-(--color-surface-100)">
+                    {referenceDate || "Select date"}
+                  </span>
+                  <CalendarPlus
+                    className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
+                    strokeWidth={1.5}
+                  />
+                  <input
+                    ref={referenceDateInputRef}
+                    type="date"
+                    value={referenceDate}
+                    aria-label="Reference date"
+                    onChange={(e) => setReferenceDate(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
+                <div className="flex flex-col gap-2 w-full sm:w-[256px]">
+                  <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
+                    Start Date
+                  </span>
+                  <div
+                    onClick={() => handleDatePickerClick(startDateInputRef)}
+                    className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  >
+                    <span className="text-sm font-normal text-(--color-surface-100)">
+                      {startDate ? startDate : "Select date"}
+                    </span>
+                    <CalendarPlus
+                      className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
+                      strokeWidth={1.5}
+                    />
+                    <input
+                      ref={startDateInputRef}
+                      type="date"
+                      value={startDate}
+                      aria-label="Start date"
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full sm:w-[256px]">
+                  <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
+                    End Date
+                  </span>
+                  <div
+                    onClick={() => handleDatePickerClick(endDateInputRef)}
+                    className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  >
+                    <span className="text-sm font-normal text-(--color-surface-100)">
+                      {endDate ? endDate : "Select date"}
+                    </span>
+                    <CalendarPlus
+                      className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
+                      strokeWidth={1.5}
+                    />
+                    <input
+                      ref={endDateInputRef}
+                      type="date"
+                      value={endDate}
+                      aria-label="End date"
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recurring Toggle */}
+            {showRecurring && (
+              <div className="flex flex-col gap-2 w-full">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => setRecurring(!recurring)}
+                    className={cn(
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                      recurring
+                        ? "bg-(--color-secondary)"
+                        : "bg-(--color-slate-30)",
+                    )}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                        recurring ? "translate-x-5.5" : "translate-x-1"
+                      }`}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-(--color-surface-100)">
+                    Run this report automatically
+                  </span>
+                </label>
+                {recurring && recurringHelperText && (
+                  <p className="text-xs text-muted-foreground leading-normal pl-14">
+                    {recurringHelperText}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Report Title */}
             <div className="flex flex-col gap-2 w-full">
               <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
                 Report Title{" "}
@@ -210,7 +349,6 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                 </span>
               </span>
               <Input
-                id="report-title"
                 type="text"
                 value={reportTitle}
                 onChange={(e) => setReportTitle(e.target.value)}
@@ -219,6 +357,7 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
               />
             </div>
 
+            {/* Action Buttons */}
             <div className="flex justify-between items-center w-full gap-4 shrink-0 mt-2">
               <Button
                 variant="outline"
@@ -240,7 +379,6 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
                 <span className="hidden sm:inline">Generate as PDF</span>
               </Button>
             </div>
-
           </div>
         </div>
 
@@ -249,5 +387,3 @@ export function GenerateReportModal({ open, onClose, onGenerate }: GenerateRepor
     </Dialog>
   );
 }
-
-export { formatDateRange };
