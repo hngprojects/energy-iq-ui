@@ -21,7 +21,7 @@ export function formatDateRange(start: string, end: string): string {
   if (!start && !end) return "";
   const fmt = (d: string) => {
     if (!d) return "";
-    const date = new Date(d + "T00:00:00");
+    const date = new Date(d.includes("T") ? d : d + "T00:00:00");
     return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   };
   if (start && end) return `${fmt(start)} - ${fmt(end)}`;

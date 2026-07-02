@@ -114,10 +114,7 @@ export const reportsService = {
       true,
     );
 
-    const reports = (envelope?.reportsData ?? []).sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+    const reports = envelope?.reportsData ?? [];
     const pagination: ReportsPagination = envelope?.meta?.pagination ?? {
       ...DEFAULT_PAGINATION,
       page: pageNumber,

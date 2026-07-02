@@ -91,6 +91,8 @@ const FILTER_PERIOD: Partial<Record<ReportFilterType, string>> = {
 export function ReportsTable() {
   const [filter, setFilter] = useState<ReportFilterType>("all");
   const [shareReport, setShareReport] = useState<Report | null>(null);
+  const [lastDownloadedReport, setLastDownloadedReport] =
+    useState<Report | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [completedId, setCompletedId] = useState<string | null>(null);
   const [downloadedReportName, setDownloadedReportName] = useState("");
@@ -120,6 +122,8 @@ export function ReportsTable() {
 
   const handleDownload = (report: Report) => {
     if (downloadingId === report.id || completedId === report.id) return;
+    setLastDownloadedReport(report);
+    setCompletedId(null);
     downloadReport(
       report,
       (id) => {
@@ -223,7 +227,20 @@ export function ReportsTable() {
         title="Download ready"
         description={`${downloadedReportName}.pdf`}
         actionText="Open file"
-        onAction={() => toast.success(`Opening ${downloadedReportName}.pdf`)}
+        onAction={async () => {
+          if (lastDownloadedReport) {
+            const id = lastDownloadedReport.id;
+            setCompletedId(null);
+            try {
+              const blob = await reportsService.downloadReport(id);
+              const url = window.URL.createObjectURL(blob);
+              window.open(url, "_blank");
+              setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+            } catch {
+              toast.error("Failed to open file");
+            }
+          }
+        }}
       />
 
       <ReportsNotificationToast
@@ -232,9 +249,20 @@ export function ReportsTable() {
         title="Report generated"
         description={generatedReportName}
         actionText="Open file"
-        onAction={() => {
-          if (lastGeneratedReport) handleDownload(lastGeneratedReport);
-          setShowGenerateToast(false);
+        onAction={async () => {
+          if (lastGeneratedReport) {
+            setShowGenerateToast(false);
+            try {
+              const blob = await reportsService.downloadReport(
+                lastGeneratedReport.id,
+              );
+              const url = window.URL.createObjectURL(blob);
+              window.open(url, "_blank");
+              setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+            } catch {
+              toast.error("Failed to open file");
+            }
+          }
         }}
       />
 
@@ -264,6 +292,7 @@ export function ReportsTable() {
                 type: details.backendType,
                 name: details.title,
                 recurring: false,
+                period: "custom",
                 startDate: details.startDate!,
                 endDate: details.endDate!,
               };

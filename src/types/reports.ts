@@ -14,6 +14,7 @@ export interface CreateReportCustomRangePayload {
   type: "GENERAL" | "SOLAR" | "ALERT" | "COSTS_AND_SAVINGS";
   name: string;
   recurring: false;
+  period: "custom";
   startDate: string;
   endDate: string;
 }
