@@ -4,7 +4,12 @@ export type { ReportIconType, ReportFilterType };
 export { FILTER_OPTIONS } from "@/constants/reports";
 
 export type ReportSeverity = "critical" | "warning" | "success";
-export type ReportStatus = "PENDING" | "CANCELLED" | "READY" | "PROCESSING" | "FAILED";
+export type ReportStatus =
+  | "PENDING"
+  | "CANCELLED"
+  | "READY"
+  | "PROCESSING"
+  | "FAILED";
 
 export interface ReportMetric {
   label: string;
@@ -113,9 +118,24 @@ export const reportsMock: Report[] = [
 ];
 
 export const reportStatsMock = {
-  solarGenerated: { label: "Solar generated", value: "1,248 kWh", sub: "14% vs April" },
-  reportsSent: { label: "Reports Sent", value: "12", sub: "To 5 recipients this month" },
-  batteryEfficiency: { label: "Battery Efficiency", value: "91%", sub: "3% vs April" },
-  reportsResolved: { label: "Reports Resolved", value: "11 / 14", sub: "79% resolution rate" },
+  solarGenerated: {
+    label: "Solar generated",
+    value: "1,248 kWh",
+    sub: "14% vs April",
+  },
+  reportsSent: {
+    label: "Reports Sent",
+    value: "12",
+    sub: "To 5 recipients this month",
+  },
+  batteryEfficiency: {
+    label: "Battery Efficiency",
+    value: "91%",
+    sub: "3% vs April",
+  },
+  reportsResolved: {
+    label: "Reports Resolved",
+    value: "11 / 14",
+    sub: "79% resolution rate",
+  },
 };
-

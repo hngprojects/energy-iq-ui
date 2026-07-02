@@ -4,26 +4,24 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { Report, ReportFilterType, FILTER_OPTIONS } from "@/lib/mocks/reports-data";
+import {
+  Report,
+  ReportFilterType,
+  FILTER_OPTIONS,
+} from "@/lib/mocks/reports-data";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ShareReportModal } from "@/components/dashboard/reports/modals/share-report-modal";
 import { ReportsNotificationToast } from "@/components/dashboard/reports/reports-notification-toast";
 import { GenerateReportModal } from "@/components/dashboard/reports/modals/generate-report-modal";
-import { ScheduleReportModal } from "@/components/dashboard/reports/modals/schedule-report-modal";
 import { ReportCardMobile } from "@/components/dashboard/reports/card/report-card-mobile";
 import { ReportTableDesktop } from "@/components/dashboard/reports/table/report-table-desktop";
-import {
-  REPORT_FREQUENCY_LABELS,
-  REPORT_BACKEND_TYPE_MAP,
-  REPORT_PERIOD_MAP,
-  ReportType,
-} from "@/constants/reports";
+
+import type { CreateReportPayload } from "@/types/reports";
 import { PaginationBar } from "@/components/dashboard/shared/pagination-bar";
 import { reportsService } from "@/services/reports-service";
 import { useReports } from "@/hooks/use-reports";
 import { mapApiReportToReport } from "@/lib/reports/map-api-report";
-import { ApiReport as ApiReportType } from "@/types/reports";
 
 export { mapApiReportToReport };
 
@@ -34,7 +32,8 @@ function FilterDropdown({
   value: ReportFilterType;
   onChange: (v: ReportFilterType) => void;
 }) {
-  const currentLabel = FILTER_OPTIONS.find((o) => o.value === value)?.label ?? "All";
+  const currentLabel =
+    FILTER_OPTIONS.find((o) => o.value === value)?.label ?? "All";
 
   return (
     <DropdownMenu.Root>
@@ -44,7 +43,9 @@ function FilterDropdown({
           className="border-border bg-card hover:bg-muted flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
         >
           <span className="text-muted-foreground">Report Type:</span>
-          <span className="text-foreground hidden sm:inline">{currentLabel}</span>
+          <span className="text-foreground hidden sm:inline">
+            {currentLabel}
+          </span>
           <ChevronDown className="text-muted-foreground h-4 w-4" />
         </Button>
       </DropdownMenu.Trigger>
@@ -77,7 +78,7 @@ function FilterDropdown({
 const FILTER_TO_BACKEND_TYPE: Partial<Record<ReportFilterType, string>> = {
   Solar: "SOLAR",
   Alert: "ALERT",
-  Device: "COSTS_AND_SAVINGS",
+  "Costs & Savings": "COSTS_AND_SAVINGS",
   Weekly: "GENERAL",
   Monthly: "GENERAL",
 };
@@ -94,16 +95,24 @@ export function ReportsTable() {
   const [completedId, setCompletedId] = useState<string | null>(null);
   const [downloadedReportName, setDownloadedReportName] = useState("");
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showGenerateToast, setShowGenerateToast] = useState(false);
   const [generatedReportName, setGeneratedReportName] = useState("");
-  const [lastGeneratedReport, setLastGeneratedReport] = useState<Report | null>(null);
-  const [showScheduleToast, setShowScheduleToast] = useState(false);
-  const [scheduledReportDetails, setScheduledReportDetails] = useState("");
+  const [lastGeneratedReport, setLastGeneratedReport] = useState<Report | null>(
+    null,
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { reports: rawReports, pagination, isLoading, inverterId, invalidate, cancelReport, deleteReport, downloadReport } = useReports(currentPage, itemsPerPage, FILTER_TO_BACKEND_TYPE[filter]);
+  const {
+    reports: rawReports,
+    pagination,
+    isLoading,
+    inverterId,
+    invalidate,
+    cancelReport,
+    deleteReport,
+    downloadReport,
+  } = useReports(currentPage, itemsPerPage, FILTER_TO_BACKEND_TYPE[filter]);
 
   const reports = FILTER_PERIOD[filter]
     ? rawReports.filter((r) => r.type === filter)
@@ -111,10 +120,18 @@ export function ReportsTable() {
 
   const handleDownload = (report: Report) => {
     if (downloadingId === report.id || completedId === report.id) return;
+    setCompletedId(null);
     downloadReport(
       report,
-      (id) => { setDownloadingId(id); setCompletedId(null); },
-      (id, name) => { setDownloadingId(null); setCompletedId(id); setDownloadedReportName(name); },
+      (id) => {
+        setDownloadingId(id);
+        setCompletedId(null);
+      },
+      (id, name) => {
+        setDownloadingId(null);
+        setCompletedId(id);
+        setDownloadedReportName(name);
+      },
       () => setDownloadingId(null),
     );
   };
@@ -133,14 +150,6 @@ export function ReportsTable() {
           </div>
           <div className="flex w-full gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Button
-              variant="outline"
-              onClick={() => setShowScheduleModal(true)}
-              className="border-border text-foreground h-11 flex-1 rounded-lg border bg-transparent px-3 text-xs font-medium sm:h-10 sm:flex-none sm:w-35.75 sm:text-sm"
-            >
-              <span className="sm:hidden">Schedule</span>
-              <span className="hidden sm:inline">Schedule Report</span>
-            </Button>
-            <Button
               onClick={() => setShowGenerateModal(true)}
               className="bg-secondary text-primary-foreground hover:bg-secondary/80 h-11 flex-1 rounded-lg px-3 text-xs font-medium sm:h-10 sm:flex-none sm:w-35.75 sm:text-sm"
             >
@@ -152,7 +161,10 @@ export function ReportsTable() {
         <div className="flex flex-col gap-4 sm:hidden">
           {isLoading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-card h-51.5 w-full animate-pulse rounded-[8px] border border-border" />
+                <div
+                  key={i}
+                  className="bg-card h-51.5 w-full animate-pulse rounded-[8px] border border-border"
+                />
               ))
             : reports.map((report) => (
                 <ReportCardMobile
@@ -191,7 +203,10 @@ export function ReportsTable() {
             totalItems={pagination.total}
             itemsPerPage={itemsPerPage}
             onPageChange={setCurrentPage}
-            onPerPageChange={(perPage) => { setItemsPerPage(perPage); setCurrentPage(1); }}
+            onPerPageChange={(perPage) => {
+              setItemsPerPage(perPage);
+              setCurrentPage(1);
+            }}
             itemLabel="reports"
           />
         )}
@@ -209,7 +224,19 @@ export function ReportsTable() {
         title="Download ready"
         description={`${downloadedReportName}.pdf`}
         actionText="Open file"
-        onAction={() => toast.success(`Opening ${downloadedReportName}.pdf`)}
+        onAction={async () => {
+          const id = completedId;
+          if (!id) return;
+          setCompletedId(null);
+          try {
+            const blob = await reportsService.downloadReport(id);
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, "_blank");
+            setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+          } catch {
+            toast.error("Failed to open file");
+          }
+        }}
       />
 
       <ReportsNotificationToast
@@ -218,44 +245,61 @@ export function ReportsTable() {
         title="Report generated"
         description={generatedReportName}
         actionText="Open file"
-        onAction={() => {
-          if (lastGeneratedReport) handleDownload(lastGeneratedReport);
-          setShowGenerateToast(false);
+        onAction={async () => {
+          if (lastGeneratedReport) {
+            setShowGenerateToast(false);
+            try {
+              const blob = await reportsService.downloadReport(
+                lastGeneratedReport.id,
+              );
+              const url = window.URL.createObjectURL(blob);
+              window.open(url, "_blank");
+              setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+            } catch {
+              toast.error("Failed to open file");
+            }
+          }
         }}
-      />
-
-      <ReportsNotificationToast
-        open={showScheduleToast}
-        onClose={() => setShowScheduleToast(false)}
-        title="Report Scheduled"
-        description={scheduledReportDetails}
-        actionText="Open file"
-        onAction={() => {}}
       />
 
       <GenerateReportModal
         open={showGenerateModal}
         onClose={() => setShowGenerateModal(false)}
-        onGenerate={async ({ title, type, startDate, endDate }) => {
+        onGenerate={async (details) => {
+          if (!inverterId) {
+            toast.error(
+              "No inverter configured. Please set up an inverter first.",
+            );
+            return;
+          }
+          const toastId = toast.loading("Generating report...");
+
           try {
-            const reportType = type as ReportType;
-            const backendType = REPORT_BACKEND_TYPE_MAP[reportType] ?? "GENERAL";
-            const period = REPORT_PERIOD_MAP[reportType] ?? "weekly";
-            const refDate = startDate || new Date().toISOString().split("T")[0];
+            let payload: CreateReportPayload;
 
-            const payload = {
-              mode: "period" as const,
-              inverterId: inverterId ?? "",
-              type: backendType,
-              name: title || `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
-              period,
-              referenceDate: refDate,
-              startDate: startDate || refDate,
-              endDate: endDate || refDate,
-              recurring: false,
-            };
+            if (details.period === "weekly" || details.period === "monthly") {
+              payload = {
+                mode: "period",
+                inverterId: inverterId,
+                type: details.backendType,
+                name: details.title,
+                recurring: details.recurring,
+                period: details.period,
+                referenceDate: details.referenceDate!,
+              };
+            } else {
+              payload = {
+                mode: "custom-date",
+                inverterId: inverterId,
+                type: details.backendType,
+                name: details.title,
+                recurring: false,
+                period: "custom",
+                startDate: details.startDate!,
+                endDate: details.endDate!,
+              };
+            }
 
-            const toastId = toast.loading("Generating report...");
             const apiRes = await reportsService.createReport(payload);
             const newReport = mapApiReportToReport(apiRes);
 
@@ -265,45 +309,9 @@ export function ReportsTable() {
             setShowGenerateToast(true);
             invalidate();
           } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Failed to generate report";
-            toast.error(message);
-          }
-        }}
-      />
-
-      <ScheduleReportModal
-        open={showScheduleModal}
-        onClose={() => setShowScheduleModal(false)}
-        onSaveSchedule={async ({ type, time, title }) => {
-          try {
-            const reportType = type as ReportType;
-            const backendType = REPORT_BACKEND_TYPE_MAP[reportType] ?? "GENERAL";
-            const period = REPORT_PERIOD_MAP[reportType] ?? "weekly";
-            const refDate = new Date().toISOString().split("T")[0];
-
-            const payload = {
-              mode: "period" as const,
-              inverterId: inverterId ?? "",
-              type: backendType,
-              name: title || `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
-              period,
-              referenceDate: refDate,
-              startDate: refDate,
-              endDate: refDate,
-              recurring: true,
-            };
-
-            const toastId = toast.loading("Scheduling report...");
-            const apiRes = await reportsService.createReport(payload);
-
-            const displayTitle = apiRes.name || payload.name;
-            setScheduledReportDetails(`${displayTitle} - ${REPORT_FREQUENCY_LABELS[type as keyof typeof REPORT_FREQUENCY_LABELS] ?? type}, ${time}`);
-            toast.success("Report scheduled successfully!", { id: toastId });
-            setShowScheduleToast(true);
-            invalidate();
-          } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Failed to schedule report";
-            toast.error(message);
+            const message =
+              err instanceof Error ? err.message : "Failed to generate report";
+            toast.error(message, { id: toastId });
           }
         }}
       />

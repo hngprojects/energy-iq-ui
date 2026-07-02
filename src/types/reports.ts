@@ -1,14 +1,27 @@
-export interface CreateReportPayload {
+export interface CreateReportPeriodPayload {
   mode: "period";
   inverterId: string;
-  type: string;
+  type: "GENERAL" | "SOLAR" | "ALERT" | "COSTS_AND_SAVINGS";
   name: string;
-  period: string;
   referenceDate: string;
-  startDate: string;
-  endDate: string;
+  period: "weekly" | "monthly";
   recurring?: boolean;
 }
+
+export interface CreateReportCustomRangePayload {
+  mode: "custom-date";
+  inverterId: string;
+  type: "GENERAL" | "SOLAR" | "ALERT" | "COSTS_AND_SAVINGS";
+  name: string;
+  recurring: false;
+  period: "custom";
+  startDate: string;
+  endDate: string;
+}
+
+export type CreateReportPayload =
+  | CreateReportPeriodPayload
+  | CreateReportCustomRangePayload;
 
 export interface ApiReport {
   id: string;
