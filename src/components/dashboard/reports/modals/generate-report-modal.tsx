@@ -30,6 +30,72 @@ interface GenerateReportModalProps {
   onGenerate: (details: GenerateReportDetails) => void;
 }
 
+function DateField({
+  label,
+  value,
+  onChange,
+  inputRef,
+  helperText,
+  errorText,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  helperText?: string;
+  errorText?: string;
+  className?: string;
+}) {
+  const handleClick = () => {
+    if (inputRef.current) {
+      try {
+        inputRef.current.showPicker();
+      } catch {
+        inputRef.current.focus();
+        inputRef.current.click();
+      }
+    }
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-2 w-full", className)}>
+      <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
+        {label}
+      </span>
+      <button
+        type="button"
+        onClick={handleClick}
+        className="group relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors w-full cursor-pointer text-sm font-normal text-(--color-surface-100)"
+      >
+        <span>{value || "Select date"}</span>
+        <CalendarPlus
+          className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
+          strokeWidth={1.5}
+        />
+      </button>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        tabIndex={-1}
+        aria-hidden="true"
+        className="absolute w-px h-px opacity-0 pointer-events-none -z-10"
+      />
+      {helperText && !errorText && (
+        <p className="text-xs text-muted-foreground leading-normal">
+          {helperText}
+        </p>
+      )}
+      {errorText && (
+        <p className="text-xs text-destructive leading-normal">{errorText}</p>
+      )}
+    </div>
+  );
+}
+
 export function GenerateReportModal({
   open,
   onClose,
@@ -50,19 +116,6 @@ export function GenerateReportModal({
 
   const typeOption = REPORT_TYPE_OPTIONS.find((k) => k.id === selectedType);
   const backendType = typeOption?.backendValue ?? "GENERAL";
-
-  const handleDatePickerClick = (
-    ref: React.RefObject<HTMLInputElement | null>,
-  ) => {
-    if (ref.current) {
-      try {
-        ref.current.showPicker();
-      } catch {
-        ref.current.focus();
-        ref.current.click();
-      }
-    }
-  };
 
   const isPeriodMode =
     selectedPeriod === "weekly" || selectedPeriod === "monthly";
@@ -89,7 +142,10 @@ export function GenerateReportModal({
 
     if (isPeriodMode) {
       details.referenceDate =
-        referenceDate || new Date().toISOString().split("T")[0];
+        referenceDate ||
+        new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+          .toISOString()
+          .split("T")[0];
     } else {
       details.startDate = startDate;
       details.endDate = endDate;
@@ -220,46 +276,33 @@ export function GenerateReportModal({
               </div>
             </div>
 
+            {/* Section 3 — Dates + Recurring */}
             {isPeriodMode ? (
               <div className="flex flex-col gap-4 w-full">
-                <div className="flex flex-col gap-2 w-full">
-                  <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                    Reference Date
-                  </span>
-                  <div
-                    onClick={() => handleDatePickerClick(referenceDateInputRef)}
-                    className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
-                  >
-                    <span className="text-sm font-normal text-(--color-surface-100)">
-                      {referenceDate || "Select date"}
-                    </span>
-                    <CalendarPlus
-                      className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
-                      strokeWidth={1.5}
-                    />
-                    <input
-                      ref={referenceDateInputRef}
-                      type="date"
-                      value={referenceDate}
-                      onChange={(e) => setReferenceDate(e.target.value)}
-                      aria-label="Reference date"
-                      title="Reference date"
-                      className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                    />
-                  </div>
-                  {!referenceDate && (
-                    <p className="text-xs text-muted-foreground leading-normal">
-                      Defaults to today if left unselected.
-                    </p>
-                  )}
-                </div>
+                <DateField
+                  label="Reference Date"
+                  value={referenceDate}
+                  onChange={setReferenceDate}
+                  inputRef={referenceDateInputRef}
+                  helperText={
+                    !referenceDate
+                      ? "Defaults to today if left unselected."
+                      : undefined
+                  }
+                />
 
                 <div className="flex flex-col gap-2">
                   <label className="flex items-center gap-3 cursor-pointer w-fit">
+                    <input
+                      type="checkbox"
+                      checked={recurring}
+                      onChange={(e) => setRecurring(e.target.checked)}
+                      className="sr-only peer"
+                      aria-label="Run this report automatically"
+                    />
                     <div
-                      onClick={() => setRecurring(!recurring)}
                       className={cn(
-                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 cursor-pointer",
+                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 cursor-pointer peer-focus-visible:outline-2",
                         recurring
                           ? "bg-(--color-secondary)"
                           : "bg-(--color-slate-30)",
@@ -268,9 +311,7 @@ export function GenerateReportModal({
                       <span
                         className={cn(
                           "inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm",
-                          recurring
-                            ? "translate-x-[1.375rem]"
-                            : "translate-x-[0.25rem]",
+                          recurring ? "translate-x-5.5" : "translate-x-1",
                         )}
                       />
                     </div>
@@ -291,60 +332,22 @@ export function GenerateReportModal({
             ) : (
               <div className="flex flex-col w-full">
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
-                  <div className="flex flex-col gap-2 w-full sm:w-[256px]">
-                    <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                      Start Date
-                    </span>
-                    <div
-                      onClick={() => handleDatePickerClick(startDateInputRef)}
-                      className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
-                    >
-                      <span className="text-sm font-normal text-(--color-surface-100)">
-                        {startDate || "Select date"}
-                      </span>
-                      <CalendarPlus
-                        className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
-                        strokeWidth={1.5}
-                      />
-                      <input
-                        ref={startDateInputRef}
-                        type="date"
-                        value={startDate}
-                        aria-label="Start date"
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 w-full sm:w-[256px]">
-                    <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                      End Date
-                    </span>
-                    <div
-                      onClick={() => handleDatePickerClick(endDateInputRef)}
-                      className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
-                    >
-                      <span className="text-sm font-normal text-(--color-surface-100)">
-                        {endDate || "Select date"}
-                      </span>
-                      <CalendarPlus
-                        className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
-                        strokeWidth={1.5}
-                      />
-                      <input
-                        ref={endDateInputRef}
-                        type="date"
-                        value={endDate}
-                        aria-label="End date"
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                      />
-                    </div>
-                  </div>
+                  <DateField
+                    label="Start Date"
+                    value={startDate}
+                    onChange={setStartDate}
+                    inputRef={startDateInputRef}
+                    className="sm:w-[256px]"
+                  />
+                  <DateField
+                    label="End Date"
+                    value={endDate}
+                    onChange={setEndDate}
+                    inputRef={endDateInputRef}
+                    className="sm:w-[256px]"
+                  />
                 </div>
 
-                {/* Validation error — only after user has touched at least one date */}
                 {isCustomMode &&
                   !isDateRangeValid &&
                   (startDate || endDate) && (

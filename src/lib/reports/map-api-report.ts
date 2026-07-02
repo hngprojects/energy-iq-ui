@@ -39,8 +39,11 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
   }
 
   let displayDateRange = "";
-  if (apiRes.startDate && apiRes.endDate) {
-    displayDateRange = formatDateRange(apiRes.startDate, apiRes.endDate);
+  if (apiRes.startDate || apiRes.endDate) {
+    displayDateRange = formatDateRange(
+      apiRes.startDate ?? "",
+      apiRes.endDate ?? "",
+    );
   } else if (apiRes.referenceDate) {
     displayDateRange = formatSingleDate(apiRes.referenceDate);
   }

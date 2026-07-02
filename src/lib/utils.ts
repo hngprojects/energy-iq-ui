@@ -19,7 +19,10 @@ export function formatNairaOrDash(value: number | null | undefined): string {
 
 export function formatSingleDate(d: string): string {
   if (!d) return "";
-  const date = new Date(d.includes("T") ? d : d + "T00:00:00");
+  const dateOnly = d.includes("T") ? d.split("T")[0] : d;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) return "";
+  const [y, m, day] = dateOnly.split("-").map(Number);
+  const date = new Date(y, m - 1, day);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
