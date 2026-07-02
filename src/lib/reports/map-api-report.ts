@@ -1,7 +1,7 @@
 import type { ApiReport } from "@/types/reports";
 import type { Report } from "@/lib/mocks/reports-data";
 import type { ReportIconType, ReportStatus } from "@/lib/mocks/reports-data";
-import { formatDateRange } from "@/components/dashboard/reports/modals/generate-report-modal";
+import { formatDateRange, formatSingleDate } from "@/lib/utils";
 
 export function mapApiReportToReport(apiRes: ApiReport): Report {
   let type = "Weekly";
@@ -10,7 +10,7 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
   } else if (apiRes.type === "ALERT") {
     type = "Alert";
   } else if (apiRes.type === "COSTS_AND_SAVINGS") {
-    type = "Device";
+    type = "Costs & Savings";
   } else if (apiRes.period === "monthly") {
     type = "Monthly";
   } else if (apiRes.period === "weekly") {
@@ -26,9 +26,10 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
     metricLabel = "Logged";
   } else if (apiRes.type === "COSTS_AND_SAVINGS") {
     const costSaved = Number(apiRes.keyMetrics?.totalCostSavedNgn ?? 0);
-    metricValue = costSaved > 0
-      ? `₦${costSaved.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`
-      : "₦0";
+    metricValue =
+      costSaved > 0
+        ? `₦${costSaved.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`
+        : "₦0";
     metricLabel = "Saved";
   } else {
     const energy = Number(apiRes.keyMetrics?.totalEnergyConsumedKwh ?? 0);
@@ -38,19 +39,29 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
   }
 
   let displayDateRange = "";
-  if (apiRes.startDate && apiRes.endDate) {
-    displayDateRange = formatDateRange(apiRes.startDate, apiRes.endDate);
+  if (apiRes.startDate || apiRes.endDate) {
+    displayDateRange = formatDateRange(
+      apiRes.startDate ?? "",
+      apiRes.endDate ?? "",
+    );
   } else if (apiRes.referenceDate) {
-    const d = new Date(apiRes.referenceDate);
-    displayDateRange = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    displayDateRange = formatSingleDate(apiRes.referenceDate);
   }
 
-  const lowerType = type.toLowerCase();
   let iconType: ReportIconType = "file";
-  if (lowerType === "monthly") iconType = "calendar";
-  else if (lowerType === "solar") iconType = "solar";
-  else if (lowerType === "alert") iconType = "alert";
-  else if (lowerType === "device") iconType = "chip";
+  if (apiRes.type === "SOLAR") iconType = "solar";
+  else if (apiRes.type === "ALERT") iconType = "alert";
+  else if (apiRes.type === "COSTS_AND_SAVINGS") iconType = "dollar";
+  else if (apiRes.period === "monthly") iconType = "calendar";
+
+  const createdDate = new Date(apiRes.createdAt || Date.now());
+  const formattedCreatedDate = Number.isNaN(createdDate.getTime())
+    ? ""
+    : new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(createdDate);
 
   return {
     id: apiRes.id,
@@ -58,11 +69,7 @@ export function mapApiReportToReport(apiRes: ApiReport): Report {
     subtitle: displayDateRange || apiRes.period || "weekly",
     type,
     status: (apiRes.status as ReportStatus) || "READY",
-    date: new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(apiRes.createdAt || Date.now())),
+    date: formattedCreatedDate,
     iconType,
     keyMetrics: { value: metricValue, label: metricLabel },
     recipients: "Me",

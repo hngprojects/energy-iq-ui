@@ -3,7 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
 import { reportsService } from "@/services/reports-service";
-import { FileText, Sun, AlertTriangle, Cpu, LucideIcon } from "lucide-react";
+import {
+  FileText,
+  Sun,
+  AlertTriangle,
+  DollarSign,
+  LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { REPORT_STAT_CARD_ICON_COLORS } from "@/constants/reports";
 
@@ -73,22 +79,26 @@ function StatCard({
 export function ReportStatCards() {
   const { isAuthenticated } = useAuthStore();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["reports", 1, 10],
-    queryFn: () => reportsService.getReports(1, 10),
+  const { data: summary, isLoading: summaryLoading } = useQuery({
+    queryKey: ["reports-summary"],
+    queryFn: () => reportsService.getReportsSummary(),
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
   });
 
-  const reports = data?.reports ?? [];
+  const { data: reportsData, isLoading: reportsLoading } = useQuery({
+    queryKey: ["reports", 1, 100],
+    queryFn: () => reportsService.getReports(1, 100),
+    enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isLoading = summaryLoading || reportsLoading;
+  const reports = reportsData?.reports ?? [];
 
   const weeklyCount = reports.filter((r) => r.period === "weekly").length;
   const monthlyCount = reports.filter((r) => r.period === "monthly").length;
   const periodicTotal = weeklyCount + monthlyCount;
-
-  const solarCount = reports.filter((r) => r.type === "SOLAR").length;
-  const alertCount = reports.filter((r) => r.type === "ALERT").length;
-  const deviceCount = reports.filter((r) => r.type === "COSTS_AND_SAVINGS").length;
 
   return (
     <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
@@ -105,7 +115,7 @@ export function ReportStatCards() {
         Icon={Sun}
         iconColor={REPORT_STAT_CARD_ICON_COLORS.solar}
         label="Solar"
-        value={String(solarCount)}
+        value={String(summary?.solar ?? 0)}
         sub="Solar reports"
         isLoading={isLoading}
       />
@@ -113,16 +123,16 @@ export function ReportStatCards() {
         Icon={AlertTriangle}
         iconColor={REPORT_STAT_CARD_ICON_COLORS.alert}
         label="Alerts"
-        value={String(alertCount)}
+        value={String(summary?.alerts ?? 0)}
         sub="Alert reports"
         isLoading={isLoading}
       />
       <StatCard
-        Icon={Cpu}
-        iconColor={REPORT_STAT_CARD_ICON_COLORS.device}
-        label="Device"
-        value={String(deviceCount)}
-        sub="Device reports"
+        Icon={DollarSign}
+        iconColor={REPORT_STAT_CARD_ICON_COLORS.costsAndSavings}
+        label="Costs & Savings"
+        value={String(summary?.costsAndSavings ?? 0)}
+        sub="Cost & savings reports"
         isLoading={isLoading}
       />
     </div>

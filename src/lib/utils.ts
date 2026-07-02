@@ -16,3 +16,23 @@ export function formatNairaOrDash(value: number | null | undefined): string {
   if (value == null) return "—";
   return `₦${Math.round(value).toLocaleString()}`;
 }
+
+export function formatSingleDate(d: string): string {
+  if (!d) return "";
+  const dateOnly = d.includes("T") ? d.split("T")[0] : d;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) return "";
+  const [y, m, day] = dateOnly.split("-").map(Number);
+  const date = new Date(y, m - 1, day);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+export function formatDateRange(start: string, end: string): string {
+  if (!start && !end) return "";
+
+  const startFmt = formatSingleDate(start);
+  const endFmt = formatSingleDate(end);
+
+  if (startFmt && endFmt) return `${startFmt} - ${endFmt}`;
+  return startFmt || endFmt;
+}
