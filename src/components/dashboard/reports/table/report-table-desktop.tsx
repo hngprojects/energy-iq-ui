@@ -159,15 +159,15 @@ export function ReportTableDesktop({
                     </td>
 
                     <td className="w-34.5 p-[12px_24px]">
-                      <div className="inline-flex flex-col items-end">
+                      <div className="flex flex-col w-full">
                         <p
-                          className="font-sans text-sm font-semibold leading-none tracking-normal whitespace-nowrap"
+                          className="font-sans text-sm font-semibold leading-none tracking-normal whitespace-nowrap text-left"
                           style={{ color: "var(--color-amber-60)" }}
                         >
                           {report.keyMetrics.value}
                         </p>
                         <p
-                          className="font-sans mt-1 text-xs font-normal leading-none tracking-normal whitespace-nowrap"
+                          className="font-sans mt-1 text-xs font-normal leading-none tracking-normal whitespace-nowrap text-left"
                           style={{ color: "var(--color-slate-70)" }}
                         >
                           {report.keyMetrics.label}

@@ -259,7 +259,7 @@ export function ReportsTable() {
               };
             } else {
               payload = {
-                mode: "custom-range",
+                mode: "custom-date",
                 inverterId: inverterId ?? "",
                 type: details.backendType,
                 name: details.title,
@@ -281,48 +281,6 @@ export function ReportsTable() {
             const message =
               err instanceof Error ? err.message : "Failed to generate report";
             toast.error(message, { id: toastId });
-          }
-        }}
-        onGenerateAndShare={async (details) => {
-          try {
-            const toastId = toast.loading("Generating report...");
-
-            let payload: CreateReportPayload;
-            if (details.period === "weekly" || details.period === "monthly") {
-              payload = {
-                mode: "period",
-                inverterId: inverterId ?? "",
-                type: details.backendType,
-                name: details.title,
-                recurring: details.recurring,
-                period: details.period,
-                referenceDate: details.referenceDate!,
-              };
-            } else {
-              payload = {
-                mode: "custom-range",
-                inverterId: inverterId ?? "",
-                type: details.backendType,
-                name: details.title,
-                recurring: false,
-                startDate: details.startDate!,
-                endDate: details.endDate!,
-              };
-            }
-
-            const apiRes = await reportsService.createReport(payload);
-            const newReport = mapApiReportToReport(apiRes);
-
-            setLastGeneratedReport(newReport);
-            setGeneratedReportName(`${newReport.title}.pdf`);
-            toast.success("Report generated successfully!", { id: toastId });
-            setShareReport(newReport);
-            setShowGenerateModal(false);
-            invalidate();
-          } catch (err: unknown) {
-            const message =
-              err instanceof Error ? err.message : "Failed to generate report";
-            toast.error(message);
           }
         }}
       />

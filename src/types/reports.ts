@@ -9,7 +9,7 @@ export interface CreateReportPeriodPayload {
 }
 
 export interface CreateReportCustomRangePayload {
-  mode: "custom-range";
+  mode: "custom-date";
   inverterId: string;
   type: "GENERAL" | "SOLAR" | "ALERT" | "COSTS_AND_SAVINGS";
   name: string;

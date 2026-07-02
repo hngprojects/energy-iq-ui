@@ -34,14 +34,12 @@ interface GenerateReportModalProps {
   open: boolean;
   onClose: () => void;
   onGenerate: (details: GenerateReportDetails) => void;
-  onGenerateAndShare?: (details: GenerateReportDetails) => void;
 }
 
 export function GenerateReportModal({
   open,
   onClose,
   onGenerate,
-  onGenerateAndShare,
 }: GenerateReportModalProps) {
   const [selectedPeriod, setSelectedPeriod] =
     useState<ReportPeriodId>("weekly");
@@ -110,9 +108,9 @@ export function GenerateReportModal({
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="fixed top-1/2 left-1/2 z-60 -translate-x-1/2 -translate-y-1/2 bg-card p-4 sm:p-6 flex flex-col w-74.25 h-177.75 max-h-[96vh] sm:w-xl sm:h-155.75 sm:max-h-[92vh] max-w-none sm:max-w-none rounded-[8px] border-none shadow-lg focus:outline-none gap-6 overflow-y-auto no-scrollbar"
+        className="fixed top-1/2 left-1/2 z-60 -translate-x-1/2 -translate-y-1/2 bg-card p-4 sm:p-6 pb-6 sm:pb-8 flex flex-col w-74.25 max-h-[96vh] sm:w-xl sm:max-h-[92vh] max-w-none sm:max-w-none rounded-[8px] border-none shadow-lg focus:outline-none gap-6 overflow-y-auto no-scrollbar"
       >
-        <div className="flex flex-col w-full sm:w-132 min-h-165.75 sm:min-h-123.75 justify-between">
+        <div className="flex flex-col w-full sm:w-132">
           <div className="flex items-center justify-between w-full h-10 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex shrink-0 items-center justify-center bg-(--color-border-disabled)">
@@ -234,31 +232,69 @@ export function GenerateReportModal({
               </div>
             </div>
 
-            {/* Date Fields (conditional) */}
             {isPeriodMode ? (
-              <div className="flex flex-col w-full sm:w-[256px] gap-2">
-                <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
-                  Reference Date
-                </span>
-                <div
-                  onClick={() => handleDatePickerClick(referenceDateInputRef)}
-                  className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
-                >
-                  <span className="text-sm font-normal text-(--color-surface-100)">
-                    {referenceDate || "Select date"}
+              <div className="flex flex-col gap-4 w-full">
+                {/* Reference Date - full width, matches Custom mode's date row */}
+                <div className="flex flex-col gap-2 w-full">
+                  <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
+                    Reference Date
                   </span>
-                  <CalendarPlus
-                    className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
-                    strokeWidth={1.5}
-                  />
-                  <input
-                    ref={referenceDateInputRef}
-                    type="date"
-                    value={referenceDate}
-                    aria-label="Reference date"
-                    onChange={(e) => setReferenceDate(e.target.value)}
-                    className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                  />
+                  <div
+                    onClick={() => handleDatePickerClick(referenceDateInputRef)}
+                    className="relative flex items-center justify-between border border-(--color-slate-60) rounded-lg px-4 h-13 bg-transparent hover:border-foreground transition-colors group w-full cursor-pointer"
+                  >
+                    <span className="text-sm font-normal text-(--color-surface-100)">
+                      {referenceDate || "Select date"}
+                    </span>
+                    <CalendarPlus
+                      className="size-5 text-(--color-slate-70) group-hover:text-foreground transition-colors"
+                      strokeWidth={1.5}
+                    />
+                    <input
+                      ref={referenceDateInputRef}
+                      type="date"
+                      value={referenceDate}
+                      onChange={(e) => setReferenceDate(e.target.value)}
+                      aria-label="Reference date"
+                      title="Reference date"
+                      className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Recurring - plain row, no card */}
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-3 cursor-pointer w-fit">
+                    <div
+                      onClick={() => setRecurring(!recurring)}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0"
+                      style={{
+                        backgroundColor: recurring
+                          ? "var(--color-secondary)"
+                          : "var(--color-slate-30)",
+                      }}
+                    >
+                      <span
+                        className="inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm"
+                        style={{
+                          transform: recurring
+                            ? "translateX(1.375rem)"
+                            : "translateX(0.25rem)",
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-(--color-surface-100)">
+                      Run this report automatically
+                    </span>
+                  </label>
+
+                  {recurring && (
+                    <p className="text-xs text-muted-foreground leading-normal">
+                      {selectedPeriod === "weekly"
+                        ? "Runs every Monday at midnight, generating a report for the past week."
+                        : "Runs at the end of the month at midnight, generating a report for the month."}
+                    </p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -317,37 +353,6 @@ export function GenerateReportModal({
               </div>
             )}
 
-            {/* Recurring Toggle */}
-            {showRecurring && (
-              <div className="flex flex-col gap-2 w-full">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div
-                    onClick={() => setRecurring(!recurring)}
-                    className={cn(
-                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                      recurring
-                        ? "bg-(--color-secondary)"
-                        : "bg-(--color-slate-30)",
-                    )}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                        recurring ? "translate-x-5.5" : "translate-x-1"
-                      }`}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-(--color-surface-100)">
-                    Run this report automatically
-                  </span>
-                </label>
-                {recurring && recurringHelperText && (
-                  <p className="text-xs text-muted-foreground leading-normal pl-14">
-                    {recurringHelperText}
-                  </p>
-                )}
-              </div>
-            )}
-
             {/* Report Title */}
             <div className="flex flex-col gap-2 w-full">
               <span className="font-semibold text-xs text-(--color-slate-80) leading-none">
@@ -365,48 +370,14 @@ export function GenerateReportModal({
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center w-full gap-4 shrink-0 mt-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const details: GenerateReportDetails = {
-                    title:
-                      reportTitle ||
-                      selectedPeriod.charAt(0).toUpperCase() +
-                        selectedPeriod.slice(1),
-                    period: selectedPeriod,
-                    type: selectedType,
-                    backendType,
-                    recurring: showRecurring ? recurring : false,
-                  };
-
-                  if (isPeriodMode) {
-                    details.referenceDate =
-                      referenceDate || new Date().toISOString().split("T")[0];
-                  } else {
-                    details.startDate = startDate;
-                    details.endDate = endDate;
-                  }
-
-                  onGenerateAndShare?.(details);
-                  onClose();
-                }}
-                className="w-[116.5px] sm:w-[256px] h-10 rounded-lg text-sm font-semibold transition-colors"
-                style={{
-                  borderColor: "var(--color-border-disabled)",
-                  backgroundColor: "var(--color-surface-10)",
-                  color: "var(--color-surface-100)",
-                }}
-              >
-                Share Report
-              </Button>
+            {/* Action Button */}
+            <div className="flex w-full shrink-0 mt-2 mb-2">
               <Button
                 onClick={handleGeneratePDF}
-                className="w-[116.5px] sm:w-[256px] h-10 rounded-lg text-sm font-semibold bg-secondary text-primary-foreground hover:bg-secondary/80 transition-colors"
+                className="w-full h-10 rounded-lg text-sm font-semibold bg-secondary text-primary-foreground hover:bg-secondary/80 transition-colors"
               >
                 <span className="sm:hidden">Generate</span>
-                <span className="hidden sm:inline">Generate as PDF</span>
+                <span className="hidden sm:inline">Generate Report</span>
               </Button>
             </div>
           </div>
