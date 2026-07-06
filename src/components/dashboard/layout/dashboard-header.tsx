@@ -94,7 +94,7 @@ export function DashboardHeader() {
               notificationsOpen ? "fixed inset-x-3 top-16 z-50" : "hidden"
             }
           >
-            <NotificationsDropdown />
+            {notificationsOpen ? <NotificationsDropdown /> : null}
           </div>
         </div>
 
@@ -151,7 +151,7 @@ export function DashboardHeader() {
                 : "hidden"
             }
           >
-            <NotificationsDropdown />
+            {notificationsOpen ? <NotificationsDropdown /> : null}
           </div>
         </div>
 
