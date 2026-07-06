@@ -33,9 +33,19 @@ function handleSessionRefreshFailure(): never {
 function getRefreshPromise(): Promise<RefreshTokenResponse> {
   if (!refreshingPromise) {
     refreshingPromise = refreshAuthSession()
-      .then((ok) => {
-        if (!ok) {
-          throw new Error("Session refresh failed");
+      .then((result) => {
+        if (!result.ok) {
+          if (result.status === 401) {
+            throw new ApiError(
+              result.message || "Your session has expired. Please sign in again.",
+              401,
+            );
+          }
+
+          throw new ApiError(
+            result.message || "Unable to refresh session right now.",
+            result.status ?? 500,
+          );
         }
         const { token, refreshToken } = useAuthStore.getState();
         if (!token) {
@@ -129,8 +139,11 @@ export async function apiFetch<TResponse>(
       try {
         const refreshData = await getRefreshPromise();
         headers["Authorization"] = `Bearer ${refreshData.accessToken}`;
-      } catch {
-        handleSessionRefreshFailure();
+      } catch (error) {
+        if (error instanceof ApiError && error.statusCode === 401) {
+          handleSessionRefreshFailure();
+        }
+        throw error;
       }
     }
   }
@@ -189,11 +202,13 @@ export async function apiFetch<TResponse>(
             { ...config, headers: newHeaders },
             proxy,
           );
-        } catch {
-          // Refresh failed, fall through to logout
+        } catch (error) {
+          if (error instanceof ApiError && error.statusCode !== 401) {
+            throw error;
+          }
         }
 
-        // Clear auth tokens via Zustand on 401 if refresh failed.
+        // Clear auth tokens only when refresh definitively says the session is invalid.
         useAuthStore.getState().logout();
         redirectToLoginOnce();
       }

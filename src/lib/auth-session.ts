@@ -2,6 +2,10 @@ import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
 import type { MeResponse, RefreshTokenResponse } from "@/types/auth";
 
+export type RefreshSessionResult =
+  | { ok: true }
+  | { ok: false; status?: number; message?: string };
+
 export function resetAuthForOAuthCallback(): void {
   useAuthStore.getState().clearClientAuth();
 }
@@ -17,11 +21,15 @@ function applyUserProfile(data: MeResponse) {
   setInverterAccess(data.inverterAccess ?? []);
 }
 
-export async function refreshAuthSession(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
+export async function refreshAuthSession(): Promise<RefreshSessionResult> {
+  if (typeof window === "undefined") {
+    return { ok: false, message: "Refresh is only available in the browser." };
+  }
 
   const { sessionId, setSessionId } = useAuthStore.getState();
-  if (!sessionId) return false;
+  if (!sessionId) {
+    return { ok: false, status: 401, message: "Missing sessionId." };
+  }
 
   try {
     const response = await fetch("/api/session", {
@@ -32,14 +40,25 @@ export async function refreshAuthSession(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      return false;
+      const payload = await response.json().catch(() => null);
+      return {
+        ok: false,
+        status: response.status,
+        message:
+          payload?.message ||
+          (typeof payload?.error === "string" ? payload.error : undefined),
+      };
     }
 
     const payload = await response.json().catch(() => null);
     const data = (payload?.data ?? payload) as RefreshTokenResponse | null;
 
     if (!data?.accessToken) {
-      return false;
+      return {
+        ok: false,
+        status: 502,
+        message: "Refresh response is missing an access token.",
+      };
     }
 
     applyRefreshResponse(data);
@@ -48,8 +67,12 @@ export async function refreshAuthSession(): Promise<boolean> {
     applyUserProfile(profile);
     setSessionId(sessionId);
 
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 500,
+      message: error instanceof Error ? error.message : "Refresh failed.",
+    };
   }
 }

@@ -21,7 +21,6 @@ import {
 import { cn } from "@/lib/utils";
 import { ALERT_ROWS, DELIVERY_CHANNELS } from "@/constants/notifications";
 import { useAuthStore } from "@/stores/auth-store";
-import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 
 function SectionHeader({
   title,
@@ -372,13 +371,6 @@ export function NotificationContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <DashboardBreadcrumb
-        items={[
-          { label: "Settings", href: "/dashboard/settings" },
-          { label: "Team & Access" },
-        ]}
-      />
-
       <div>
         <h1 className="text-2xl font-bold text-(--color-dark-text)">
           Notification Preferences
