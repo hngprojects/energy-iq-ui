@@ -131,7 +131,7 @@ export function NotificationsDropdown() {
       </div>
 
       <Link
-        href="/dashboard/settings/notifications"
+        href="/dashboard/notifications"
         className="block border-t border-border py-4 text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         View all notifications

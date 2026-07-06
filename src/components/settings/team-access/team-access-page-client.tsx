@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, LockKeyhole, Plus, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
@@ -221,8 +221,28 @@ export function TeamAccessPageClient() {
           No inverter found for this account yet.
         </div>
       ) : !canManageTeam ? (
-        <div className="rounded-xl border border-border bg-card px-6 py-10 text-sm text-muted-foreground">
-          You need admin access to manage team members on this inverter.
+        <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#F3F4F6]">
+                <ShieldAlert className="size-5 text-[#111827]" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <LockKeyhole className="size-3.5" />
+                  Restricted access
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Team management is limited on this inverter
+                  </h2>
+                  <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                    Only the inverter owner or an admin can invite users, change roles, and revoke access.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       ) : isLoading ? (
         <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-border bg-card">

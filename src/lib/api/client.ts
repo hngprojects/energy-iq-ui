@@ -16,10 +16,17 @@ if (!isServer) {
 }
 
 let refreshingPromise: Promise<RefreshTokenResponse> | null = null;
+let authRedirectInFlight = false;
+
+function redirectToLoginOnce() {
+  if (typeof window === "undefined" || authRedirectInFlight) return;
+  authRedirectInFlight = true;
+  window.location.replace("/login");
+}
 
 function handleSessionRefreshFailure(): never {
   useAuthStore.getState().logout();
-  window.location.replace("/login");
+  redirectToLoginOnce();
   throw new ApiError("Your session has expired. Please sign in again.", 401);
 }
 
@@ -188,7 +195,7 @@ export async function apiFetch<TResponse>(
 
         // Clear auth tokens via Zustand on 401 if refresh failed.
         useAuthStore.getState().logout();
-        window.location.replace("/login");
+        redirectToLoginOnce();
       }
 
       const message =
