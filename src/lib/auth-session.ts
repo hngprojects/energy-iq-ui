@@ -1,49 +1,34 @@
+import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
-import type { RefreshTokenResponse } from "@/types/auth";
+import type { MeResponse, RefreshTokenResponse } from "@/types/auth";
 
-/** Wipe stale client state before applying a new OAuth callback token. */
 export function resetAuthForOAuthCallback(): void {
   useAuthStore.getState().clearClientAuth();
 }
 
-export async function persistTokensToSession(
-  token: string,
-  refreshToken: string,
-): Promise<void> {
-  if (typeof window === "undefined") return;
-
-  const response = await fetch("/api/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ token, refreshToken }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to persist auth session cookies (${response.status})`);
-  }
+function applyRefreshResponse(data: RefreshTokenResponse) {
+  const { setTokensLocal } = useAuthStore.getState();
+  setTokensLocal(data.accessToken, data.refreshToken ?? null);
 }
 
-function applyRefreshResponse(data: RefreshTokenResponse) {
-  const { user, setAuthLocal, setTokensLocal } = useAuthStore.getState();
-  const rememberMe =
-    typeof window !== "undefined" &&
-    localStorage.getItem("remember_me") === "1";
-
-  if (user) {
-    setAuthLocal(user, data.accessToken, data.refreshToken, rememberMe);
-  } else {
-    setTokensLocal(data.accessToken, data.refreshToken);
-  }
+function applyUserProfile(data: MeResponse) {
+  const { setUser, setInverterAccess } = useAuthStore.getState();
+  setUser(data.user);
+  setInverterAccess(data.inverterAccess ?? []);
 }
 
 export async function refreshAuthSession(): Promise<boolean> {
   if (typeof window === "undefined") return false;
 
+  const { sessionId, setSessionId } = useAuthStore.getState();
+  if (!sessionId) return false;
+
   try {
     const response = await fetch("/api/session", {
       method: "PATCH",
       credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
     });
 
     if (!response.ok) {
@@ -58,6 +43,11 @@ export async function refreshAuthSession(): Promise<boolean> {
     }
 
     applyRefreshResponse(data);
+
+    const profile = await AuthService.me();
+    applyUserProfile(profile);
+    setSessionId(sessionId);
+
     return true;
   } catch {
     return false;

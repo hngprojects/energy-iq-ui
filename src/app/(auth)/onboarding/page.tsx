@@ -92,12 +92,13 @@ export default function OnboardingPage() {
       return;
     }
 
-    const { setUser, logout } = useAuthStore.getState();
+    const { setUser, setInverterAccess, logout } = useAuthStore.getState();
 
     AuthService.me()
       .then((realUser) => {
-        if (realUser?.id) {
-          setUser(realUser);
+        if (realUser?.user?.id) {
+          setUser(realUser.user);
+          setInverterAccess(realUser.inverterAccess ?? []);
           useAuthStore.setState({ isAuthenticated: true });
           return;
         }

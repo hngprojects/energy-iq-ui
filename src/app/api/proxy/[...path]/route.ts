@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 // import { env } from "@/env/server";
 
 const API_BASE_URL = process.env.API_BASE_URL;
+const REFRESH_PATH_PATTERN = /Path=\/api\/v1\/auth\/refresh/gi;
+
+function normalizeSetCookieHeader(setCookieHeader: string): string {
+  return setCookieHeader.replace(REFRESH_PATH_PATTERN, "Path=/api/session");
+}
 
 const buildBackendUrl = (path: string, search: string): string => {
   if (!API_BASE_URL) {
@@ -147,7 +152,10 @@ async function proxyRequest(req: Request, paramSegments?: string[]) {
     });
     const setCookieHeader = backendRes.headers.get("set-cookie");
     if (setCookieHeader) {
-      nextRes.headers.set("set-cookie", setCookieHeader);
+      nextRes.headers.set(
+        "set-cookie",
+        normalizeSetCookieHeader(setCookieHeader),
+      );
     }
     return nextRes;
   } catch (error) {

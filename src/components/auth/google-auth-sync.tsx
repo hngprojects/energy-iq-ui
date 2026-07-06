@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthService } from "@/services/auth-service";
 import {
-  persistTokensToSession,
   resetAuthForOAuthCallback,
 } from "@/lib/auth-session";
 
@@ -80,19 +79,24 @@ function GoogleAuthSyncInner() {
       hashParams.get("accessToken") ||
       hashParams.get("token");
 
-    const refreshToken =
-      searchParams.get("refreshToken") || hashParams.get("refreshToken") || "";
+    const sessionId =
+      searchParams.get("sessionId") || hashParams.get("sessionId") || "";
 
-    if (token) {
+    if (token && sessionId) {
       cleanOAuthParamsFromUrl();
       void (async () => {
         try {
           resetAuthForOAuthCallback();
-          setTokensLocal(token, refreshToken);
-          await persistTokensToSession(token, refreshToken);
+          setTokensLocal(token, null);
           const realUser = await AuthService.me();
-          if (realUser?.id) {
-            setAuthLocal(realUser, token, refreshToken, true);
+          if (realUser?.user?.id) {
+            setAuthLocal({
+              user: realUser.user,
+              accessToken: token,
+              sessionId,
+              inverterAccess: realUser.inverterAccess ?? [],
+              rememberMe: true,
+            });
           } else {
             logout();
           }
