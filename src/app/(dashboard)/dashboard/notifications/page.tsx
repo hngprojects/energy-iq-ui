@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NotificationContent } from "@/components/dashboard/notifications/notifications-content";
+import { DashboardNotificationsContent } from "@/components/dashboard/notifications/dashboard-notifications-content";
 
 export const metadata: Metadata = {
   title: "Notifications | EnergyIQ",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function NotificationsPage() {
-  return <NotificationContent />;
+  return <DashboardNotificationsContent />;
 }

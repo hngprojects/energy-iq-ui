@@ -166,6 +166,19 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       setAuth: async (payload) => {
+        if (typeof window !== "undefined" && payload.refreshToken) {
+          const response = await fetch("/api/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ refreshToken: payload.refreshToken }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to initialize auth session.");
+          }
+        }
+
         useAuthStore.getState().setAuthLocal(payload);
       },
       setTokensLocal: (accessToken, refreshToken = null) => {

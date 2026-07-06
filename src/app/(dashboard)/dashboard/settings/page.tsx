@@ -36,7 +36,7 @@ const SETTING_CARDS = [
     title: "Notifications",
     description:
       "Control organisational hierarchies by assigning specific user roles, permissions, and administrative access levels.", // Matched to UI screenshot
-    href: "/dashboard/notifications",
+    href: "/dashboard/settings/notifications",
   },
 ];
 

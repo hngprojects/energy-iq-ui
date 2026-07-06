@@ -49,7 +49,7 @@ function cleanOAuthParamsFromUrl() {
 function GoogleAuthSyncInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setAuthLocal, setTokensLocal, logout } = useAuthStore();
+  const { setAuth, setTokensLocal, logout } = useAuthStore();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -78,6 +78,8 @@ function GoogleAuthSyncInner() {
       searchParams.get("token") ||
       hashParams.get("accessToken") ||
       hashParams.get("token");
+    const refreshToken =
+      searchParams.get("refreshToken") || hashParams.get("refreshToken");
 
     const sessionId =
       searchParams.get("sessionId") || hashParams.get("sessionId") || "";
@@ -90,11 +92,12 @@ function GoogleAuthSyncInner() {
           setTokensLocal(token, null);
           const realUser = await AuthService.me();
           if (realUser?.user?.id) {
-            setAuthLocal({
+            await setAuth({
               user: realUser.user,
               accessToken: token,
               sessionId,
               inverterAccess: realUser.inverterAccess ?? [],
+              refreshToken: refreshToken ?? undefined,
               rememberMe: true,
             });
           } else {
@@ -108,7 +111,7 @@ function GoogleAuthSyncInner() {
     }
   }, [
     searchParams,
-    setAuthLocal,
+    setAuth,
     setTokensLocal,
     logout,
     router,
