@@ -257,7 +257,7 @@ export function TeamAccessPageClient() {
           <TeamAccessStatsCards stats={stats} />
 
           {members.length === 0 ? (
-            <TeamAccessEmptyState onInvite={() => setInviteModalOpen(true)} />
+            <TeamAccessEmptyState />
           ) : (
             <TeamAccessTable
               members={members}

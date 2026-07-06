@@ -8,6 +8,19 @@ function normalizeSetCookieHeader(setCookieHeader: string): string {
   return setCookieHeader.replace(REFRESH_PATH_PATTERN, "Path=/api/session");
 }
 
+function getSetCookieHeaders(headers: Headers): string[] {
+  const headersWithSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  if (typeof headersWithSetCookie.getSetCookie === "function") {
+    return headersWithSetCookie.getSetCookie();
+  }
+
+  const setCookieHeader = headers.get("set-cookie");
+  return setCookieHeader ? [setCookieHeader] : [];
+}
+
 const buildBackendUrl = (path: string, search: string): string => {
   if (!API_BASE_URL) {
     throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
@@ -150,12 +163,15 @@ async function proxyRequest(req: Request, paramSegments?: string[]) {
           "application/json; charset=utf-8",
       },
     });
-    const setCookieHeader = backendRes.headers.get("set-cookie");
-    if (setCookieHeader) {
-      nextRes.headers.set(
-        "set-cookie",
-        normalizeSetCookieHeader(setCookieHeader),
-      );
+    const setCookieHeaders = getSetCookieHeaders(backendRes.headers);
+    if (setCookieHeaders.length > 0) {
+      nextRes.headers.delete("set-cookie");
+      for (const setCookieHeader of setCookieHeaders) {
+        nextRes.headers.append(
+          "set-cookie",
+          normalizeSetCookieHeader(setCookieHeader),
+        );
+      }
     }
     return nextRes;
   } catch (error) {

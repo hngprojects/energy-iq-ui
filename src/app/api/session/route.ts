@@ -47,11 +47,29 @@ function getRefreshCookieHeader(refreshToken: string) {
   return `${REFRESH_TOKEN_COOKIE}=${refreshToken}`;
 }
 
-function extractSetCookieToken(setCookieHeader: string | null): string | null {
-  if (!setCookieHeader) return null;
+function getSetCookieHeaders(headers: Headers): string[] {
+  const headersWithSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
 
-  const match = setCookieHeader.match(/refresh_token=([^;]+)/i);
-  return match?.[1] ?? null;
+  if (typeof headersWithSetCookie.getSetCookie === "function") {
+    return headersWithSetCookie.getSetCookie();
+  }
+
+  const setCookieHeader = headers.get("set-cookie");
+  return setCookieHeader ? [setCookieHeader] : [];
+}
+
+function extractSetCookieToken(setCookieHeaders: string[]): string | null {
+  for (let index = setCookieHeaders.length - 1; index >= 0; index -= 1) {
+    const match = setCookieHeaders[index].match(/refresh_token=([^;]+)/i);
+    const value = match?.[1];
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -144,7 +162,7 @@ export async function PATCH(req: NextRequest) {
 
     const response = NextResponse.json(data);
     const rotatedRefreshToken = extractSetCookieToken(
-      backendResponse.headers.get("set-cookie"),
+      getSetCookieHeaders(backendResponse.headers),
     );
     if (rotatedRefreshToken) {
       setRefreshCookie(response, rotatedRefreshToken);
