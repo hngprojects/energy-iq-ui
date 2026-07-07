@@ -1,7 +1,7 @@
 import { AuthService } from "@/services/auth-service";
 import { ApiError } from "@/lib/api/error";
 import { useAuthStore } from "@/stores/auth-store";
-import type { MeResponse, RefreshTokenResponse } from "@/types/auth";
+import type { RefreshTokenResponse } from "@/types/auth";
 
 export type RefreshSessionResult =
   | { ok: true }
@@ -14,12 +14,6 @@ export function resetAuthForOAuthCallback(): void {
 function applyRefreshResponse(data: RefreshTokenResponse) {
   const { setTokensLocal } = useAuthStore.getState();
   setTokensLocal(data.accessToken);
-}
-
-function applyUserProfile(data: MeResponse) {
-  const { setUser, setInverterAccess } = useAuthStore.getState();
-  setUser(data.user);
-  setInverterAccess(data.inverterAccess ?? []);
 }
 
 export async function refreshAuthSession(): Promise<RefreshSessionResult> {
@@ -44,9 +38,6 @@ export async function refreshAuthSession(): Promise<RefreshSessionResult> {
     }
 
     applyRefreshResponse(data);
-
-    const profile = await AuthService.me();
-    applyUserProfile(profile);
     setSessionId(sessionId);
 
     return { ok: true };

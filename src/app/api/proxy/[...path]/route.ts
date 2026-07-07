@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 // import { env } from "@/env/server";
 
 const API_BASE_URL = process.env.API_BASE_URL;
@@ -90,6 +91,25 @@ const buildForwardHeaders = (req: Request): Headers => {
   return headers;
 };
 
+const addRefreshTokenCookie = (
+  headers: Headers,
+  refreshToken: string | undefined,
+) => {
+  if (!refreshToken) return;
+
+  const currentCookie = headers.get("cookie");
+  const withoutRefreshToken = currentCookie
+    ?.split(";")
+    .map((cookie) => cookie.trim())
+    .filter((cookie) => cookie && !cookie.startsWith(`${REFRESH_TOKEN_COOKIE}=`));
+  const nextCookies = [
+    ...(withoutRefreshToken ?? []),
+    `${REFRESH_TOKEN_COOKIE}=${refreshToken}`,
+  ];
+
+  headers.set("cookie", nextCookies.join("; "));
+};
+
 export async function GET(
   req: Request,
   context: { params: Promise<{ path: string[] }> },
@@ -160,6 +180,13 @@ async function proxyRequest(req: Request, paramSegments?: string[]) {
     const backendUrl = buildBackendUrl(pathname, search);
     const rawBody = await extractBody(req);
     const headers = buildForwardHeaders(req);
+    if (pathname === "auth/refresh") {
+      const cookieStore = await cookies();
+      addRefreshTokenCookie(
+        headers,
+        cookieStore.get(REFRESH_TOKEN_COOKIE)?.value,
+      );
+    }
     const backendRes = await forwardRequest(backendUrl, req, rawBody, headers);
     // If the backend returns a 4xx or 5xx error, we still want to forward the response body
     // so the client can display the specific error message (e.g., "Invalid email or password").

@@ -41,9 +41,10 @@ function normalizeMePayload(payload: unknown): {
 
 export function useCurrentUserSync(options?: { enabled?: boolean }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const token = useAuthStore((state) => state.token);
   const setUser = useAuthStore((state) => state.setUser);
   const setInverterAccess = useAuthStore((state) => state.setInverterAccess);
-  const enabled = (options?.enabled ?? true) && isAuthenticated;
+  const enabled = (options?.enabled ?? true) && isAuthenticated && !!token;
 
   const query = useQuery({
     queryKey: ["auth-me"],

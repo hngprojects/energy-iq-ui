@@ -19,7 +19,8 @@ export const proxy: NextProxy = (request) => {
       request.nextUrl.searchParams.has("accessToken") ||
       request.nextUrl.searchParams.has("token");
     const sessionCookie = request.cookies.get("auth_session");
-    if (!sessionCookie?.value && !hasOAuthToken) {
+    const refreshTokenCookie = request.cookies.get("refresh_token");
+    if (!sessionCookie?.value && !refreshTokenCookie?.value && !hasOAuthToken) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set(
         "redirect",

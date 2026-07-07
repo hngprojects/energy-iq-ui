@@ -161,6 +161,7 @@ export async function apiFetch<TResponse>(
     const res = await axiosInstance.request({
       url,
       ...config,
+      withCredentials: true,
       headers,
     });
 

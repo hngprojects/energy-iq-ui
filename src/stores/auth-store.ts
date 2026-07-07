@@ -5,6 +5,7 @@ import type { InverterAccess, User } from "@/types/auth";
 const SESSION_COOKIE = "auth_session";
 const AUTH_STORAGE_KEY = "auth-storage";
 const SESSION_ID_STORAGE_KEY = "session_id";
+const ACCESS_TOKEN_STORAGE_KEY = "access_token";
 
 function setSessionCookie(persist = false) {
   if (typeof document === "undefined") return;
@@ -37,6 +38,11 @@ function getStoredSessionId(): string | null {
   return localStorage.getItem(SESSION_ID_STORAGE_KEY);
 }
 
+function getStoredAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
 function setStoredSessionId(sessionId: string | null) {
   if (typeof window === "undefined") return;
 
@@ -48,12 +54,24 @@ function setStoredSessionId(sessionId: string | null) {
   localStorage.removeItem(SESSION_ID_STORAGE_KEY);
 }
 
+function setStoredAccessToken(accessToken: string | null) {
+  if (typeof window === "undefined") return;
+
+  if (accessToken) {
+    sessionStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+    return;
+  }
+
+  sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
 function wipePersistedAuthSnapshot() {
   if (typeof window === "undefined") return;
 
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem("remember_me");
   localStorage.removeItem(SESSION_ID_STORAGE_KEY);
+  sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
 interface AuthState {
@@ -149,6 +167,7 @@ export const useAuthStore = create<AuthState>()(
         }
 
         setStoredSessionId(sessionId);
+        setStoredAccessToken(accessToken);
         setSessionCookie(rememberMe);
         set({
           user: normalizeUser(user),
@@ -163,10 +182,23 @@ export const useAuthStore = create<AuthState>()(
         useAuthStore.getState().setAuthLocal(payload);
       },
       setTokensLocal: (accessToken) => {
+        if (typeof window !== "undefined" && accessToken) {
+          setStoredAccessToken(accessToken);
+          sessionStorage.setItem("session_active", "1");
+          setSessionCookie(localStorage.getItem("remember_me") === "1");
+        } else if (typeof window !== "undefined") {
+          setStoredAccessToken(null);
+        }
         set({ token: accessToken });
       },
       setSessionId: (sessionId) => {
         setStoredSessionId(sessionId);
+        if (sessionId) {
+          setSessionCookie(
+            typeof window !== "undefined" &&
+              localStorage.getItem("remember_me") === "1",
+          );
+        }
         set({ sessionId });
       },
       setUser: (user) => set({ user: normalizeUser(user) }),
@@ -177,6 +209,7 @@ export const useAuthStore = create<AuthState>()(
         wipePersistedAuthSnapshot();
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("session_active");
+          sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
         }
         clearSessionCookie();
         set({
@@ -191,6 +224,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("session_active");
+          sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
           localStorage.removeItem("remember_me");
         }
         clearSessionCookie();
@@ -223,9 +257,14 @@ export const useAuthStore = create<AuthState>()(
         return {
           ...currentState,
           ...persisted,
-          token: null,
+          token: getStoredAccessToken(),
           sessionId: persisted.sessionId ?? getStoredSessionId(),
           inverterAccess: persisted.inverterAccess ?? [],
+          isAuthenticated: Boolean(
+            persisted.isAuthenticated ||
+              persisted.sessionId ||
+              getStoredSessionId(),
+          ),
         };
       },
       onRehydrateStorage: () => (state) => {
@@ -253,8 +292,11 @@ export const useAuthStore = create<AuthState>()(
         const rememberMe = localStorage.getItem("remember_me") === "1";
 
         if (state.isAuthenticated || state.sessionId) {
+          state.isAuthenticated = true;
           setSessionCookie(rememberMe);
         }
+
+        state.token = getStoredAccessToken();
 
         state.setHasHydrated(true);
       },

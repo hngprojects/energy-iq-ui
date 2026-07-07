@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
+import { refreshAuthSession } from "@/lib/auth-session";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, _hasHydrated, user } = useAuthStore();
+  const { isAuthenticated, _hasHydrated, user, token, sessionId, logout } =
+    useAuthStore();
+  const [isRestoringSession, setIsRestoringSession] = useState(false);
+  const restoreStartedRef = useRef(false);
   const { useOnboardingStatus } = useInverterQueries();
   const {
     data: status,
-    isLoading,
-    isFetching,
   } = useOnboardingStatus();
   const searchParams = useSearchParams();
   const search = searchParams.toString();
@@ -28,15 +31,35 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     hashParams.has("accessToken") ||
     hashParams.has("token");
 
-  const isFullyOnboarded =
-    user?.onboardingComplete === true ||
-    status?.onboardingComplete === true &&
-    status?.steps?.accountCreated === true &&
-    status?.steps?.emailVerified === true &&
-    status?.steps?.inverterConnected === true;
-  const isBootstrappingOnboarding =
-    !_hasHydrated ||
-    (isAuthenticated && (!user?.id || isLoading || isFetching));
+  const hasResolvedOnboarding =
+    Boolean(_hasHydrated) &&
+    Boolean(isAuthenticated) &&
+    Boolean(user?.id) &&
+    Boolean(token);
+  const needsSessionRestore =
+    Boolean(_hasHydrated) &&
+    Boolean(isAuthenticated) &&
+    Boolean(sessionId) &&
+    !token &&
+    !hasIncomingOAuthToken;
+
+  useEffect(() => {
+    if (!needsSessionRestore || restoreStartedRef.current) return;
+
+    restoreStartedRef.current = true;
+    setIsRestoringSession(true);
+
+    refreshAuthSession()
+      .then((result) => {
+        if (result.ok) return;
+
+        logout();
+        router.replace(`/login?redirect=${encodeURIComponent(currentUrl)}`);
+      })
+      .finally(() => {
+        setIsRestoringSession(false);
+      });
+  }, [currentUrl, logout, needsSessionRestore, router]);
 
   useEffect(() => {
     if (!_hasHydrated) return;
@@ -47,17 +70,14 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!isBootstrappingOnboarding) {
-      if (status?.onboardingComplete === false && user?.onboardingComplete !== true) {
-        router.replace("/onboarding");
-      }
+    if (status?.onboardingComplete === false && user?.onboardingComplete !== true) {
+      router.replace("/onboarding");
     }
   }, [
     _hasHydrated,
     hasIncomingOAuthToken,
     isAuthenticated,
-    isBootstrappingOnboarding,
-    isFullyOnboarded,
+    sessionId,
     status?.onboardingComplete,
     user?.onboardingComplete,
     user?.id,
@@ -66,7 +86,13 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   ]);
 
   // IMPORTANT: Wait for hydration before rendering anything or redirecting
-  if (_hasHydrated === false || hasIncomingOAuthToken || isBootstrappingOnboarding) {
+  if (
+    _hasHydrated === false ||
+    hasIncomingOAuthToken ||
+    needsSessionRestore ||
+    isRestoringSession ||
+    !hasResolvedOnboarding
+  ) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="border-secondary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
@@ -75,10 +101,6 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return null;
-  }
-
-  if (status?.onboardingComplete === false && user?.onboardingComplete !== true) {
     return null;
   }
 
