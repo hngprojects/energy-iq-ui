@@ -59,7 +59,6 @@ function wipePersistedAuthSnapshot() {
 interface AuthState {
   user: User | null;
   token: string | null;
-  refreshToken: string | null;
   sessionId: string | null;
   inverterAccess: InverterAccess[];
   isAuthenticated: boolean;
@@ -70,7 +69,6 @@ interface AuthState {
     accessToken: string;
     sessionId: string;
     inverterAccess?: InverterAccess[];
-    refreshToken?: string;
     rememberMe?: boolean;
   }) => Promise<void>;
   setAuthLocal: (payload: {
@@ -78,10 +76,9 @@ interface AuthState {
     accessToken: string;
     sessionId: string;
     inverterAccess?: InverterAccess[];
-    refreshToken?: string;
     rememberMe?: boolean;
   }) => void;
-  setTokensLocal: (accessToken: string, refreshToken?: string | null) => void;
+  setTokensLocal: (accessToken: string | null) => void;
   setSessionId: (sessionId: string | null) => void;
   setUser: (user: User) => void;
   setInverterAccess: (inverterAccess: InverterAccess[]) => void;
@@ -130,7 +127,6 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
-      refreshToken: null,
       sessionId: null,
       inverterAccess: [],
       isAuthenticated: false,
@@ -141,7 +137,6 @@ export const useAuthStore = create<AuthState>()(
         accessToken,
         sessionId,
         inverterAccess = [],
-        refreshToken = null,
         rememberMe = false,
       }) => {
         if (typeof window !== "undefined") {
@@ -158,7 +153,6 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: normalizeUser(user),
           token: accessToken,
-          refreshToken,
           sessionId,
           inverterAccess,
           isAuthenticated: true,
@@ -166,23 +160,10 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       setAuth: async (payload) => {
-        if (typeof window !== "undefined" && payload.refreshToken) {
-          const response = await fetch("/api/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ refreshToken: payload.refreshToken }),
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to initialize auth session.");
-          }
-        }
-
         useAuthStore.getState().setAuthLocal(payload);
       },
-      setTokensLocal: (accessToken, refreshToken = null) => {
-        set({ token: accessToken, refreshToken });
+      setTokensLocal: (accessToken) => {
+        set({ token: accessToken });
       },
       setSessionId: (sessionId) => {
         setStoredSessionId(sessionId);
@@ -201,7 +182,6 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           token: null,
-          refreshToken: null,
           sessionId: null,
           inverterAccess: [],
           isAuthenticated: false,
@@ -215,18 +195,9 @@ export const useAuthStore = create<AuthState>()(
         }
         clearSessionCookie();
         setStoredSessionId(null);
-        if (typeof window !== "undefined") {
-          void fetch("/api/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ clear: true }),
-          }).catch(() => undefined);
-        }
         set({
           user: null,
           token: null,
-          refreshToken: null,
           sessionId: null,
           inverterAccess: [],
           isAuthenticated: false,
@@ -253,7 +224,6 @@ export const useAuthStore = create<AuthState>()(
           ...currentState,
           ...persisted,
           token: null,
-          refreshToken: null,
           sessionId: persisted.sessionId ?? getStoredSessionId(),
           inverterAccess: persisted.inverterAccess ?? [],
         };
@@ -266,7 +236,6 @@ export const useAuthStore = create<AuthState>()(
           clearSessionCookie();
           state.user = null;
           state.token = null;
-          state.refreshToken = null;
           state.sessionId = null;
           state.inverterAccess = [];
           state.isAuthenticated = false;

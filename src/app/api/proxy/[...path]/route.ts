@@ -17,9 +17,20 @@ function getSetCookieHeaders(headers: Headers): string[] {
   return setCookieHeader ? [setCookieHeader] : [];
 }
 
-function extractRefreshToken(setCookieHeader: string): string | null {
-  const match = setCookieHeader.match(/refresh_token=([^;]+)/i);
-  return match?.[1] ?? null;
+function parseRefreshTokenCookie(setCookieHeader: string): {
+  value: string;
+  clear: boolean;
+} | null {
+  const match = setCookieHeader.match(/refresh_token=([^;]*)/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    value: match[1] ?? "",
+    clear: /max-age=0/i.test(setCookieHeader),
+  };
 }
 
 const buildBackendUrl = (path: string, search: string): string => {
@@ -168,14 +179,15 @@ async function proxyRequest(req: Request, paramSegments?: string[]) {
     if (setCookieHeaders.length > 0) {
       nextRes.headers.delete("set-cookie");
       for (const setCookieHeader of setCookieHeaders) {
-        const refreshToken = extractRefreshToken(setCookieHeader);
+        const refreshTokenCookie = parseRefreshTokenCookie(setCookieHeader);
 
-        if (refreshToken) {
-          nextRes.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
+        if (refreshTokenCookie) {
+          nextRes.cookies.set(REFRESH_TOKEN_COOKIE, refreshTokenCookie.value, {
             path: "/",
-            sameSite: "strict",
+            sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
             httpOnly: true,
+            ...(refreshTokenCookie.clear ? { maxAge: 0 } : {}),
           });
           continue;
         }

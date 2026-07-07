@@ -48,7 +48,6 @@ export function AuthSignupForm() {
           accessToken: data.accessToken,
           sessionId: data.sessionId,
           inverterAccess: data.inverterAccess,
-          refreshToken: data.refreshToken,
         });
         toast.success("Invitation accepted successfully!");
         router.replace("/dashboard");

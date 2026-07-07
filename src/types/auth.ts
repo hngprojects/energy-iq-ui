@@ -27,7 +27,6 @@ export interface LoginResponse {
   sessionId: string;
   user: User;
   inverterAccess: InverterAccess[];
-  refreshToken?: string;
 }
 
 export interface RegisterResponse {
@@ -46,12 +45,10 @@ export interface VerifyEmailResponse {
   sessionId?: string;
   user: User;
   inverterAccess?: InverterAccess[];
-  refreshToken?: string;
 }
 
 export interface RefreshTokenResponse {
   accessToken: string;
-  refreshToken?: string;
 }
 
 export interface MeResponse {

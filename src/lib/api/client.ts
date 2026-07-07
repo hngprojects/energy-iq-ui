@@ -47,13 +47,12 @@ function getRefreshPromise(): Promise<RefreshTokenResponse> {
             result.status ?? 500,
           );
         }
-        const { token, refreshToken } = useAuthStore.getState();
+        const { token } = useAuthStore.getState();
         if (!token) {
           throw new Error("Session refresh missing tokens");
         }
         return {
           accessToken: token,
-          refreshToken: refreshToken ?? "",
         } satisfies RefreshTokenResponse;
       })
       .finally(() => {

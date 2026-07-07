@@ -53,7 +53,6 @@ export type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>;
 
 export const refreshTokenSchema = z.object({
   sessionId: z.string().uuid("Session ID is required"),
-  refreshToken: z.string().min(1, "Refresh token is required").optional(),
 });
 
 export type RefreshTokenFormValues = z.infer<typeof refreshTokenSchema>;

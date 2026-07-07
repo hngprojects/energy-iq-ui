@@ -78,9 +78,6 @@ function GoogleAuthSyncInner() {
       searchParams.get("token") ||
       hashParams.get("accessToken") ||
       hashParams.get("token");
-    const refreshToken =
-      searchParams.get("refreshToken") || hashParams.get("refreshToken");
-
     const sessionId =
       searchParams.get("sessionId") || hashParams.get("sessionId") || "";
 
@@ -89,7 +86,7 @@ function GoogleAuthSyncInner() {
       void (async () => {
         try {
           resetAuthForOAuthCallback();
-          setTokensLocal(token, null);
+          setTokensLocal(token);
           const realUser = await AuthService.me();
           if (realUser?.user?.id) {
             await setAuth({
@@ -97,7 +94,6 @@ function GoogleAuthSyncInner() {
               accessToken: token,
               sessionId,
               inverterAccess: realUser.inverterAccess ?? [],
-              refreshToken: refreshToken ?? undefined,
               rememberMe: true,
             });
           } else {

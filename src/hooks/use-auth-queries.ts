@@ -98,7 +98,6 @@ export const useAuthQueries = () => {
             accessToken: data.accessToken,
             sessionId: data.sessionId,
             inverterAccess: data.inverterAccess,
-            refreshToken: data.refreshToken,
             rememberMe: variables.rememberMe ?? false,
           });
         } catch {
@@ -185,7 +184,6 @@ export const useAuthQueries = () => {
             accessToken: data.accessToken,
             sessionId: data.sessionId,
             inverterAccess: data.inverterAccess ?? [],
-            refreshToken: data.refreshToken,
           });
         } catch {
           storeLogout();

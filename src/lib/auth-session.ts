@@ -1,4 +1,5 @@
 import { AuthService } from "@/services/auth-service";
+import { ApiError } from "@/lib/api/error";
 import { useAuthStore } from "@/stores/auth-store";
 import type { MeResponse, RefreshTokenResponse } from "@/types/auth";
 
@@ -12,7 +13,7 @@ export function resetAuthForOAuthCallback(): void {
 
 function applyRefreshResponse(data: RefreshTokenResponse) {
   const { setTokensLocal } = useAuthStore.getState();
-  setTokensLocal(data.accessToken, data.refreshToken ?? null);
+  setTokensLocal(data.accessToken);
 }
 
 function applyUserProfile(data: MeResponse) {
@@ -32,26 +33,7 @@ export async function refreshAuthSession(): Promise<RefreshSessionResult> {
   }
 
   try {
-    const response = await fetch("/api/session", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId }),
-    });
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null);
-      return {
-        ok: false,
-        status: response.status,
-        message:
-          payload?.message ||
-          (typeof payload?.error === "string" ? payload.error : undefined),
-      };
-    }
-
-    const payload = await response.json().catch(() => null);
-    const data = (payload?.data ?? payload) as RefreshTokenResponse | null;
+    const data = await AuthService.refresh({ sessionId });
 
     if (!data?.accessToken) {
       return {
@@ -71,7 +53,7 @@ export async function refreshAuthSession(): Promise<RefreshSessionResult> {
   } catch (error) {
     return {
       ok: false,
-      status: 500,
+      status: error instanceof ApiError ? error.status : 500,
       message: error instanceof Error ? error.message : "Refresh failed.",
     };
   }
