@@ -148,7 +148,9 @@ export async function PATCH(req: NextRequest) {
         payload ?? { message: "Refresh failed." },
         { status: backendResponse.status },
       );
-      expireSessionCookies(response);
+      if (backendResponse.status === 401 || backendResponse.status === 403) {
+        expireSessionCookies(response);
+      }
       return response;
     }
 

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { getRoleDashboards, getRolePermissions } from "@/lib/team-access-helpers";
 import type { TeamAccessRole, TeamMember } from "@/types/team-access";
 
 const TEAM_ACCESS_STORAGE_KEY = "energy-iq-team-access";
@@ -60,16 +61,6 @@ interface TeamAccessState {
   removeMember: (id: string) => void;
   updateRole: (id: string, role: TeamAccessRole) => void;
   resetMembers: () => void;
-}
-
-function getRolePermissions(role: TeamAccessRole): string {
-  if (role === "admin") return "Full access";
-  if (role === "technician") return "System alerts and metrics only";
-  return "Read-only access";
-}
-
-function getRoleDashboards(role: TeamAccessRole): number {
-  return role === "technician" ? 2 : 1;
 }
 
 export const useTeamAccessStore = create<TeamAccessState>()(

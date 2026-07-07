@@ -345,8 +345,6 @@ function VerifyModal({
 }
 
 export function NotificationContent() {
-  const user = useAuthStore((state) => state.user);
-
   const [alertStates, setAlertStates] = useState<Record<string, boolean>>({
     battery_low: true,
     predictive_depletion: false,

@@ -25,7 +25,7 @@ function getNotificationIcon(notification: NotificationItem) {
   if (text.includes("battery") || text.includes("alert")) return AlertTriangle;
   if (text.includes("solar")) return Sun;
   if (text.includes("save")) return TrendingUp;
-  if (text.includes("ai")) return Cpu;
+  if (/\bai\b/.test(text)) return Cpu;
   return Bell;
 }
 
@@ -38,7 +38,8 @@ export function NotificationsDropdown() {
   });
 
   const notifications = query.data?.payload ?? [];
-  const unreadCount = notifications.filter((item) => !item.isRead).length;
+  const unreadPreviewCount = notifications.filter((item) => !item.isRead).length;
+  const hasUnreadPreview = unreadPreviewCount > 0;
 
   const markReadMutation = useMutation({
     mutationFn: (notificationId: string) => notificationsService.markAsRead(notificationId),
@@ -58,10 +59,8 @@ export function NotificationsDropdown() {
       <div className="flex items-center justify-between px-5 py-4">
         <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
           Notifications
-          {unreadCount > 0 && (
-            <span className="inline-flex size-5 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white">
-              {unreadCount}
-            </span>
+          {hasUnreadPreview && (
+            <span className="inline-flex size-2.5 rounded-full bg-danger" aria-label="Unread notifications in preview" />
           )}
         </h3>
         <Button
@@ -69,11 +68,11 @@ export function NotificationsDropdown() {
           variant="ghost"
           size="sm"
           onClick={() => void markAllRead()}
-          disabled={unreadCount === 0 || markReadMutation.isPending}
+          disabled={!hasUnreadPreview || markReadMutation.isPending}
           className="h-auto px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
         >
           <Check className="h-3.5 w-3.5" />
-          Mark as read
+          Mark preview as read
         </Button>
       </div>
 

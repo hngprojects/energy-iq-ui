@@ -34,7 +34,7 @@ export const notificationsService = {
 
   markAsRead: async (notificationId: string) => {
     return apiFetch<NotificationItem>(
-      `/notifications/${notificationId}/read`,
+      `/notifications/${encodeURIComponent(notificationId)}/read`,
       { method: "PATCH" },
       true,
     );

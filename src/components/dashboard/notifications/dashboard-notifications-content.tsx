@@ -149,8 +149,8 @@ export function DashboardNotificationsContent() {
   });
 
   const notifications = query.data?.payload ?? [];
-  const unreadCount = notifications.filter((item) => !item.isRead).length;
-  const deliveredCount = notifications.filter(
+  const unreadPreviewCount = notifications.filter((item) => !item.isRead).length;
+  const deliveredPreviewCount = notifications.filter(
     (item) => item.inAppDeliveryStatus === "SUCCESSFUL",
   ).length;
   const latestTimestamp =
@@ -193,7 +193,7 @@ export function DashboardNotificationsContent() {
         <Button
           variant="outline"
           onClick={() => void markVisibleRead()}
-          disabled={unreadCount === 0 || markReadMutation.isPending}
+          disabled={unreadPreviewCount === 0 || markReadMutation.isPending}
           className="h-11 w-full lg:w-auto bg-black hover:bg-black text-white"
         >
           {markReadMutation.isPending ? (
@@ -207,21 +207,21 @@ export function DashboardNotificationsContent() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
-          label="Unread Notifications"
-          value={unreadCount}
-          helper="Require your attention"
+          label="Unread in View"
+          value={unreadPreviewCount}
+          helper="Unread items in this loaded list"
           icon={Bell}
         />
         <StatCard
-          label="Delivered Today"
-          value={deliveredCount}
-          helper="Visible in-app updates"
+          label="Delivered in View"
+          value={deliveredPreviewCount}
+          helper="Delivered items in this loaded list"
           icon={ShieldCheck}
         />
         <StatCard
-          label="Latest Activity"
+          label="Latest Loaded Activity"
           value={latestTimestamp}
-          helper="Most recent notification"
+          helper="Most recent item in this loaded list"
           icon={AlertTriangle}
         />
       </div>

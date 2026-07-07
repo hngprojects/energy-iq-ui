@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
 import { AuthHeader } from "@/components/auth/auth-header";
+import { ApiError } from "@/lib/api/error";
 import { AuthService } from "@/services/auth-service";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -45,10 +46,7 @@ export function AcceptInviteFlow({
       .catch((error) => {
         if (cancelled) return;
 
-        if (
-          error instanceof Error &&
-          error.message.toLowerCase().includes("unauth")
-        ) {
+        if (error instanceof ApiError && error.status === 401) {
           logout();
           router.replace(
             `/login?redirect=${encodeURIComponent(`/invites/${inviteToken}`)}`,

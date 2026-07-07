@@ -140,7 +140,7 @@ export async function apiFetch<TResponse>(
         const refreshData = await getRefreshPromise();
         headers["Authorization"] = `Bearer ${refreshData.accessToken}`;
       } catch (error) {
-        if (error instanceof ApiError && error.statusCode === 401) {
+        if (error instanceof ApiError && error.status === 401) {
           handleSessionRefreshFailure();
         }
         throw error;
@@ -203,7 +203,7 @@ export async function apiFetch<TResponse>(
             proxy,
           );
         } catch (error) {
-          if (error instanceof ApiError && error.statusCode !== 401) {
+          if (error instanceof ApiError && error.status !== 401) {
             throw error;
           }
         }

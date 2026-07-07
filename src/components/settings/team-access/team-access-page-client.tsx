@@ -11,6 +11,7 @@ import { TeamAccessStatsCards } from "./team-access-stats";
 import { TeamAccessEmptyState } from "./team-access-empty-state";
 import { TeamAccessTable } from "./team-access-table";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
+import { getRoleDashboards, getRolePermissions } from "@/lib/team-access-helpers";
 import { useAuthStore } from "@/stores/auth-store";
 import { teamAccessService } from "@/services/team-access-service";
 import type {
@@ -36,16 +37,6 @@ function getUiRole(role: ApiInverterMember["role"]): TeamAccessRole {
   if (role === "inverter_admin") return "admin";
   if (role === "inverter_technician") return "technician";
   return "viewer";
-}
-
-function getRolePermissions(role: TeamAccessRole) {
-  if (role === "admin") return "Full access";
-  if (role === "technician") return "System alerts and metrics only";
-  return "Read-only access";
-}
-
-function getRoleDashboards(role: TeamAccessRole) {
-  return role === "technician" ? 2 : 1;
 }
 
 function deriveNames(member: ApiInverterMember) {
@@ -216,7 +207,11 @@ export function TeamAccessPageClient() {
         </Button>
       </div>
 
-      {!selectedInverterId ? (
+      {isLoading ? (
+        <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-border bg-card">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : !selectedInverterId ? (
         <div className="rounded-xl border border-border bg-card px-6 py-10 text-sm text-muted-foreground">
           No inverter found for this account yet.
         </div>
@@ -243,10 +238,6 @@ export function TeamAccessPageClient() {
               </div>
             </div>
           </div>
-        </div>
-      ) : isLoading ? (
-        <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-border bg-card">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : membersQuery.isError ? (
         <div className="rounded-xl border border-border bg-card px-6 py-10 text-sm text-muted-foreground">
