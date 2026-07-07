@@ -37,12 +37,10 @@ function getDeliveryLabel(status: NotificationItem["inAppDeliveryStatus"]) {
 function StatCard({
   label,
   value,
-  helper,
   icon: Icon,
 }: {
   label: string;
   value: string | number;
-  helper: string;
   icon: typeof Bell;
 }) {
   return (
@@ -52,7 +50,6 @@ function StatCard({
       </div>
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
     </div>
   );
 }
@@ -155,6 +152,7 @@ export function DashboardNotificationsContent() {
     filter === "unread" ? unreadNotificationsQuery : allNotificationsQuery;
 
   const notifications = activeQuery.data?.payload ?? [];
+  const visibleUnreadNotifications = notifications.filter((item) => !item.isRead);
   const totalNotifications =
     allNotificationsQuery.data?.total ?? notifications.length;
   const unreadNotifications =
@@ -177,8 +175,9 @@ export function DashboardNotificationsContent() {
   });
 
   const markVisibleRead = async () => {
-    const unread = notifications.filter((item) => !item.isRead);
-    await Promise.all(unread.map((item) => markReadMutation.mutateAsync(item.id)));
+    await Promise.all(
+      visibleUnreadNotifications.map((item) => markReadMutation.mutateAsync(item.id)),
+    );
   };
 
   return (
@@ -202,7 +201,9 @@ export function DashboardNotificationsContent() {
         <Button
           variant="outline"
           onClick={() => void markVisibleRead()}
-          disabled={unreadNotifications === 0 || markReadMutation.isPending}
+          disabled={
+            visibleUnreadNotifications.length === 0 || markReadMutation.isPending
+          }
           className="h-11 w-full lg:w-auto bg-black hover:bg-black text-white"
         >
           {markReadMutation.isPending ? (
@@ -218,19 +219,16 @@ export function DashboardNotificationsContent() {
         <StatCard
           label="Total Notifications"
           value={totalNotifications}
-          helper="Notifications available in your account"
           icon={Bell}
         />
         <StatCard
           label="Unread Notifications"
           value={unreadNotifications}
-          helper="Unread items reported by the API"
           icon={ShieldCheck}
         />
         <StatCard
           label="Latest Activity"
           value={latestTimestamp}
-          helper="Most recent notification returned"
           icon={AlertTriangle}
         />
       </div>
