@@ -139,22 +139,28 @@ export function DashboardNotificationsContent() {
   const [filter, setFilter] = useState<Filter>("all");
   const queryClient = useQueryClient();
 
-  const query = useQuery({
-    queryKey: ["notifications-page", filter],
-    queryFn: () =>
-      filter === "unread"
-        ? notificationsService.getUnreadNotifications(1, 20)
-        : notificationsService.getNotifications(1, 20),
+  const allNotificationsQuery = useQuery({
+    queryKey: ["notifications-page", "all"],
+    queryFn: () => notificationsService.getNotifications(1, 20),
     retry: false,
   });
 
-  const notifications = query.data?.payload ?? [];
-  const unreadPreviewCount = notifications.filter((item) => !item.isRead).length;
-  const deliveredPreviewCount = notifications.filter(
-    (item) => item.inAppDeliveryStatus === "SUCCESSFUL",
-  ).length;
+  const unreadNotificationsQuery = useQuery({
+    queryKey: ["notifications-page", "unread"],
+    queryFn: () => notificationsService.getUnreadNotifications(1, 20),
+    retry: false,
+  });
+
+  const activeQuery =
+    filter === "unread" ? unreadNotificationsQuery : allNotificationsQuery;
+
+  const notifications = activeQuery.data?.payload ?? [];
+  const totalNotifications = allNotificationsQuery.data?.total ?? notifications.length;
+  const unreadNotifications = unreadNotificationsQuery.data?.total ?? notifications.filter((item) => !item.isRead).length;
   const latestTimestamp =
-    notifications.length === 0
+    allNotificationsQuery.data?.payload?.length
+      ? formatTimestamp(allNotificationsQuery.data.payload[0].createdAt)
+      : notifications.length === 0
       ? "No activity yet"
       : formatTimestamp(notifications[0].createdAt);
 
@@ -171,6 +177,16 @@ export function DashboardNotificationsContent() {
     const unread = notifications.filter((item) => !item.isRead);
     await Promise.all(unread.map((item) => markReadMutation.mutateAsync(item.id)));
   };
+
+  const isLoading =
+    activeQuery.isLoading ||
+    allNotificationsQuery.isLoading ||
+    unreadNotificationsQuery.isLoading;
+
+  const isError =
+    activeQuery.isError ||
+    allNotificationsQuery.isError ||
+    unreadNotificationsQuery.isError;
 
   return (
     <div className="space-y-6">
@@ -193,7 +209,7 @@ export function DashboardNotificationsContent() {
         <Button
           variant="outline"
           onClick={() => void markVisibleRead()}
-          disabled={unreadPreviewCount === 0 || markReadMutation.isPending}
+          disabled={unreadNotifications === 0 || markReadMutation.isPending}
           className="h-11 w-full lg:w-auto bg-black hover:bg-black text-white"
         >
           {markReadMutation.isPending ? (
@@ -207,21 +223,21 @@ export function DashboardNotificationsContent() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
-          label="Unread in View"
-          value={unreadPreviewCount}
-          helper="Unread items in this loaded list"
+          label="Total Notifications"
+          value={totalNotifications}
+          helper="Notifications available in your account"
           icon={Bell}
         />
         <StatCard
-          label="Delivered in View"
-          value={deliveredPreviewCount}
-          helper="Delivered items in this loaded list"
+          label="Unread Notifications"
+          value={unreadNotifications}
+          helper="Unread items reported by the API"
           icon={ShieldCheck}
         />
         <StatCard
-          label="Latest Loaded Activity"
+          label="Latest Activity"
           value={latestTimestamp}
-          helper="Most recent item in this loaded list"
+          helper="Most recent notification returned"
           icon={AlertTriangle}
         />
       </div>
@@ -253,9 +269,9 @@ export function DashboardNotificationsContent() {
         </div>
 
         <div>
-          {query.isLoading ? (
+          {isLoading ? (
             <NotificationSkeleton />
-          ) : query.isError ? (
+          ) : isError ? (
             <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 px-6 py-12 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-muted">
                 <AlertTriangle className="size-5 text-muted-foreground" />

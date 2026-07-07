@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 // import { env } from "@/env/server";
 
 const API_BASE_URL = process.env.API_BASE_URL;
-const REFRESH_PATH_PATTERN = /Path=\/api\/v1\/auth\/refresh/gi;
-
-function normalizeSetCookieHeader(setCookieHeader: string): string {
-  return setCookieHeader.replace(REFRESH_PATH_PATTERN, "Path=/api/session");
-}
+const REFRESH_TOKEN_COOKIE = "refresh_token";
 
 function getSetCookieHeaders(headers: Headers): string[] {
   const headersWithSetCookie = headers as Headers & {
@@ -19,6 +15,11 @@ function getSetCookieHeaders(headers: Headers): string[] {
 
   const setCookieHeader = headers.get("set-cookie");
   return setCookieHeader ? [setCookieHeader] : [];
+}
+
+function extractRefreshToken(setCookieHeader: string): string | null {
+  const match = setCookieHeader.match(/refresh_token=([^;]+)/i);
+  return match?.[1] ?? null;
 }
 
 const buildBackendUrl = (path: string, search: string): string => {
@@ -167,10 +168,19 @@ async function proxyRequest(req: Request, paramSegments?: string[]) {
     if (setCookieHeaders.length > 0) {
       nextRes.headers.delete("set-cookie");
       for (const setCookieHeader of setCookieHeaders) {
-        nextRes.headers.append(
-          "set-cookie",
-          normalizeSetCookieHeader(setCookieHeader),
-        );
+        const refreshToken = extractRefreshToken(setCookieHeader);
+
+        if (refreshToken) {
+          nextRes.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
+            path: "/",
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
+            httpOnly: true,
+          });
+          continue;
+        }
+
+        nextRes.headers.append("set-cookie", setCookieHeader);
       }
     }
     return nextRes;

@@ -282,11 +282,8 @@ export const useAuthStore = create<AuthState>()(
         state.sessionId = state.sessionId ?? getStoredSessionId();
 
         const rememberMe = localStorage.getItem("remember_me") === "1";
-        const sessionActive = sessionStorage.getItem("session_active") === "1";
 
-        if (state.isAuthenticated && !rememberMe && !sessionActive) {
-          state.clearClientAuth();
-        } else if (state.isAuthenticated || state.sessionId) {
+        if (state.isAuthenticated || state.sessionId) {
           setSessionCookie(rememberMe);
         }
 

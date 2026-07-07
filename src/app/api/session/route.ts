@@ -6,7 +6,7 @@ const REFRESH_TOKEN_COOKIE = "refresh_token";
 const API_BASE_URL = process.env.API_BASE_URL;
 
 const cookieOptions = {
-  path: "/api/session",
+  path: "/",
   sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",
   httpOnly: true,
@@ -14,7 +14,7 @@ const cookieOptions = {
 
 const expiredCookieOptions = {
   maxAge: 0,
-  path: "/api/session",
+  path: "/",
   sameSite: "strict" as const,
   secure: process.env.NODE_ENV === "production",
   httpOnly: true,

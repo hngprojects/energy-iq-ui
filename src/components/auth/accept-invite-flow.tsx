@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthWrapper } from "@/components/layout/auth-wrapper";
@@ -16,13 +16,19 @@ export function AcceptInviteFlow({
 }) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
   const setInverterAccess = useAuthStore((state) => state.setInverterAccess);
   const logout = useAuthStore((state) => state.logout);
+  const hasSubmittedRef = useRef(false);
 
   useEffect(() => {
     if (!inviteToken) {
       toast.error("Invite token is missing.");
       router.replace("/login");
+      return;
+    }
+
+    if (!hasHydrated) {
       return;
     }
 
@@ -32,6 +38,12 @@ export function AcceptInviteFlow({
       );
       return;
     }
+
+    if (hasSubmittedRef.current) {
+      return;
+    }
+
+    hasSubmittedRef.current = true;
 
     let cancelled = false;
 
@@ -63,7 +75,14 @@ export function AcceptInviteFlow({
     return () => {
       cancelled = true;
     };
-  }, [inviteToken, isAuthenticated, logout, router, setInverterAccess]);
+  }, [
+    hasHydrated,
+    inviteToken,
+    isAuthenticated,
+    logout,
+    router,
+    setInverterAccess,
+  ]);
 
   return (
     <AuthWrapper>

@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useInverterQueries } from "@/hooks/use-inverter-queries";
 import { useAuthStore } from "@/stores/auth-store";
-import { onboardingStorage } from "@/lib/onboarding-storage";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -41,11 +40,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
 
     if (!isLoading && !isError) {
-      // Check localStorage flag first before redirecting
-      const isStorageMarkedComplete =
-        user?.id && onboardingStorage.isCompleted(user.id);
-
-      if (!isFullyOnboarded && !isStorageMarkedComplete) {
+      if (!isFullyOnboarded) {
         router.replace("/onboarding");
       }
     }
@@ -60,12 +55,6 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     router,
     currentUrl,
   ]);
-
-  useEffect(() => {
-    if (isFullyOnboarded && user?.id) {
-      onboardingStorage.setCompleted(user.id);
-    }
-  }, [isFullyOnboarded, user?.id]);
 
   // IMPORTANT: Wait for hydration before rendering anything or redirecting
   if (!_hasHydrated || hasIncomingOAuthToken) {
@@ -100,12 +89,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!isFullyOnboarded) {
-    // If localStorage says completed but query says otherwise, still allow (avoid redirect loop)
-    const isStorageMarkedComplete =
-      user?.id && onboardingStorage.isCompleted(user.id);
-    if (!isStorageMarkedComplete) {
-      return null;
-    }
+    return null;
   }
 
   return <>{children}</>;
