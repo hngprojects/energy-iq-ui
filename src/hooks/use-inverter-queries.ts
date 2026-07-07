@@ -46,7 +46,8 @@ export const useInverterQueries = () => {
       queryKey: ["onboarding-status", user?.id],
       queryFn: InverterService.getOnboardingStatus,
       enabled: isAuthenticated && !!user?.id,
-      retry: false,
+      retry: 2,
+      refetchOnWindowFocus: false,
       staleTime: 0,
     });
 
