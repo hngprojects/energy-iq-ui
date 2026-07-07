@@ -155,8 +155,11 @@ export function DashboardNotificationsContent() {
     filter === "unread" ? unreadNotificationsQuery : allNotificationsQuery;
 
   const notifications = activeQuery.data?.payload ?? [];
-  const totalNotifications = allNotificationsQuery.data?.total ?? notifications.length;
-  const unreadNotifications = unreadNotificationsQuery.data?.total ?? notifications.filter((item) => !item.isRead).length;
+  const totalNotifications =
+    allNotificationsQuery.data?.total ?? notifications.length;
+  const unreadNotifications =
+    unreadNotificationsQuery.data?.total ??
+    notifications.filter((item) => !item.isRead).length;
   const latestTimestamp =
     allNotificationsQuery.data?.payload?.length
       ? formatTimestamp(allNotificationsQuery.data.payload[0].createdAt)
@@ -177,16 +180,6 @@ export function DashboardNotificationsContent() {
     const unread = notifications.filter((item) => !item.isRead);
     await Promise.all(unread.map((item) => markReadMutation.mutateAsync(item.id)));
   };
-
-  const isLoading =
-    activeQuery.isLoading ||
-    allNotificationsQuery.isLoading ||
-    unreadNotificationsQuery.isLoading;
-
-  const isError =
-    activeQuery.isError ||
-    allNotificationsQuery.isError ||
-    unreadNotificationsQuery.isError;
 
   return (
     <div className="space-y-6">
@@ -269,9 +262,9 @@ export function DashboardNotificationsContent() {
         </div>
 
         <div>
-          {isLoading ? (
+          {activeQuery.isLoading ? (
             <NotificationSkeleton />
-          ) : isError ? (
+          ) : activeQuery.isError ? (
             <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 px-6 py-12 text-center">
               <div className="flex size-14 items-center justify-center rounded-full bg-muted">
                 <AlertTriangle className="size-5 text-muted-foreground" />
