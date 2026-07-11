@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import QueryProvider from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { AuthRefreshManager } from "@/components/auth/auth-refresh-manager";
 
 const figtree = Figtree({
   subsets: ["latin"],
@@ -136,6 +137,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <QueryProvider>
+          <AuthRefreshManager />
           {children}
 
           <Toaster position="top-right" richColors />
