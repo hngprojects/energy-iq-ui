@@ -409,17 +409,10 @@ function ActivityTable({ rows }: { rows: SuperAdminActivity[] }) {
 function ChartCard({
   title,
   value,
-  bars,
+  input,
+  output,
   icon: Icon,
 }: (typeof SUPER_ADMIN_OVERVIEW_CHARTS)[number]) {
-  const points = bars
-    .map((bar, index) => {
-      const x = (index / Math.max(bars.length - 1, 1)) * 100;
-      const y = 100 - bar;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-start justify-between">
@@ -435,43 +428,22 @@ function ChartCard({
             <span key={index} className="border-t border-dashed border-border" />
           ))}
         </div>
-        <div className="absolute inset-x-5 bottom-5 top-8 flex items-end gap-2">
-          {bars.map((bar, index) => (
-            <div key={index} className="flex flex-1 items-end justify-center">
+        <div className="absolute inset-x-5 bottom-5 top-8 flex items-end gap-2 sm:gap-3">
+          {input.map((inputValue, index) => (
+            <div key={index} className="flex flex-1 items-end justify-center gap-1">
               <div
-                className="w-full min-w-2 rounded-t bg-secondary/45"
-                style={{ height: `${Math.max(bar, 8)}%` }}
+                className="h-full w-full max-w-4 rounded-t bg-secondary/80"
+                style={{ height: `${Math.max(inputValue, 8)}%` }}
+                title={`input ${inputValue}`}
+              />
+              <div
+                className="h-full w-full max-w-4 rounded-t bg-chart-battery"
+                style={{ height: `${Math.max(output[index] ?? 0, 8)}%` }}
+                title={`output ${output[index] ?? 0}`}
               />
             </div>
           ))}
         </div>
-        <svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          className="absolute inset-x-5 bottom-5 top-8 h-[calc(100%-3.25rem)] w-[calc(100%-2.5rem)] overflow-visible text-secondary"
-        >
-          <polyline
-            points={points}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            vectorEffect="non-scaling-stroke"
-          />
-          {bars.map((bar, index) => {
-            const x = (index / Math.max(bars.length - 1, 1)) * 100;
-            const y = 100 - bar;
-            return (
-              <circle
-                key={index}
-                cx={x}
-                cy={y}
-                r="1.8"
-                fill="currentColor"
-                vectorEffect="non-scaling-stroke"
-              />
-            );
-          })}
-        </svg>
       </div>
       <div className="mt-3 flex justify-end gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">

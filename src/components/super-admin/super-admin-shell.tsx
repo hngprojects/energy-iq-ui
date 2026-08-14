@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Logo } from "@/components/ui/logo";
 import { SUPER_ADMIN_NAV_ITEMS } from "@/constants/super-admin";
 import { cn } from "@/lib/utils";
 import { useSuperAdminAuthStore } from "@/stores/super-admin-auth-store";
