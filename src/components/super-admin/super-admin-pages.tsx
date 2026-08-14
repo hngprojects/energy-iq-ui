@@ -298,7 +298,7 @@ function DataTable({
     if (kind === "users")
       return ["Users", "Account Status", "Payment Status", "Last Log-in", "Amount Spent"];
     if (kind === "dashboard")
-      return ["Users", "Payment Status", "Registration Date", "Credits Used", "Amount Spent"];
+      return ["Users", "Account Status", "Payment Status", "Registration Date", "Amount Spent"];
     if (kind === "communications")
       return ["ID", "Message", "Status", "Priority", "Date"];
     return ["ID", kind === "feedback" ? "Feedback content" : "Submitted by", "Status", "Priority", "Date Submitted"];
@@ -391,7 +391,7 @@ function ActivityTable({ rows }: { rows: SuperAdminActivity[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="border-b border-border bg-muted px-5 py-3 text-sm font-medium">
-        Last 30 days
+        Recent activity
       </div>
       {rows.map((row) => (
         <div
@@ -461,7 +461,7 @@ function ChartCard({
 
 function filterRows(rows: SuperAdminTableRow[], filters: FilterState) {
   const query = filters.search.trim().toLowerCase();
-  const now = new Date("2026-08-14T00:00:00");
+  const now = new Date();
 
   return rows.filter((row) => {
     const haystack = [
@@ -506,7 +506,8 @@ function dateMatchesPreset(dateText: string, preset: string, now: Date) {
   const parsedDate = parseSuperAdminDate(dateText);
   if (!parsedDate) return true;
 
-  const days = Math.abs(now.getTime() - parsedDate.getTime()) / 86_400_000;
+  const days = (startOfDay(now).getTime() - startOfDay(parsedDate).getTime()) / 86_400_000;
+  if (days < 0) return false;
 
   if (preset === "Last Month") return days <= 31;
   if (preset === "Last 3 Months") return days <= 93;
@@ -517,7 +518,7 @@ function dateMatchesPreset(dateText: string, preset: string, now: Date) {
 }
 
 function parseSuperAdminDate(value: string) {
-  if (value === "Today") return new Date("2026-08-14T00:00:00");
+  if (value === "Today") return new Date();
 
   const slashDate = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (slashDate) {
@@ -527,6 +528,10 @@ function parseSuperAdminDate(value: string) {
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function startOfDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 }
 
 function useTableFilters() {

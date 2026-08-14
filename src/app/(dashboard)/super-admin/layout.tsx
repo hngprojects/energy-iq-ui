@@ -1,14 +1,17 @@
-import { SuperAdminAuthGuard } from "@/components/super-admin/super-admin-auth-guard";
+import { redirect } from "next/navigation";
 import { SuperAdminShell } from "@/components/super-admin/super-admin-shell";
+import { hasSuperAdminSession } from "@/lib/super-admin-session";
 
-export default function SuperAdminLayout({
+export default async function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  if (!(await hasSuperAdminSession())) {
+    redirect("/super-admin");
+  }
+
   return (
-    <SuperAdminAuthGuard>
-      <SuperAdminShell>{children}</SuperAdminShell>
-    </SuperAdminAuthGuard>
+    <SuperAdminShell>{children}</SuperAdminShell>
   );
 }

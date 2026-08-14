@@ -19,9 +19,11 @@ export function SuperAdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const logout = useSuperAdminAuthStore((state) => state.logout);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/super-admin/session", { method: "DELETE" });
     logout();
     router.replace("/super-admin");
+    router.refresh();
   };
 
   return (
